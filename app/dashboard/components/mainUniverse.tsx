@@ -33,9 +33,12 @@ import GameUniverse from "@/app/dashboard/components/gameUniverse";
 import { AppProvider, useAppContext } from "@/app/utils/AppContext";
 import { Db } from "@/app/utils/db";
 import SimpleLoading from "./simpleLoading";
+import Navbar from "./navBarV2";
+import IdeaComponent from "./ideaComponent";
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
-    const [activeMenu, setActiveMenu] = useState("analytics");
+    const [activeMenu, setActiveMenu] = useState("software");
+    const [activeView, setActiveView] = useState("view1");
     const [selectedGameData, setSelectedGameData] = useState<GameData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -115,7 +118,7 @@ export default function MainUniverse() {
             }));
             console.log("get collection data successfully");
             setCollectionData(collection_uris);
- 
+
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching tokens:', error);
@@ -123,6 +126,46 @@ export default function MainUniverse() {
             // window.location.href = '/dashboard/login';
         }
     };
+
+    const ideas = [
+        {
+          id: '1',
+          title: 'Metaloot',
+          description: 'This is a description of my first idea',
+          createdAt: '2024-03-20',
+          photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
+          upvotes: 10,
+          downvotes: 2,
+          location: "San Francisco",
+          industry: "Technology",
+          tags: ["Most Favoured"],
+        },
+        {
+            id: '2',
+            title: 'Benefir+',
+            description: 'This is a description of my first idea',
+            createdAt: '2024-03-20',
+            photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
+            upvotes: 10,
+            downvotes: 2,
+            location: "San Francisco",
+            industry: "Technology",
+            tags: [],
+          },
+          {
+            id: '3',
+            title: 'F1Academy',
+            description: 'This is a description of my first idea',
+            createdAt: '2024-03-20',
+            photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
+            upvotes: 10,
+            downvotes: 2,
+            location: "San Francisco",
+            industry: "Technology",
+            tags: ["Most Viewed"],
+          },
+        // ... more ideas
+      ];
 
     useEffect(() => {
         console.log("this is auth", auth);
@@ -145,38 +188,38 @@ export default function MainUniverse() {
 
     const menuItems = [
         {
-            id: "analytics",
-            label: "Analytics",
-            icon: IoStatsChartOutline,
-            selectedIcon: IoStatsChartSharp
-        },
-        {
-            id: "tokenomics",
-            label: "Tokenomics",
-            icon: MdOutlineGeneratingTokens,
-            selectedIcon: MdGeneratingTokens
-        },
-        {
-            id: "collections",
-            label: "Collections",
-            icon: IoStorefrontOutline,
-            selectedIcon: IoImagesSharp
-        },
-        {
-            id: "webhook",
-            label: "Webhooks",
-            icon: MdOutlineWebhook,
-            selectedIcon: MdWebhook
-        },
-        {
-            id: "api",
-            label: "API Management",
+            id: "software",
+            label: "Software & Tech",
             icon: IoCodeSlashOutline,
             selectedIcon: IoCodeSlashSharp
         },
         {
-            id: "settings",
-            label: "Settings",
+            id: "healthcare",
+            label: "Healthcare",
+            icon: MdOutlineGeneratingTokens,
+            selectedIcon: MdGeneratingTokens
+        },
+        {
+            id: "fintech",
+            label: "Fintech",
+            icon: IoStorefrontOutline,
+            selectedIcon: IoImagesSharp
+        },
+        {
+            id: "ecommerce",
+            label: "E-Commerce",
+            icon: IoStorefrontOutline,
+            selectedIcon: IoStorefrontSharp
+        },
+        {
+            id: "ai",
+            label: "AI & ML",
+            icon: IoStatsChartOutline,
+            selectedIcon: IoStatsChartSharp
+        },
+        {
+            id: "sustainability",
+            label: "Green Tech",
             icon: IoSettingsOutline,
             selectedIcon: IoSettingsSharp
         }
@@ -186,67 +229,14 @@ export default function MainUniverse() {
         <>
             {isLoading ? (
                 <SimpleLoading />
-            ) : !selectedGameData ? (
-                <GameUniverse
-                    setSelectedGame={selectGame}
-                />
             ) : (
-                <div className="bg-black/90 overflow-hidden">
-                    <SimpleSupport />
-                    <div className="flex min-h-[calc(100vh-4rem)] backdrop-blur-xl">
-                        <SimpleSideBar
-                            onContentChange={setActiveMenu}
-                            content={activeMenu}
-                            menuItems={menuItems}
-                        >
-
-                            {/* Main Content */}
-                            <div className="flex-1 h-[calc(100vh-4rem)]">
-                                <DashboardHeader
-                                    selectedGameData={selectedGameData}
-                                    setSelectedGameData={setSelectedGameData}
-                                />
-                                <motion.div
-                                    variants={containerVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className=" h-full p-6 backdrop-blur-xl overflow-y-auto"
-                                >
-                                    {activeMenu === "analytics" && <AnalyticsSection selectedGame={selectedGameData} />}
-                                    {/* {activeMenu === "game" && <GameSection />} */}
-                                    {activeMenu === "tokenomics" && <TokenomicsSection selectedGame={selectedGameData} />}
-                                    {activeMenu === "collections" && <CollectionsSection selectedGame={selectedGameData} />}
-                                    {/* {activeMenu === "marketplace" && <MarketplaceSection selectedGame={selectedGameData} />} */}
-                                    {activeMenu === "webhook" && <WebhookSection selectedGame={selectedGameData} />}
-                                    {activeMenu === "api" && <APISection selectedGame={selectedGameData} />}
-                                    {activeMenu === "settings" && <SettingsSection selectedGame={selectedGameData} />}
-                                </motion.div>
-                            </div>
-                        </SimpleSideBar>
-                    </div>
-
-                    {/* Mobile Navigation */}
-                    <div className="md:hidden sticky bottom-0 left-0 w-full flex flex-row justify-between bg-zinc-900/90 backdrop-blur-xl text-white/80 py-4 px-5 border-t border-white/10">
-                        {menuItems.map((item) => {
-                            const isSelected = activeMenu === item.id;
-                            const IconComponent = isSelected ? item.selectedIcon : item.icon;
-
-                            return (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveMenu(item.id)}
-                                    className={`flex justify-center items-center gap-2 px-3 py-3 rounded-lg transition-all duration-200 h-12 w-12 
-                        ${isSelected
-                                            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                        }`}
-                                >
-                                    <IconComponent className={`text-xl ${isSelected ? 'text-white' : 'text-white/60'}`} />
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
+                <>
+                 <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} />
+                 <div className="bg-white">
+                   <IdeaComponent ideas={ideas} />
+                   </div>
+                </>
+          
             )}
         </>
     );

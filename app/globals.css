@@ -3,7 +3,7 @@
 @tailwind mobileComponents;
 @tailwind utilities;
 
-@layer utilities {
+/* @layer utilities {
   .animation-delay-2000 {
     animation-delay: 2s;
   }
@@ -29,4 +29,4 @@
 
 .animate-blob {
   animation: blob 7s infinite;
-} 
+}  */

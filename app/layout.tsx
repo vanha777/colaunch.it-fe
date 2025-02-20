@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="metaloot">
+    <html lang="en" data-theme="light">
       <Head>
         {/* General Meta Tags */}
         <meta name="title" content="MetaLoot - Gaming Digital Asset Register" />

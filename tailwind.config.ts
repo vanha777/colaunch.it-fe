@@ -30,6 +30,7 @@ module.exports = {
     require('daisyui')],
   daisyui: {
     themes: [
+      "light",
       {
         metaloot: {
           "primary": "#FF6B6B",
