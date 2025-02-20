@@ -6,7 +6,7 @@ export default function SimpleLoading() {
     const [opacity, setOpacity] = useState(1)
 
     return (
-        <div className="min-h-screen bg-[#020309] flex flex-col items-center justify-center gap-8"
+        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-fuchsia-50 flex flex-col items-center justify-center gap-8"
             style={{ opacity: opacity }}>
             <motion.div
                 className="relative w-32 h-32"
@@ -19,12 +19,12 @@ export default function SimpleLoading() {
                     ease: "linear"
                 }}
             >
-                {/* Player 1 style sync rings */}
-                <div className="absolute inset-0 rounded-full border-4 border-[#0CC0DF]/20" />
+                {/* Outer ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-sky-300/50" />
                 <motion.div
-                    className="absolute inset-0 rounded-full border-4 border-gradient-to-r from-[#0CC0DF] to-[#14F195] border-t-transparent"
+                    className="absolute inset-0 rounded-full border-4 border-gradient-to-r from-sky-500 to-fuchsia-500 border-t-transparent"
                     style={{
-                        filter: "drop-shadow(0 0 8px #0CC0DF)"
+                        filter: "drop-shadow(0 0 8px rgba(14, 165, 233, 0.6))"
                     }}
                     animate={{
                         scale: [1, 1.1, 1],
@@ -38,7 +38,7 @@ export default function SimpleLoading() {
                     }}
                 />
                 <motion.div
-                    className="absolute inset-2 rounded-full border-4 border-[#14F195]/40 border-t-transparent"
+                    className="absolute inset-2 rounded-full border-4 border-fuchsia-400/50 border-t-transparent"
                     animate={{
                         rotate: -360
                     }}
@@ -50,9 +50,9 @@ export default function SimpleLoading() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                     <motion.div
-                        className="w-16 h-16 bg-gradient-to-r from-[#0CC0DF]/10 to-[#14F195]/10 rounded-full"
+                        className="w-16 h-16 bg-gradient-to-r from-sky-300/30 to-fuchsia-300/30 rounded-full"
                         style={{
-                            boxShadow: "0 0 20px #14F195"
+                            boxShadow: "0 0 20px rgba(236, 72, 153, 0.4)"
                         }}
                         animate={{
                             scale: [1, 1.2, 1],
@@ -66,20 +66,6 @@ export default function SimpleLoading() {
                     />
                 </div>
             </motion.div>
-
-            {/* Syncing text */}
-            {/* <motion.div
-                className="text-transparent bg-gradient-to-r from-[#0CC0DF] to-[#14F195] bg-clip-text font-medium"
-                animate={{
-                    opacity: [0.7, 1, 0.7]
-                }}
-                transition={{
-                    duration: 3,
-                    repeat: Infinity
-                }}
-            >
-                Syncing into Sources...
-            </motion.div> */}
         </div>
     )
 }

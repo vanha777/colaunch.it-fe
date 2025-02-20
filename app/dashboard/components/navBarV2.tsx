@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 
 interface MenuItem {
     id: string;
@@ -22,7 +23,15 @@ const Navbar: React.FC<NavbarProps> = ({
     activeView,
     setActiveView
 }) => {
+
+    const { auth, setAccessToken, setUser, setGame, setTokenData, logout } = useAppContext();
     const [selectedIcon, setSelectedIcon] = useState<string>("🌟");
+    console.log("this is auth", auth.userData?.photo);
+
+    const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        // Handle image loading error
+        console.error("Error loading image");
+    };
 
     return (
         <div className="navbar bg-white shadow-sm flex justify-center items-center">
@@ -31,15 +40,28 @@ const Navbar: React.FC<NavbarProps> = ({
                 <div className="flex justify-between items-center px-6 w-full py-3">
                     <div className="flex-none">
                         <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-                            MetaLoot
+                            CoLaunch.it
                         </div>
                     </div>
 
                     <div className="flex-none flex items-center gap-3">
-                        <span className="text-gray-700">User Name</span>
+                        <span className="text-gray-700">{auth.userData?.name}</span>
                         <div className="avatar">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full w-9 h-9 flex items-center justify-center">
-                                <span>U</span>
+                            <div className="w-9 h-9 rounded-full overflow-hidden">
+                                {auth.userData?.photo ? (
+                                    <img
+                                        src={auth.userData.photo}
+                                        alt={auth.userData?.name || 'User avatar'}
+                                        className="w-full h-full object-cover rounded-full"
+                                        crossOrigin="anonymous"
+                                        referrerPolicy="no-referrer"
+                                        onError={handleImageError}
+                                    />
+                                ) : (
+                                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white w-full h-full flex items-center justify-center">
+                                        <span>U</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
