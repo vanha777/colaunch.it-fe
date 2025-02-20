@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const profileData = JSON.parse(decodedToken) as GoogleProfile
   
     // Check if user exists in Supabase or create new user)
-    let { data, error } = await database.from('subscribers')
+    let { data, error } = await database.from('users')
       .select('*')
       .eq('email', profileData.email)
       .single()
@@ -29,9 +29,9 @@ export async function GET(request: Request) {
     if (subscriber && profileData.picture !== subscriber.photo) {
       console.log("updating user photo")
       const { data: updatedData, error: updateError } = await database
-        .from('subscribers')
+        .from('users')
         .update({ photo: profileData.picture })
-        .eq('id', subscriber.id)
+        .eq('email', subscriber.email)
         .select()
         .single()
       
@@ -42,16 +42,12 @@ export async function GET(request: Request) {
     }
 
     if (data == null) {
-      // Create new subscriber
-      const { data, error } = await Db.from('subscribers').insert([
+      // Create new user
+      const { data, error } = await Db.from('users').insert([
         {
           email: profileData.email,
           name: profileData.name,
-          favourite_game: null,
-          studio_name: null,
-          wallet: null,
-          referal: null,
-          type: "developer",
+          type: "distributor",
           photo: profileData.picture,
         }
       ]).select().single();
