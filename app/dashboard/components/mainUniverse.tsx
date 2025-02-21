@@ -1,12 +1,7 @@
 "use client";
 
-import DashboardHeader from "@/app/dashboard/components/DashboardHeader";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import AnalyticsSection from "@/app/dashboard/components/AnalyticsSection";
-import GameSection from "@/app/dashboard/components/GameSection";
-import CollectionsSection from "@/app/dashboard/components/CollectionsSection";
-import TokenomicsSection from "@/app/dashboard/components/TokenomicsSection";
 import {
     IoGameControllerOutline,
     IoGameControllerSharp,
@@ -22,14 +17,7 @@ import {
     IoStorefrontSharp
 } from "react-icons/io5";
 import { MdGeneratingTokens, MdOutlineGeneratingTokens, MdOutlineWebhook, MdWebhook } from "react-icons/md";
-import APISection from "@/app/dashboard/components/APISection";
-import SettingsSection from "@/app/dashboard/components/SettingsSection";
-import WebhookSection from "@/app/dashboard/components/WebhookSection";
-import MarketplaceSection from "@/app/dashboard/components/MarketplaceSection";
-import SimpleSideBar from "@/components/simpleSideBar";
-import SimpleSupport from "@/components/simpleSupport";
 import { CollectionData, GameData } from '@/app/utils/AppContext'
-import GameUniverse from "@/app/dashboard/components/gameUniverse";
 import { AppProvider, useAppContext } from "@/app/utils/AppContext";
 import { Db } from "@/app/utils/db";
 import SimpleLoading from "./simpleLoading";

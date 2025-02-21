@@ -132,6 +132,8 @@ const Navbar: React.FC<NavbarProps> = ({
                         </div>
                     </div>
                 </div>
+                
+         
 
                 {/* Tabs section */}
                 <div className="navbar-start flex justify-center w-full pb-2">

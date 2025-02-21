@@ -1,27 +1,35 @@
-interface IdeaProps {
-  title: string;
-  description: string;
-  date?: string; // Optional prop with '?'
-}
+import IdeaCard from "./components/ideaCard";
+import SimpleNavBar from "./components/simpleNavBar";
 
-const IdeaCard = ({ title, description, date }: IdeaProps) => {
+export default function IdeaPage({ params }: { params: { id: string } }) {
+  console.log('Path ID:', params.id);
+  const ideas = {
+    title: "Revolutionary Smart Home Device",
+    description: "A new IoT device that integrates with existing home automation systems while providing enhanced security features and energy optimization",
+    date: "2024-03-20",
+    location: "San Francisco, CA",
+    industry: "Technology",
+    images: [
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/archery",
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball"
+    ],
+    upvotes: 156,
+    downvotes: 12,
+    dealInfo: {
+      createdDate: "2024-01-15",
+      percentage: 85,
+      totalDeals: 24
+    }
+  }
   return (
-    <div className="p-4 border rounded-lg shadow-sm">
-      <h2 className="text-xl font-bold">{title}</h2>
-      {date && <p className="text-sm text-gray-500">{date}</p>}
-      <p className="mt-2">{description}</p>
-    </div>
-  );
-};
+    <>
+      <SimpleNavBar />
+      <div className="container mx-auto p-4">
+        <IdeaCard
+          idea={ideas}
+        />
+      </div>
+    </>
 
-export default function IdeaPage() {
-  return (
-    <div className="container mx-auto p-4">
-      <IdeaCard
-        title="My First Idea"
-        description="This is a sample idea component with props"
-        date="2024-03-20"
-      />
-    </div>
   );
 }
