@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import IdeaCard, { IdeaProps, OfferProps } from "./components/ideaCard";
 import SimpleNavBar from "./components/simpleNavBar";
 import { Db, Server } from "@/app/utils/db";
+import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 export const revalidate = 0
 export default async function IdeaPage({ params }: { params: { id: string } }) {
   console.log('Path ID:', params.id);

@@ -1,5 +1,7 @@
 'use client';
 import { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import { Db, Server, PrivateKey } from "@/app/utils/db";
+import jwt from "jwt-simple";
 
 export interface UserData {
     id?: string;
@@ -70,6 +72,7 @@ export interface AppContextData {
     setTokenData: (tokenData: TokenData | null) => void;
     setCollectionData: (collectionData: CollectionData[] | null) => void;
     logout: () => void;
+    getUser: () => UserData | null;
 }
 
 const AppContext = createContext<AppContextData | undefined>(undefined);
@@ -103,6 +106,66 @@ export function AppProvider({ children }: AppProviderProps) {
             ...prev,
             userData,
         }));
+
+        // Only access localStorage on the client side
+        if (typeof window !== 'undefined') {
+            try {
+                // Create JWT payload with user data and expiry
+                const payload = {
+                    userData,
+                    exp: Math.floor((Date.now() + (2 * 60 * 60 * 1000)) / 1000) // 2 hours from now in seconds
+                };
+
+                // Sign the payload with private key to create JWT
+                const token = jwt.encode(payload, PrivateKey || 'fallback-secret-key');
+
+                // Store the signed JWT in localStorage
+                console.log("setting user session", token);
+                localStorage.setItem('userSession', token);
+            } catch (error) {
+                console.error('Error creating user session:', error);
+                // Handle the error gracefully - maybe clear the session
+                localStorage.removeItem('userSession');
+            }
+        }
+    }, []);
+
+
+    const getUser = useCallback(() => {
+        try {
+            // Only access localStorage on the client side
+            if (typeof window === 'undefined') {
+                return null;
+            }
+
+            // Get the stored JWT from localStorage
+            const token = localStorage.getItem('userSession');
+
+            if (!token) {
+                setAuth(prev => ({ ...prev, userData: null }));
+                return null;
+            }
+
+            // Verify and decode the JWT
+            const decoded = jwt.decode(token, PrivateKey) as { userData: UserData; exp: number };
+            console.log("getting user session", decoded);
+            // Check if token has expired
+            if (decoded.exp < Math.floor(Date.now() / 1000)) {
+                localStorage.removeItem('userSession');
+                setAuth(prev => ({ ...prev, userData: null }));
+                return null;
+            }
+            setAuth(prev => ({ ...prev, userData: decoded.userData }));
+
+            return decoded.userData;
+        } catch (error) {
+            // Only access localStorage on the client side
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('userSession');
+            }
+            setAuth(prev => ({ ...prev, userData: null }));
+            return null;
+        }
     }, []);
 
     const setGame = useCallback((gameData: GameData[]) => {
@@ -135,12 +198,17 @@ export function AppProvider({ children }: AppProviderProps) {
             collectionData: null,
             isAuthenticated: false,
         });
+        // Only access localStorage on the client side
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('userSession');
+        }
     }, []);
 
     const value: AppContextData = {
         auth,
         setAccessToken,
         setUser,
+        getUser,
         setGame,
         setTokenData,
         setCollectionData,

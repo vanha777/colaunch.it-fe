@@ -8,11 +8,11 @@ import SimpleLoading from "./components/simpleLoading";
 import { set } from "date-fns";
 
 interface InitialUserProps {
-    initialUser: UserData;
+    rawUser?: any;
 }
 
-export default function DashboardClient({ initialUser }: InitialUserProps) {
-    const { auth, setAccessToken, setUser, setGame, setTokenData, logout } = useAppContext();
+export default function DashboardClient({ rawUser }: InitialUserProps) {
+    const { auth, setAccessToken, setUser, setGame, setTokenData, logout,getUser } = useAppContext();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +20,16 @@ export default function DashboardClient({ initialUser }: InitialUserProps) {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                let initialUser: UserData;
+                if (rawUser) {
+                    initialUser = JSON.parse(rawUser) as UserData;
+                } else {
+                    const user = getUser();
+                    if (!user) {
+                        throw new Error('No user found');
+                    }
+                    initialUser = user;
+                }
                 setIsLoading(true);
                 console.log("this is data", initialUser);
                 // // Fetch game data
@@ -35,7 +45,7 @@ export default function DashboardClient({ initialUser }: InitialUserProps) {
         };
 
         fetchData();
-    }, [initialUser]);
+    }, []);
 
     return isLoading ? <SimpleLoading /> : <MainUniverse />;
 }

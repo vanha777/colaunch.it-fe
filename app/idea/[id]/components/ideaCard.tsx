@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Db, Server } from "@/app/utils/db";
+import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 export interface LocationProps {
   id?: number;
   country?: string;
@@ -33,6 +34,15 @@ export interface IdeaProps {
 }
 
 export default function IdeaCard({ idea }: { idea: IdeaProps }) {
+  const { auth, setUser, getUser } = useAppContext();
+  useEffect(() => {
+    if (!auth.userData) {
+      const user = getUser();
+      console.log("welcome back", user);
+    }
+  }, []);
+  // const user = getUser();
+  // console.log("user", user);
   // const [idea, setIdea] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   // Add new state for modal
@@ -47,13 +57,18 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   };
 
   const handleVote = async (voteType: 'up' | 'down') => {
+    if (!auth.userData) {
+      console.log('User must be logged in to vote');
+      return;
+    }
+
     console.log('voteType', voteType);
     try {
       // Update the local state optimistically
       if (voteType === 'up') {
         setUpvotes(prev => prev + 1);
       } else {
-        setDownvotes(prev => prev + 1);
+        setDownvotes(prev => prev - 1);
       }
 
       // Update the database
@@ -202,14 +217,16 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleVote('up')}
-                  className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-xl transition-colors`}
+                  disabled={!auth.userData}
                 >
                   <span>⬆️</span>
                   <span className="font-medium">{upvotes}</span>
                 </button>
                 <button
                   onClick={() => handleVote('down')}
-                  className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-xl transition-colors`}
+                  disabled={!auth.userData}
                 >
                   <span>⬇️</span>
                   <span className="font-medium">{downvotes}</span>
@@ -320,11 +337,19 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
           {/* Card Action */}
           <div className="p-6 bg-gray-50">
-            <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:opacity-90 transition-all duration-200 font-medium shadow-sm hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98">
+            <button
+              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${!auth.userData
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:opacity-90 hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98'
+                }`}
+              disabled={!auth.userData}
+            >
               Make Deal
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
-              By making a deal, you agree to our terms and conditions. Commission rates are subject to change.
+              {!auth.userData
+                ? "Please login to make deals."
+                : "By making a deal, you agree to our terms and conditions. Commission rates are subject to change."}
             </p>
           </div>
         </div>
