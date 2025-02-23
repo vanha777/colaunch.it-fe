@@ -25,6 +25,14 @@ interface IdeaProps {
 export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   // const [idea, setIdea] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Add new state for modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Add handler for opening modal
+  const handleImageClick = (index: number) => {
+    setCurrentImageIndex(index);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="w-full px-48">
@@ -36,7 +44,8 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             <img
               src={idea.images[0]}
               alt="Main image"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => handleImageClick(0)}
             />
           </div>
           
@@ -47,7 +56,8 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                 <img
                   src={image}
                   alt={`Image ${index + 2}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={() => handleImageClick(index + 1)}
                 />
               </div>
             ))}
@@ -57,10 +67,59 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           <button 
             className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg 
                        text-sm font-medium shadow-md hover:scale-105 transition-transform"
-            onClick={() => {/* Handle show all photos */}}
+            onClick={() => setIsModalOpen(true)}
           >
             Show all photos
           </button>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {isModalOpen && idea.images && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+          <div className="relative w-full max-w-6xl mx-auto">
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 z-10 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
+              onClick={() => setIsModalOpen(false)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Main image */}
+            <div className="relative aspect-video">
+              <img
+                src={idea.images[currentImageIndex]}
+                alt={`Image ${currentImageIndex + 1}`}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Navigation buttons */}
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
+              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? idea.images!.length - 1 : prev - 1))}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
+              onClick={() => setCurrentImageIndex((prev) => (prev === idea.images!.length - 1 ? 0 : prev + 1))}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* Image counter */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-3 py-1 rounded-full">
+              {currentImageIndex + 1} / {idea.images.length}
+            </div>
+          </div>
         </div>
       )}
 
