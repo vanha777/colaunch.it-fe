@@ -15,10 +15,15 @@ interface IdeaProps {
     createdDate?: string;
     percentage?: number;
     totalDeals?: number;
+    active?: boolean;
+    comission?: number;
+    type?: string;
+    description?: string;
   };
 }
 
 export default function IdeaCard({ idea }: { idea: IdeaProps }) {
+  // const [idea, setIdea] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   return (
@@ -69,23 +74,73 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           <p className="mt-2">{idea.description}</p>
         </div>
 
-        {/* Right Section */}
-        <div className="w-1/3 p-4 border rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">Deal Information</h3>
-          <div className="space-y-2">
-            {idea.dealInfo?.createdDate && (
-              <p className="text-sm">Created: {idea.dealInfo.createdDate}</p>
+        {/* Right Section - Redesigned */}
+        <div className="w-1/3 flex flex-col p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
+          {/* Card Header with Metadata */}
+          <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <h3 className="text-xl font-bold text-gray-800">Deal Information</h3>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              {idea.dealInfo?.createdDate && (
+                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  📅 {idea.dealInfo.createdDate}
+                </span>
+              )}
+              {idea.dealInfo?.active !== undefined && (
+                <span className={`px-2 py-1 rounded-full ${
+                  idea.dealInfo.active 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  ⭐ {idea.dealInfo.active ? 'Active' : 'Inactive'}
+                </span>
+              )}
+              {idea.dealInfo?.type && (
+                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  📋 {idea.dealInfo.type}
+                </span>
+              )}
+              {idea.dealInfo?.totalDeals && (
+                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  🤝 {idea.dealInfo.totalDeals} deals
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Card Body */}
+          <div className="flex-1 p-6 space-y-6">
+            {/* Commission - Highlighted */}
+            {idea.dealInfo?.comission && (
+              <div className="bg-blue-50 p-4 rounded-xl">
+                <div className="text-3xl font-bold text-blue-600 mb-1">
+                  {idea.dealInfo.comission}%
+                </div>
+                <div className="text-sm text-blue-600">Commission Rate</div>
+              </div>
             )}
-            {idea.dealInfo?.percentage && (
-              <p className="text-sm">Success Rate: {idea.dealInfo.percentage}%</p>
-            )}
-            {idea.dealInfo?.totalDeals && (
-              <p className="text-sm">Total Deals: {idea.dealInfo.totalDeals}</p>
+
+            {/* Description - Prominent */}
+            {idea.dealInfo?.description && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  Deal Details
+                </h4>
+                <p className="text-gray-700 leading-relaxed">
+                  {idea.dealInfo.description}
+                </p>
+              </div>
             )}
           </div>
-          <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-            Make Deal
-          </button>
+
+          {/* Card Action */}
+          <div className="p-6 bg-gray-50">
+            <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98">
+              Make Deal
+            </button>
+            <p className="text-xs text-gray-500 text-center mt-3">
+              By making a deal, you agree to our terms and conditions. Commission rates are subject to change.
+            </p>
+          </div>
         </div>
       </div>
     </div>

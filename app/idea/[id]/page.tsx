@@ -3,6 +3,8 @@ import SimpleNavBar from "./components/simpleNavBar";
 
 export default function IdeaPage({ params }: { params: { id: string } }) {
   console.log('Path ID:', params.id);
+  // fetch idea from supabase
+  // fetch that idea deals from supabase
   const ideas = {
     title: "Revolutionary Smart Home Device",
     description: "A new IoT device that integrates with existing home automation systems while providing enhanced security features and energy optimization",
@@ -17,7 +19,10 @@ export default function IdeaPage({ params }: { params: { id: string } }) {
     downvotes: 12,
     dealInfo: {
       createdDate: "2024-01-15",
-      percentage: 85,
+      active: true,
+      comission: 25,
+      type:"increase-sales",
+      description:"You get comission for every sale",
       totalDeals: 24
     }
   }
