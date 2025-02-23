@@ -128,10 +128,10 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
         {/* Left Section - Redesigned */}
         <div className="flex-1 p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
           {/* Header with Title and Industry */}
-          <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
                   {idea.title}
                 </h2>
                 <div className="flex gap-3 mt-2">
@@ -175,7 +175,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
         {/* Right Section - Redesigned */}
         <div className="w-1/3 flex flex-col p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
           {/* Card Header with Metadata */}
-          <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
             <h3 className="text-xl font-bold text-gray-800">Deal Information</h3>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               {idea.dealInfo?.createdDate && (
@@ -232,7 +232,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
           {/* Card Action */}
           <div className="p-6 bg-gray-50">
-            <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98">
+            <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:opacity-90 transition-all duration-200 font-medium shadow-sm hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98">
               Make Deal
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
