@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import Image from 'next/image';
-
+import { Db, Server } from "@/app/utils/db";
 export interface LocationProps {
   id?: number;
   country?: string;
@@ -20,6 +20,7 @@ export interface OfferProps {
 }
 
 export interface IdeaProps {
+  id?: number;
   title: string;
   description: string;
   date?: string;
@@ -36,11 +37,51 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   // Add new state for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [upvotes, setUpvotes] = useState(idea.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(idea.downvotes || 0);
 
   // Add handler for opening modal
   const handleImageClick = (index: number) => {
     setCurrentImageIndex(index);
     setIsModalOpen(true);
+  };
+
+  const handleVote = async (voteType: 'up' | 'down') => {
+    console.log('voteType', voteType);
+    try {
+      // Update the local state optimistically
+      if (voteType === 'up') {
+        setUpvotes(prev => prev + 1);
+      } else {
+        setDownvotes(prev => prev + 1);
+      }
+
+      // Update the database
+      const { error } = await Db
+        .from('ideas')
+        .update({
+          [voteType === 'up' ? 'upvotes' : 'downvotes']: voteType === 'up' ? upvotes + 1 : downvotes + 1
+        })
+        .eq('id', idea.id);
+
+      if (error) {
+        // Revert the local state if there's an error
+        if (voteType === 'up') {
+          setUpvotes(prev => prev - 1);
+        } else {
+          setDownvotes(prev => prev - 1);
+        }
+        console.error('Error updating votes:', error);
+      }
+    } catch (error) {
+      console.error('Error handling vote:', error);
+      // Revert the local state
+      if (voteType === 'up') {
+        setUpvotes(prev => prev - 1);
+      } else {
+        setDownvotes(prev => prev - 1);
+      }
+    }
   };
 
   return (
@@ -159,13 +200,19 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
               {/* Voting System */}
               <div className="flex gap-2">
-                <button className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => handleVote('up')}
+                  className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                >
                   <span>⬆️</span>
-                  <span className="font-medium">{idea.upvotes || 0}</span>
+                  <span className="font-medium">{upvotes}</span>
                 </button>
-                <button className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => handleVote('down')}
+                  className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                >
                   <span>⬇️</span>
-                  <span className="font-medium">{idea.downvotes || 0}</span>
+                  <span className="font-medium">{downvotes}</span>
                 </button>
                 {/* X (formerly Twitter) Share Button */}
                 <button
