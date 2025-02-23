@@ -2,24 +2,33 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-interface IdeaProps {
+export interface LocationProps {
+  id?: number;
+  country?: string;
+  state?: string;
+  suburb?: string;
+}
+
+export interface OfferProps {
+  id?: number;
+  created_at?: string;
+  totalDeals?: number;
+  active?: boolean;
+  comission?: number;
+  type?: string;
+  description?: string;
+}
+
+export interface IdeaProps {
   title: string;
   description: string;
   date?: string;
-  location?: string;
+  address_detail?: LocationProps;
   industry?: string;
-  images?: string[];
+  media?: string[];
   upvotes?: number;
   downvotes?: number;
-  dealInfo?: {
-    createdDate?: string;
-    percentage?: number;
-    totalDeals?: number;
-    active?: boolean;
-    comission?: number;
-    type?: string;
-    description?: string;
-  };
+  offer?: OfferProps;
 }
 
 export default function IdeaCard({ idea }: { idea: IdeaProps }) {
@@ -37,21 +46,21 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   return (
     <div className="w-full px-48">
       {/* Carousel Section */}
-      {idea.images && idea.images.length > 0 && (
+      {idea.media && idea.media.length > 0 && (
         <div className="relative w-full h-[400px] mb-4 grid grid-cols-4 gap-2 rounded-xl overflow-hidden">
           {/* Main large image */}
           <div className="col-span-2 row-span-2 relative h-full">
             <img
-              src={idea.images[0]}
+              src={idea.media[0]}
               alt="Main image"
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => handleImageClick(0)}
             />
           </div>
-          
+
           {/* Secondary images */}
           <div className="col-span-2 grid grid-cols-2 gap-2 h-full">
-            {idea.images.slice(1, 5).map((image, index) => (
+            {idea.media.slice(1, 5).map((image, index) => (
               <div key={index} className="relative h-[196px]">
                 <img
                   src={image}
@@ -64,7 +73,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           </div>
 
           {/* Show all photos button */}
-          <button 
+          <button
             className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg 
                        text-sm font-medium shadow-md hover:scale-105 transition-transform"
             onClick={() => setIsModalOpen(true)}
@@ -75,7 +84,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
       )}
 
       {/* Image Modal */}
-      {isModalOpen && idea.images && (
+      {isModalOpen && idea.media && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
           <div className="relative w-full max-w-6xl mx-auto">
             {/* Close button */}
@@ -91,7 +100,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             {/* Main image */}
             <div className="relative aspect-video">
               <img
-                src={idea.images[currentImageIndex]}
+                src={idea.media[currentImageIndex]}
                 alt={`Image ${currentImageIndex + 1}`}
                 className="w-full h-full object-contain"
               />
@@ -100,7 +109,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             {/* Navigation buttons */}
             <button
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
-              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? idea.images!.length - 1 : prev - 1))}
+              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? idea.media!.length - 1 : prev - 1))}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -108,7 +117,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             </button>
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
-              onClick={() => setCurrentImageIndex((prev) => (prev === idea.images!.length - 1 ? 0 : prev + 1))}
+              onClick={() => setCurrentImageIndex((prev) => (prev === idea.media!.length - 1 ? 0 : prev + 1))}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -117,7 +126,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
             {/* Image counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-3 py-1 rounded-full">
-              {currentImageIndex + 1} / {idea.images.length}
+              {currentImageIndex + 1} / {idea.media.length}
             </div>
           </div>
         </div>
@@ -135,9 +144,9 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                   {idea.title}
                 </h2>
                 <div className="flex gap-3 mt-2">
-                  {idea.location && (
+                  {idea.address_detail && (
                     <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
-                      <span className="mr-1">📍</span> {idea.location}
+                      <span className="mr-1">📍</span> {idea.address_detail.country}{idea.address_detail.state ? `, ${idea.address_detail.state}` : ''}{idea.address_detail.suburb ? `, ${idea.address_detail.suburb}` : ''}
                     </span>
                   )}
                   {idea.industry && (
@@ -147,7 +156,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                   )}
                 </div>
               </div>
-              
+
               {/* Voting System */}
               <div className="flex gap-2">
                 <button className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
@@ -159,7 +168,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                   <span className="font-medium">{idea.downvotes || 0}</span>
                 </button>
                 {/* X (formerly Twitter) Share Button */}
-                <button 
+                <button
                   onClick={() => {
                     const text = `Check out this cool idea from CoLaunch.It: ${idea.title}`;
                     const url = window.location.href;
@@ -176,7 +185,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                   Share
                 </button>
                 {/* LinkedIn Share Button */}
-                <button 
+                <button
                   onClick={() => {
                     const url = window.location.href;
                     window.open(
@@ -187,7 +196,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                   className="flex items-center gap-1 bg-[#0A66C2] text-white px-4 py-2 rounded-xl hover:bg-[#004182] transition-colors"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                   </svg>
                   Share
                 </button>
@@ -211,28 +220,27 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
             <h3 className="text-xl font-bold text-gray-800">Deal Information</h3>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {idea.dealInfo?.createdDate && (
+              {idea.offer?.created_at && (
                 <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  📅 {idea.dealInfo.createdDate}
+                  📅 {idea.offer.created_at}
                 </span>
               )}
-              {idea.dealInfo?.active !== undefined && (
-                <span className={`px-2 py-1 rounded-full ${
-                  idea.dealInfo.active 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  ⭐ {idea.dealInfo.active ? 'Active' : 'Inactive'}
+              {idea.offer?.active !== undefined && (
+                <span className={`px-2 py-1 rounded-full ${idea.offer.active
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+                  }`}>
+                  ⭐ {idea.offer.active ? 'Active' : 'Inactive'}
                 </span>
               )}
-              {idea.dealInfo?.type && (
+              {idea.offer?.type && (
                 <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  📋 {idea.dealInfo.type}
+                  📋 {idea.offer.type}
                 </span>
               )}
-              {idea.dealInfo?.totalDeals && (
+              {idea.offer?.totalDeals && (
                 <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  🤝 {idea.dealInfo.totalDeals} deals
+                  🤝 {idea.offer.totalDeals} deals
                 </span>
               )}
             </div>
@@ -241,23 +249,23 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           {/* Card Body */}
           <div className="flex-1 p-6 space-y-6">
             {/* Commission - Highlighted */}
-            {idea.dealInfo?.comission && (
+            {idea.offer?.comission && (
               <div className="bg-blue-50 p-4 rounded-xl">
                 <div className="text-3xl font-bold text-blue-600 mb-1">
-                  {idea.dealInfo.comission}%
+                  {idea.offer.comission}%
                 </div>
                 <div className="text-sm text-blue-600">Commission Rate</div>
               </div>
             )}
 
             {/* Description - Prominent */}
-            {idea.dealInfo?.description && (
+            {idea.offer?.description && (
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                   Deal Details
                 </h4>
                 <p className="text-gray-700 leading-relaxed">
-                  {idea.dealInfo.description}
+                  {idea.offer.description}
                 </p>
               </div>
             )}
