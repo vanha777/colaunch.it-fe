@@ -27,51 +27,90 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   return (
-    <div className="w-full">
+    <div className="w-full px-48">
       {/* Carousel Section */}
       {idea.images && idea.images.length > 0 && (
-        <div className="relative w-full h-64 mb-4">
-          <img
-            src={idea.images[currentImageIndex]}
-            alt={`Image ${currentImageIndex + 1}`}
-            className="w-full h-full object-cover rounded-t-lg"
-          />
-          <div className="absolute bottom-4 right-4 space-x-2">
-            {idea.images.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full ${
-                  currentImageIndex === index ? 'bg-white' : 'bg-gray-400'
-                }`}
-              />
+        <div className="relative w-full h-[400px] mb-4 grid grid-cols-4 gap-2 rounded-xl overflow-hidden">
+          {/* Main large image */}
+          <div className="col-span-2 row-span-2 relative h-full">
+            <img
+              src={idea.images[0]}
+              alt="Main image"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          {/* Secondary images */}
+          <div className="col-span-2 grid grid-cols-2 gap-2 h-full">
+            {idea.images.slice(1, 5).map((image, index) => (
+              <div key={index} className="relative h-[196px]">
+                <img
+                  src={image}
+                  alt={`Image ${index + 2}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ))}
           </div>
+
+          {/* Show all photos button */}
+          <button 
+            className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg 
+                       text-sm font-medium shadow-md hover:scale-105 transition-transform"
+            onClick={() => {/* Handle show all photos */}}
+          >
+            Show all photos
+          </button>
         </div>
       )}
 
       {/* Split Content */}
       <div className="flex gap-4">
-        {/* Left Section */}
-        <div className="flex-1 p-4 border rounded-lg shadow-sm">
-          <h2 className="text-xl font-bold">{idea.title}</h2>
-          {idea.location && (
-            <p className="text-sm text-gray-600">📍 {idea.location}</p>
-          )}
-          {idea.industry && (
-            <p className="text-sm text-gray-600">🏢 {idea.industry}</p>
-          )}
-          <div className="flex gap-4 my-2">
-            <button className="flex items-center gap-1">
-              <span>⬆️</span>
-              <span>{idea.upvotes || 0}</span>
-            </button>
-            <button className="flex items-center gap-1">
-              <span>⬇️</span>
-              <span>{idea.downvotes || 0}</span>
-            </button>
+        {/* Left Section - Redesigned */}
+        <div className="flex-1 p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
+          {/* Header with Title and Industry */}
+          <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                  {idea.title}
+                </h2>
+                <div className="flex gap-3 mt-2">
+                  {idea.location && (
+                    <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                      <span className="mr-1">📍</span> {idea.location}
+                    </span>
+                  )}
+                  {idea.industry && (
+                    <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                      <span className="mr-1">🏢</span> {idea.industry}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Voting System */}
+              <div className="flex gap-2">
+                <button className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                  <span>⬆️</span>
+                  <span className="font-medium">{idea.upvotes || 0}</span>
+                </button>
+                <button className="flex items-center gap-1 bg-white px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+                  <span>⬇️</span>
+                  <span className="font-medium">{idea.downvotes || 0}</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <p className="mt-2">{idea.description}</p>
+
+          {/* Description Section */}
+          <div className="p-6">
+            <div className="prose prose-lg">
+              <p className="text-gray-700 leading-relaxed">
+                {idea.description}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Right Section - Redesigned */}

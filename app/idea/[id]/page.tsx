@@ -13,7 +13,11 @@ export default function IdeaPage({ params }: { params: { id: string } }) {
     industry: "Technology",
     images: [
       "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/archery",
-      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball"
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball",
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball",
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball",
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball",
+      "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/basketball",
     ],
     upvotes: 156,
     downvotes: 12,
@@ -21,8 +25,8 @@ export default function IdeaPage({ params }: { params: { id: string } }) {
       createdDate: "2024-01-15",
       active: true,
       comission: 25,
-      type:"increase-sales",
-      description:"You get comission for every sale",
+      type: "increase-sales",
+      description: "You get comission for every sale",
       totalDeals: 24
     }
   }
