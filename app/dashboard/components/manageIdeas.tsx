@@ -2,12 +2,16 @@ import { Db } from '@/app/utils/db';
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { FaImage } from 'react-icons/fa';
 import { AppProvider, GameData, useAppContext } from "@/app/utils/AppContext";
+import { circIn } from 'framer-motion';
+
 interface CollectionFormData {
-    name: string;
-    symbol: string;
+    title: string;
+    industry: string;
     description: string;
-    image: File | null;
-    size: number;
+    country: string;
+    city: string;
+    state: string;
+    images: File[];
 }
 
 interface CreateCollectionFormProps {
@@ -15,19 +19,63 @@ interface CreateCollectionFormProps {
     selectedGame?: GameData;
 }
 
+const INDUSTRY_OPTIONS = [
+    "Technology",
+    "Healthcare",
+    "Finance",
+    "Education",
+    "Entertainment",
+    "Retail",
+    "Manufacturing",
+    "Transportation",
+    "Energy",
+    "Real Estate"
+];
+
 export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: CreateCollectionFormProps) {
     const { auth, setTokenData, setCollectionData } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [collectionForm, setCollectionForm] = useState<CollectionFormData>({
-        name: '',
-        symbol: '',
+        title: '',
+        industry: '',
         description: '',
-        image: null,
-        size: 0,
+        country: '',
+        city: '',
+        state: '',
+        images: [],
     });
 
-    const handleCollectionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        const newFile = files[0];
+        if (newFile.size > 10 * 1024 * 1024) {
+            alert('File size must be less than 10MB');
+            e.target.value = '';
+            return;
+        }
+
+        if (collectionForm.images.length >= 5) {
+            alert('Maximum 5 images allowed');
+            return;
+        }
+
+        setCollectionForm(prev => ({
+            ...prev,
+            images: [...prev.images, newFile]
+        }));
+    };
+
+    const removeImage = (index: number) => {
+        setCollectionForm(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleCollectionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
         if (type === 'file') {
@@ -42,7 +90,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                 }
                 setCollectionForm(prev => ({
                     ...prev,
-                    image: file
+                    images: [...prev.images, file]
                 }));
             }
         } else {
@@ -64,111 +112,66 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
         }
         try {
             setIsLoading(true);
-            // TODO: Implement collection creation logic
-            console.log('Creating collection:', collectionForm);
-            //  Handle photo upload to Supabase storage
-            let photoUrl = "";
-            if (collectionForm.image) {
-                const upload_name = `photo/collection-${Date.now()}-${collectionForm.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            // Handle photo upload to Supabase storage
+            let photoUrls: string[] = [];
+            // Upload all images
+            for (const image of collectionForm.images) {
+                const upload_name = `${crypto.randomUUID()}`;
                 const { data: uploadData, error: uploadError } = await Db.storage
-                    .from('metaloot')
-                    .upload(upload_name, collectionForm.image);
-
+                    .from('idea_media')
+                    .upload(upload_name, image);
                 if (uploadError) {
                     console.error('Error uploading photo:', uploadError);
-                    return;
+                    continue;
                 }
-                console.log("upload Image Successfully", uploadData)
                 // Get public URL for the uploaded photo
                 const { data: { publicUrl } } = Db.storage
-                    .from('metaloot')
+                    .from('idea_media')
                     .getPublicUrl(uploadData.path);
-                console.log("publicUrl", publicUrl)
-                photoUrl = publicUrl;
+                photoUrls.push(publicUrl);
             }
-            const metadata = {
-                name: collectionForm.name,
-                symbol: collectionForm.symbol,
-                description: collectionForm.description,
-                external_url: "https://metaloot.dev",
-                image: photoUrl,
-                collection_details: {
-                    size: collectionForm.size,
-                },
-                attributes: [],
-                properties: {
-                    category: "image",
-                    creators: [
-                        {
-                            address: selectedGame?.address,
-                            share: 100
-                        }
-                    ]
-                }
-            };
+            console.log("photoUrls", photoUrls)
 
-            const metadataBlob = new Blob([JSON.stringify(metadata)], {
-                type: 'application/json'
-            });
-            let metadata_name = `metadata/collection-${Date.now()}-${collectionForm.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-            const { data: uploadData, error: uploadError } = await Db.storage
-                .from('metaloot')
-                .upload(metadata_name, metadataBlob);
+            const { data: addressData, error: addressError } = await Db
+                .from('address_detail')
+                .insert([{
+                    country: collectionForm.country,
+                    suburb: collectionForm.city,
+                    state: collectionForm.state,
+                }])
+                .select()
+                .single();
 
-            if (uploadError) {
-                console.error('Error uploading metadata:', uploadError);
-                return;
-            }
-            console.log("upload Metadata Successfully", uploadData)
-            // Get public URL for the uploaded photo
-            const { data: { publicUrl } } = Db.storage
-                .from('metaloot')
-                .getPublicUrl(uploadData.path);
 
-            console.log("metadata", publicUrl)
+            if (addressError) throw addressError;
+            console.log("addressData", addressData)
 
-            const response = await fetch('https://metaloot-cloud-d4ec.shuttle.app/v1/api/collection', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${auth.accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(
-                    {
-                        name: collectionForm.name,
-                        symbol: collectionForm.symbol,
-                        size: Number(collectionForm.size),
-                        uri: publicUrl
-                    }
-                )
-            });
-            if (!response.ok) {
-                throw new Error('Failed to create collection');
-            }
-            const data = await response.json();
-            console.log("data", data)
-            let collection_address = data.address;
-            let collectionData_old = auth.collectionData;
-            const collectionData_new = {
-                name: collectionForm.name,
-                symbol: collectionForm.symbol,
-                uri: publicUrl,
-                image: photoUrl,
-                description: collectionForm.description,
-                address: collection_address,
-            };
-            if (collectionData_old) {
-                collectionData_old.push(collectionData_new);
-            } else {
-                setCollectionData([collectionData_new]);
-            }
-            console.log("Create collection Successfully ,", collection_address);
+            // Insert data into ideas table
+            const { data: ideaData, error: ideaError } = await Db
+                .from('ideas')
+                .insert([{
+                    title: collectionForm.title,
+                    industry: collectionForm.industry,
+                    description: collectionForm.description,
+                    address_id: addressData.id,
+                    upvotes: 0,
+                    downvotes: 0,
+                    media: photoUrls,
+                    user_id: auth?.userData?.id
+                }])
+                .select()
+                .single();
+
+            if (ideaError) throw ideaError;
+            console.log("ideaData", ideaData)
+            // Close form and reset loading state
+            setShowCreateForm(false);
         } catch (error) {
-            console.error('Error creating collection:', error)
+            console.error('Error creating collection:', error);
+            alert('Failed to create idea. Please try again.');
         } finally {
             setIsLoading(false);
-            setShowCreateForm(false);
-        };
+        }
     };
 
     return (
@@ -180,30 +183,77 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                         <p className="text-gray-600">Creating collection...</p>
                     </div>
                 ) : (
-                    <div className="text-center space-y-8 mb-32">
-                        {/* Collection Preview Display */}
-                        <div className="relative">
-                            <div className="w-32 h-32 mx-auto bg-white border border-gray-200 rounded-full flex items-center justify-center relative z-10">
-                                {collectionForm.image ? (
-                                    <img
-                                        src={URL.createObjectURL(collectionForm.image)}
-                                        alt="Collection preview"
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                ) : (
-                                    <span className="text-gray-800 text-4xl font-bold">
-                                        {collectionForm.symbol?.[0] || '?'}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 blur-xl rounded-full transform scale-150 -z-0"></div>
-                            <div className="mt-4 text-center">
-                                <h3 className="text-gray-800 text-xl font-bold">
-                                    {collectionForm.name || 'Collection Name'}
-                                </h3>
-                                <p className="text-gray-600 text-sm mt-1">
-                                    {collectionForm.symbol || 'SYMBOL'}
-                                </p>
+                    <div className="text-center space-y-8 mb-32 w-full max-w-[800px]">
+                        {/* Image Grid Preview */}
+                        <div className="w-full max-w-[800px] mx-auto">
+                            <div className="grid grid-cols-4 gap-2">
+                                {/* Main large image slot */}
+                                <div className="col-span-2 row-span-2 relative h-[400px]">
+                                    {collectionForm.images.length > 0 ? (
+                                        <div className="relative w-full h-full">
+                                            <img
+                                                src={URL.createObjectURL(collectionForm.images[0])}
+                                                alt="Main preview"
+                                                className="w-full h-full object-cover rounded-xl"
+                                            />
+                                            <button
+                                                onClick={() => removeImage(0)}
+                                                className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/75"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="w-full h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-gray-400 transition-colors">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className="hidden"
+                                            />
+                                            <div className="text-center">
+                                                <FaImage className="w-8 h-8 mx-auto text-gray-400" />
+                                                <span className="mt-2 block text-sm text-gray-500">Add main image</span>
+                                            </div>
+                                        </label>
+                                    )}
+                                </div>
+
+                                {/* Secondary image slots */}
+                                <div className="col-span-2 grid grid-cols-2 gap-2">
+                                    {[1, 2, 3, 4].map((index) => (
+                                        <div key={index} className="relative h-[196px]">
+                                            {collectionForm.images[index] ? (
+                                                <div className="relative w-full h-full">
+                                                    <img
+                                                        src={URL.createObjectURL(collectionForm.images[index])}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-full h-full object-cover rounded-xl"
+                                                    />
+                                                    <button
+                                                        onClick={() => removeImage(index)}
+                                                        className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/75"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <label className="w-full h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-gray-400 transition-colors">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleImageChange}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="text-center">
+                                                        <FaImage className="w-6 h-6 mx-auto text-gray-400" />
+                                                        <span className="mt-1 block text-xs text-gray-500">Add image</span>
+                                                    </div>
+                                                </label>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -223,51 +273,65 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                                 <div className="space-y-4">
                                     <input
                                         type="text"
-                                        name="name"
-                                        value={collectionForm.name}
+                                        name="title"
+                                        value={collectionForm.title}
                                         onChange={handleCollectionChange}
-                                        placeholder="Collection Name"
+                                        placeholder="Idea Title"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />
-                                    <input
-                                        type="text"
-                                        name="symbol"
-                                        value={collectionForm.symbol}
+                                    <select
+                                        name="industry"
+                                        value={collectionForm.industry}
                                         onChange={handleCollectionChange}
-                                        placeholder="Collection Symbol"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
-                                    />
-                                    <input
-                                        type="number"
-                                        name="size"
-                                        value={collectionForm.size}
-                                        onChange={handleCollectionChange}
-                                        placeholder="Collection Size"
-                                        min="1"
-                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
-                                        required
-                                    />
+                                    >
+                                        <option value="">Select Industry</option>
+                                        {INDUSTRY_OPTIONS.map((industry) => (
+                                            <option key={industry} value={industry}>
+                                                {industry}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             )}
 
                             {currentStep === 2 && (
                                 <div className="space-y-4">
-                                    <input
-                                        type="file"
-                                        name="image"
-                                        accept="image/*"
-                                        onChange={handleCollectionChange}
-                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
-                                        required
-                                    />
                                     <textarea
                                         name="description"
                                         value={collectionForm.description}
                                         onChange={handleCollectionChange}
                                         placeholder="Collection Description"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800 h-32"
+                                        required
+                                    />
+                                    <input
+                                        type="text"
+                                        name="country"
+                                        value={collectionForm.country}
+                                        onChange={handleCollectionChange}
+                                        placeholder="Idea Country"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
+                                        required
+                                    />
+                                    <input
+                                        type="text"
+                                        name="city"
+                                        value={collectionForm.city}
+                                        onChange={handleCollectionChange}
+                                        placeholder="Idea City"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
+                                        required
+                                    />
+                                    <input
+                                        type="text"
+                                        name="state"
+                                        value={collectionForm.state}
+                                        onChange={handleCollectionChange}
+                                        placeholder="Idea State"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />
                                 </div>

@@ -22,10 +22,11 @@ import { AppProvider, useAppContext } from "@/app/utils/AppContext";
 import { Db } from "@/app/utils/db";
 import SimpleLoading from "./simpleLoading";
 import Navbar from "./navBarV2";
-import IdeaComponent from "./ideaComponent";
+import IdeaComponent, { Idea } from "./ideaComponent";
 import SimpleNav from "./simpleNav";
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
+    const [ideas, setIdeas] = useState<Idea[]>([]);
     const [activeMenu, setActiveMenu] = useState("software");
     const [activeView, setActiveView] = useState("view1");
     const [selectedGameData, setSelectedGameData] = useState<GameData | null>(null);
@@ -116,51 +117,63 @@ export default function MainUniverse() {
         }
     };
 
-    const ideas = [
-        {
-          id: '1',
-          title: 'Metaloot',
-          description: 'This is a description of my first idea',
-          createdAt: '2024-03-20',
-          photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
-          upvotes: 10,
-          downvotes: 2,
-          location: "San Francisco",
-          industry: "Technology",
-          tags: ["Most Favoured"],
-        },
-        {
-            id: '2',
-            title: 'Benefit+',
-            description: 'This is a description of my first idea',
-            createdAt: '2024-03-20',
-            photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/267.jpg",
-            upvotes: 4,
-            downvotes: 2,
-            location: "Utah",
-            industry: "Technology",
-            tags: [],
-          },
-          {
-            id: '3',
-            title: 'F1Academy',
-            description: 'This is a description of my first idea',
-            createdAt: '2024-03-20',
-            photo:"https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/fire.jpg",
-            upvotes:2,
-            downvotes: 2,
-            location: "Florida",
-            industry: "Technology",
-            tags: ["Most Viewed"],
-          },
-        // ... more ideas
-      ];
+    // const ideas = [
+    //     {
+    //         id: '1',
+    //         title: 'Metaloot',
+    //         description: 'This is a description of my first idea',
+    //         createdAt: '2024-03-20',
+    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
+    //         upvotes: 10,
+    //         downvotes: 2,
+    //         location: "San Francisco",
+    //         industry: "Technology",
+    //         tags: ["Most Favoured"],
+    //     },
+    //     {
+    //         id: '2',
+    //         title: 'Benefit+',
+    //         description: 'This is a description of my first idea',
+    //         createdAt: '2024-03-20',
+    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/267.jpg",
+    //         upvotes: 4,
+    //         downvotes: 2,
+    //         location: "Utah",
+    //         industry: "Technology",
+    //         tags: [],
+    //     },
+    //     {
+    //         id: '3',
+    //         title: 'F1Academy',
+    //         description: 'This is a description of my first idea',
+    //         createdAt: '2024-03-20',
+    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/fire.jpg",
+    //         upvotes: 2,
+    //         downvotes: 2,
+    //         location: "Florida",
+    //         industry: "Technology",
+    //         tags: ["Most Viewed"],
+    //     },
+    //     // ... more ideas
+    // ];
 
     useEffect(() => {
         console.log("this is auth", auth);
         if (auth.userData == null) {
             window.location.href = '/dashboard/login';
         }
+        const fetchIdeas = async () => {
+            const { data: ideasData, error: ideasError } = await Db
+                .from('ideas')
+                .select(`
+                    *,
+                    address_detail!inner (*)
+                  `);
+            console.log("ideasData", ideasData);
+            const ideas = ideasData as Idea[];
+            setIdeas(ideas);
+        }
+        fetchIdeas();
         // fetch token data for selected game
     }, [auth.userData]);
 
@@ -220,13 +233,13 @@ export default function MainUniverse() {
                 <SimpleLoading />
             ) : (
                 <>
-                 <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} />
-                 <div className="bg-white">
-                    <SimpleNav/>
-                   <IdeaComponent ideas={ideas} />
-                   </div>
+                    <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} />
+                    <div className="bg-white">
+                        <SimpleNav />
+                        <IdeaComponent ideas={ideas} />
+                    </div>
                 </>
-          
+
             )}
         </>
     );

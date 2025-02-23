@@ -1,16 +1,19 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { LocationProps } from '@/app/idea/[id]/components/ideaCard';
 
-interface Idea {
+export interface Idea {
   id: string;
   title: string;
   description: string;
   createdAt: string;
-  photo: string;
+  media: string[] | [];
   upvotes: number;
   downvotes: number;
-  location: string;
+  address_id: string;
+  address_detail: LocationProps;
   industry: string;
+  create_at: string;
   tags: string[];
   // Add more properties as needed
 }
@@ -29,8 +32,8 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50">
       {ideas.map((idea) => (
-        <div 
-          key={idea.id} 
+        <div
+          key={idea.id}
           className="card bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
           onClick={() => handleCardClick(idea.id)}
         >
@@ -38,7 +41,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas }) => {
             {idea.tags && idea.tags.length > 0 && (
               <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
                 {idea.tags.map((tag, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="bg-white bg-opacity-90 text-blue-600 px-3 py-1 rounded-full text-sm font-medium shadow-sm"
                   >
@@ -47,7 +50,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas }) => {
                 ))}
               </div>
             )}
-            <img src={idea.photo} alt={idea.title} className="w-full h-52 object-cover rounded-t-xl" />
+            <img src={idea.media[0]} alt={idea.title} className="w-full h-52 object-cover rounded-t-xl" />
           </figure>
           <div className="card-body p-5">
             <div className="flex justify-between items-start">
@@ -75,7 +78,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas }) => {
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                {idea.location}
+                {idea.address_detail.suburb},{idea.address_detail.state},{idea.address_detail.country}
               </div>
             </div>
           </div>

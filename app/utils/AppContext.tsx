@@ -4,7 +4,7 @@ import { Db, Server, PrivateKey } from "@/app/utils/db";
 import jwt from "jwt-simple";
 
 export interface UserData {
-    id?: string;
+    id: string;
     email?: string;
     name?: string;
     photo?: string;
