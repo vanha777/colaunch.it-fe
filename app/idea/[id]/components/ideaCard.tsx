@@ -283,54 +283,69 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           {/* Card Header with Metadata */}
           <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
             <h3 className="text-xl font-bold text-gray-800">Deal Information</h3>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {idea.offer?.created_at && (
-                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  📅 {idea.offer.created_at}
-                </span>
-              )}
-              {idea.offer?.active !== undefined && (
-                <span className={`px-2 py-1 rounded-full ${idea.offer.active
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
+            {idea.offer ? (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                {idea.offer.created_at && (
+                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                    📅 {idea.offer.created_at}
+                  </span>
+                )}
+                {idea.offer.active !== undefined && (
+                  <span className={`px-2 py-1 rounded-full ${
+                    idea.offer.active
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
                   }`}>
-                  ⭐ {idea.offer.active ? 'Active' : 'Inactive'}
-                </span>
-              )}
-              {idea.offer?.type && (
-                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  📋 {idea.offer.type}
-                </span>
-              )}
-              {idea.offer?.totalDeals && (
-                <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                  🤝 {idea.offer.totalDeals} deals
-                </span>
-              )}
-            </div>
+                    ⭐ {idea.offer.active ? 'Active' : 'Inactive'}
+                  </span>
+                )}
+                {idea.offer.type && (
+                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                    📋 {idea.offer.type}
+                  </span>
+                )}
+                {idea.offer.totalDeals && (
+                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                    🤝 {idea.offer.totalDeals} deals
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="mt-3 text-gray-600">
+                No deals available at the moment
+              </div>
+            )}
           </div>
 
           {/* Card Body */}
           <div className="flex-1 p-6 space-y-6">
-            {/* Commission - Highlighted */}
-            {idea.offer?.comission && (
-              <div className="bg-blue-50 p-4 rounded-xl">
-                <div className="text-3xl font-bold text-blue-600 mb-1">
-                  {idea.offer.comission}%
-                </div>
-                <div className="text-sm text-blue-600">Commission Rate</div>
-              </div>
-            )}
+            {idea.offer ? (
+              <>
+                {/* Commission - Highlighted */}
+                {idea.offer.comission && (
+                  <div className="bg-blue-50 p-4 rounded-xl">
+                    <div className="text-3xl font-bold text-blue-600 mb-1">
+                      {idea.offer.comission}%
+                    </div>
+                    <div className="text-sm text-blue-600">Commission Rate</div>
+                  </div>
+                )}
 
-            {/* Description - Prominent */}
-            {idea.offer?.description && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                  Deal Details
-                </h4>
-                <p className="text-gray-700 leading-relaxed">
-                  {idea.offer.description}
-                </p>
+                {/* Description - Prominent */}
+                {idea.offer.description && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                      Deal Details
+                    </h4>
+                    <p className="text-gray-700 leading-relaxed">
+                      {idea.offer.description}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">
+                Check back later for new deals
               </div>
             )}
           </div>
@@ -338,18 +353,21 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           {/* Card Action */}
           <div className="p-6 bg-gray-50">
             <button
-              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${!auth.userData
+              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${
+                !auth.userData || !idea.offer
                   ? 'opacity-50 cursor-not-allowed'
                   : 'hover:opacity-90 hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98'
-                }`}
-              disabled={!auth.userData}
+              }`}
+              disabled={!auth.userData || !idea.offer}
             >
-              Make Deal
+              {idea.offer ? 'Make Deal' : 'No Deals Available'}
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
               {!auth.userData
                 ? "Please login to make deals."
-                : "By making a deal, you agree to our terms and conditions. Commission rates are subject to change."}
+                : idea.offer
+                ? "By making a deal, you agree to our terms and conditions. Commission rates are subject to change."
+                : "No deals are currently available for this idea."}
             </p>
           </div>
         </div>

@@ -117,46 +117,6 @@ export default function MainUniverse() {
         }
     };
 
-    // const ideas = [
-    //     {
-    //         id: '1',
-    //         title: 'Metaloot',
-    //         description: 'This is a description of my first idea',
-    //         createdAt: '2024-03-20',
-    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/cover_media/53701603291_5e7c531ce9_o",
-    //         upvotes: 10,
-    //         downvotes: 2,
-    //         location: "San Francisco",
-    //         industry: "Technology",
-    //         tags: ["Most Favoured"],
-    //     },
-    //     {
-    //         id: '2',
-    //         title: 'Benefit+',
-    //         description: 'This is a description of my first idea',
-    //         createdAt: '2024-03-20',
-    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/267.jpg",
-    //         upvotes: 4,
-    //         downvotes: 2,
-    //         location: "Utah",
-    //         industry: "Technology",
-    //         tags: [],
-    //     },
-    //     {
-    //         id: '3',
-    //         title: 'F1Academy',
-    //         description: 'This is a description of my first idea',
-    //         createdAt: '2024-03-20',
-    //         photo: "https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/crypto-ql/fire.jpg",
-    //         upvotes: 2,
-    //         downvotes: 2,
-    //         location: "Florida",
-    //         industry: "Technology",
-    //         tags: ["Most Viewed"],
-    //     },
-    //     // ... more ideas
-    // ];
-
     useEffect(() => {
         console.log("this is auth", auth);
         if (auth.userData == null) {
@@ -168,7 +128,7 @@ export default function MainUniverse() {
                 .select(`
                     *,
                     address_detail!inner (*)
-                  `);
+                  `).order('upvotes', { ascending: false }); // Sorting by upvotes descending
             console.log("ideasData", ideasData);
             const ideas = ideasData as Idea[];
             setIdeas(ideas);
