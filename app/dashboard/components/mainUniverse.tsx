@@ -23,6 +23,7 @@ import { Db } from "@/app/utils/db";
 import SimpleLoading from "./simpleLoading";
 import Navbar from "./navBarV2";
 import IdeaComponent from "./ideaComponent";
+import SimpleNav from "./simpleNav";
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
     const [activeMenu, setActiveMenu] = useState("software");
@@ -221,6 +222,7 @@ export default function MainUniverse() {
                 <>
                  <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} />
                  <div className="bg-white">
+                    <SimpleNav/>
                    <IdeaComponent ideas={ideas} />
                    </div>
                 </>
