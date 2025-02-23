@@ -351,7 +351,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                                     type="submit"
                                     className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
                                 >
-                                    {currentStep === 2 ? 'Create Collection' : 'Next'}
+                                    {currentStep === 2 ? 'Post Idea' : 'Next'}
                                 </button>
                             </div>
                         </form>

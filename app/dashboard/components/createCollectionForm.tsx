@@ -287,7 +287,7 @@ export default function CreateCollectionForm({ setShowCreateForm, selectedGame }
                                     type="submit"
                                     className="flex-1 px-6 py-3 bg-gradient-to-r from-[#0CC0DF] to-[#14F195] rounded-lg text-black font-medium hover:opacity-90 transition-opacity"
                                 >
-                                    {currentStep === 2 ? 'Create Collection' : 'Next'}
+                                    {currentStep === 2 ? 'Post Idea' : 'Next'}
                                 </button>
                             </div>
                         </form>
