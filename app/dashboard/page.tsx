@@ -4,7 +4,6 @@ import DashboardClient from "./DashboardClient";
 import { redirect } from "next/navigation";
 import { UserData } from "../utils/AppContext";
 
-
 export default function Dashboard({ searchParams }: { searchParams: { [key: string]: string | undefined } }) {
   const initialUser = searchParams.user;
   console.log("initialUser", initialUser);

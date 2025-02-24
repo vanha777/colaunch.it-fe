@@ -8,6 +8,7 @@ export interface UserData {
     email?: string;
     name?: string;
     photo?: string;
+    type?: string;
     [key: string]: any;
 }
 

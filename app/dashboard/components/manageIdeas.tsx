@@ -3,6 +3,7 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { FaImage } from 'react-icons/fa';
 import { AppProvider, GameData, useAppContext } from "@/app/utils/AppContext";
 import { circIn } from 'framer-motion';
+import { IdeaProps } from '@/app/idea/[id]/components/ideaCard';
 
 interface CollectionFormData {
     title: string;
@@ -12,11 +13,12 @@ interface CollectionFormData {
     city: string;
     state: string;
     images: File[];
+    url?: string;
 }
 
 interface CreateCollectionFormProps {
     setShowCreateForm: (show: boolean) => void;
-    selectedGame?: GameData;
+    selectedIdea?: IdeaProps;
 }
 
 const INDUSTRY_OPTIONS = [
@@ -32,18 +34,23 @@ const INDUSTRY_OPTIONS = [
     "Real Estate"
 ];
 
-export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: CreateCollectionFormProps) {
+export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: CreateCollectionFormProps) {
     const { auth, setTokenData, setCollectionData } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [collectionForm, setCollectionForm] = useState<CollectionFormData>({
-        title: '',
-        industry: '',
-        description: '',
-        country: '',
-        city: '',
-        state: '',
+        title: selectedIdea?.title || '',
+        industry: selectedIdea?.industry || '',
+        description: selectedIdea?.description || '',
+        country: selectedIdea?.address_detail?.country || '',
+        city: selectedIdea?.address_detail?.suburb || '',
+        state: selectedIdea?.address_detail?.state || '',
         images: [],
+        url: selectedIdea?.url || '',
+    });
+    // Add this new state to track all displayed images (both existing and new)
+    const [displayImages, setDisplayImages] = useState<Array<string | File>>(() => {
+        return selectedIdea?.media || [];
     });
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -57,11 +64,12 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
             return;
         }
 
-        if (collectionForm.images.length >= 5) {
+        if (displayImages.length >= 5) {
             alert('Maximum 5 images allowed');
             return;
         }
 
+        setDisplayImages(prev => [...prev, newFile]);
         setCollectionForm(prev => ({
             ...prev,
             images: [...prev.images, newFile]
@@ -69,10 +77,20 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
     };
 
     const removeImage = (index: number) => {
-        setCollectionForm(prev => ({
-            ...prev,
-            images: prev.images.filter((_, i) => i !== index)
-        }));
+        setDisplayImages(prev => prev.filter((_, i) => i !== index));
+        // Only remove from collectionForm.images if it's a new image
+        if (index >= (selectedIdea?.media?.length || 0)) {
+            const newImageIndex = index - (selectedIdea?.media?.length || 0);
+            setCollectionForm(prev => ({
+                ...prev,
+                images: prev.images.filter((_, i) => i !== newImageIndex)
+            }));
+        }
+    };
+
+    // Helper function to get image URL
+    const getImageUrl = (image: string | File): string => {
+        return image instanceof File ? URL.createObjectURL(image) : image;
     };
 
     const handleCollectionChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -112,9 +130,14 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
         }
         try {
             setIsLoading(true);
-            // Handle photo upload to Supabase storage
             let photoUrls: string[] = [];
-            // Upload all images
+            
+            // Keep existing images if updating
+            if (selectedIdea?.media) {
+                photoUrls = [...selectedIdea.media];
+            }
+
+            // Upload new images
             for (const image of collectionForm.images) {
                 const upload_name = `${crypto.randomUUID()}`;
                 const { data: uploadData, error: uploadError } = await Db.storage
@@ -124,47 +147,67 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                     console.error('Error uploading photo:', uploadError);
                     continue;
                 }
-                // Get public URL for the uploaded photo
                 const { data: { publicUrl } } = Db.storage
                     .from('idea_media')
                     .getPublicUrl(uploadData.path);
                 photoUrls.push(publicUrl);
             }
-            console.log("photoUrls", photoUrls)
 
-            const { data: addressData, error: addressError } = await Db
-                .from('address_detail')
-                .insert([{
-                    country: collectionForm.country,
-                    suburb: collectionForm.city,
-                    state: collectionForm.state,
-                }])
-                .select()
-                .single();
+            if (selectedIdea) {
+                // Update existing idea
+                const { error: ideaError } = await Db
+                    .from('ideas')
+                    .update({
+                        title: collectionForm.title,
+                        industry: collectionForm.industry,
+                        description: collectionForm.description,
+                        media: photoUrls,
+                        url: collectionForm.url
+                    })
+                    .eq('id', selectedIdea.id);
 
+                const { error: addressError } = await Db
+                    .from('address_detail')
+                    .update({
+                        country: collectionForm.country,
+                        suburb: collectionForm.city,
+                        state: collectionForm.state,
+                    })
+                    .eq('id', selectedIdea.address_detail?.id);
 
-            if (addressError) throw addressError;
-            console.log("addressData", addressData)
+                if (ideaError || addressError) throw ideaError || addressError;
+            } else {
+                // Create new idea (existing code)
+                const { data: addressData, error: addressError } = await Db
+                    .from('address_detail')
+                    .insert([{
+                        country: collectionForm.country,
+                        suburb: collectionForm.city,
+                        state: collectionForm.state,
+                    }])
+                    .select()
+                    .single();
 
-            // Insert data into ideas table
-            const { data: ideaData, error: ideaError } = await Db
-                .from('ideas')
-                .insert([{
-                    title: collectionForm.title,
-                    industry: collectionForm.industry,
-                    description: collectionForm.description,
-                    address_id: addressData.id,
-                    upvotes: 0,
-                    downvotes: 0,
-                    media: photoUrls,
-                    user_id: auth?.userData?.id
-                }])
-                .select()
-                .single();
+                if (addressError) throw addressError;
 
-            if (ideaError) throw ideaError;
-            console.log("ideaData", ideaData)
-            // Close form and reset loading state
+                const { data: ideaData, error: ideaError } = await Db
+                    .from('ideas')
+                    .insert([{
+                        title: collectionForm.title,
+                        industry: collectionForm.industry,
+                        description: collectionForm.description,
+                        address_id: addressData.id,
+                        upvotes: 0,
+                        downvotes: 0,
+                        media: photoUrls,
+                        user_id: auth?.userData?.id,
+                        url: collectionForm.url
+                    }])
+                    .select()
+                    .single();
+
+                if (ideaError) throw ideaError;
+            }
             setShowCreateForm(false);
         } catch (error) {
             console.error('Error creating collection:', error);
@@ -189,10 +232,10 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                             <div className="grid grid-cols-4 gap-2">
                                 {/* Main large image slot */}
                                 <div className="col-span-2 row-span-2 relative h-[400px]">
-                                    {collectionForm.images.length > 0 ? (
+                                    {displayImages.length > 0 ? (
                                         <div className="relative w-full h-full">
                                             <img
-                                                src={URL.createObjectURL(collectionForm.images[0])}
+                                                src={getImageUrl(displayImages[0])}
                                                 alt="Main preview"
                                                 className="w-full h-full object-cover rounded-xl"
                                             />
@@ -223,10 +266,10 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                                 <div className="col-span-2 grid grid-cols-2 gap-2">
                                     {[1, 2, 3, 4].map((index) => (
                                         <div key={index} className="relative h-[196px]">
-                                            {collectionForm.images[index] ? (
+                                            {displayImages[index] ? (
                                                 <div className="relative w-full h-full">
                                                     <img
-                                                        src={URL.createObjectURL(collectionForm.images[index])}
+                                                        src={getImageUrl(displayImages[index])}
                                                         alt={`Preview ${index + 1}`}
                                                         className="w-full h-full object-cover rounded-xl"
                                                     />
@@ -294,6 +337,14 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedGame }: Crea
                                             </option>
                                         ))}
                                     </select>
+                                    <input
+                                        type="url"
+                                        name="url"
+                                        value={collectionForm.url}
+                                        onChange={handleCollectionChange}
+                                        placeholder="Project URL (optional)"
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
+                                    />
                                 </div>
                             )}
 

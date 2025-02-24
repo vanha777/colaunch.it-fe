@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Db, Server } from "@/app/utils/db";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
+import { redirect } from 'next/navigation';
 export interface LocationProps {
   id?: number;
   country?: string;
@@ -18,7 +19,6 @@ export interface OfferProps {
   comission?: number;
   type?: string;
   description?: string;
-  ideas_id?: IdeaProps;
 }
 
 export interface IdeaProps {
@@ -35,13 +35,41 @@ export interface IdeaProps {
   offer?: OfferProps;
 }
 
-export default function IdeaCard({ idea }: { idea: IdeaProps }) {
+export default function IdeaCard() {
   const { auth, setUser, getUser } = useAppContext();
+  const [parsedIdea, setParsedIdea] = useState<IdeaProps | null>(null);
   useEffect(() => {
-    if (!auth.userData) {
-      const user = getUser();
-      console.log("welcome back", user);
+    const fetchIdeas = async () => {
+      let user = auth.userData;
+      if (!user) {
+        user = getUser();
+        console.log("welcome back", user);
+      }
+      // fetch idea from supabase with related data
+      const { data: ideaData, error: ideaError } = await Db
+        .from('ideas')
+        .select(`*,address_detail!inner (*)`)
+        .eq('user_id', user?.id)
+        .limit(1).single();
+
+      if (!ideaData || ideaData.length === 0) {
+        console.log("ideaData not found");
+        redirect('/not-found');
+      }
+      let parsedIdeaData = JSON.parse(JSON.stringify(ideaData)) as IdeaProps;
+      const { data: offersData, error: offerError } = await Db
+        .from('offers')
+        .select(`*`)
+        .eq('idea_id', parsedIdeaData.id)
+        .limit(1).single();
+
+      if (offersData) {
+        parsedIdeaData.offer = JSON.parse(JSON.stringify(offersData)) as OfferProps;
+      }
+      console.log("parsedIdea", parsedIdeaData);
+      setParsedIdea(parsedIdeaData);
     }
+    fetchIdeas();
   }, []);
   // const user = getUser();
   // console.log("user", user);
@@ -49,8 +77,8 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   // Add new state for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [upvotes, setUpvotes] = useState(idea.upvotes || 0);
-  const [downvotes, setDownvotes] = useState(idea.downvotes || 0);
+  const [upvotes, setUpvotes] = useState(parsedIdea?.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(parsedIdea?.downvotes || 0);
 
   // Add handler for opening modal
   const handleImageClick = (index: number) => {
@@ -79,7 +107,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
         .update({
           [voteType === 'up' ? 'upvotes' : 'downvotes']: voteType === 'up' ? upvotes + 1 : downvotes + 1
         })
-        .eq('id', idea.id);
+        .eq('id', parsedIdea?.id);
 
       if (error) {
         // Revert the local state if there's an error
@@ -104,12 +132,12 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   return (
     <div className="w-full px-48">
       {/* Carousel Section */}
-      {idea.media && idea.media.length > 0 && (
+      {parsedIdea?.media && parsedIdea?.media.length > 0 && (
         <div className="relative w-full h-[400px] mb-4 grid grid-cols-4 gap-2 rounded-xl overflow-hidden">
           {/* Main large image */}
           <div className="col-span-2 row-span-2 relative h-full">
             <img
-              src={idea.media[0]}
+              src={parsedIdea?.media[0]}
               alt="Main image"
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => handleImageClick(0)}
@@ -118,7 +146,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
           {/* Secondary images */}
           <div className="col-span-2 grid grid-cols-2 gap-2 h-full">
-            {idea.media.slice(1, 5).map((image, index) => (
+            {parsedIdea?.media.slice(1, 5).map((image, index) => (
               <div key={index} className="relative h-[196px]">
                 <img
                   src={image}
@@ -142,7 +170,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
       )}
 
       {/* Image Modal */}
-      {isModalOpen && idea.media && (
+      {isModalOpen && parsedIdea?.media && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
           <div className="relative w-full max-w-6xl mx-auto">
             {/* Close button */}
@@ -158,7 +186,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             {/* Main image */}
             <div className="relative aspect-video">
               <img
-                src={idea.media[currentImageIndex]}
+                src={parsedIdea?.media[currentImageIndex]}
                 alt={`Image ${currentImageIndex + 1}`}
                 className="w-full h-full object-contain"
               />
@@ -167,7 +195,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             {/* Navigation buttons */}
             <button
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
-              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? idea.media!.length - 1 : prev - 1))}
+              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? parsedIdea?.media!.length - 1 : prev - 1))}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -175,7 +203,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             </button>
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 p-2 rounded-full hover:bg-black/75"
-              onClick={() => setCurrentImageIndex((prev) => (prev === idea.media!.length - 1 ? 0 : prev + 1))}
+              onClick={() => setCurrentImageIndex((prev) => (prev === parsedIdea?.media!.length - 1 ? 0 : prev + 1))}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -184,7 +212,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
             {/* Image counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-3 py-1 rounded-full">
-              {currentImageIndex + 1} / {idea.media.length}
+              {currentImageIndex + 1} / {parsedIdea?.media!.length}
             </div>
           </div>
         </div>
@@ -199,22 +227,22 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                  {idea.title}
+                  {parsedIdea?.title}
                 </h2>
-                {idea.url && (
-                  <a href={idea.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
-                    <span className="mr-1">🔗</span> {idea.url}
+                {parsedIdea?.url && (
+                  <a href={parsedIdea?.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                    <span className="mr-1">🔗</span> {parsedIdea?.url}
                   </a>
                 )}
                 <div className="flex gap-3 mt-2">
-                  {idea.address_detail && (
+                  {parsedIdea?.address_detail && (
                     <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
-                      <span className="mr-1">📍</span> {idea.address_detail.country}{idea.address_detail.state ? `, ${idea.address_detail.state}` : ''}{idea.address_detail.suburb ? `, ${idea.address_detail.suburb}` : ''}
+                      <span className="mr-1">📍</span> {parsedIdea?.address_detail.country}{parsedIdea?.address_detail.state ? `, ${parsedIdea?.address_detail.state}` : ''}{parsedIdea?.address_detail.suburb ? `, ${parsedIdea?.address_detail.suburb}` : ''}
                     </span>
                   )}
-                  {idea.industry && (
+                  {parsedIdea?.industry && (
                     <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
-                      <span className="mr-1">🏢</span> {idea.industry}
+                      <span className="mr-1">🏢</span> {parsedIdea?.industry}
                     </span>
                   )}
                 </div>
@@ -241,7 +269,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                 {/* X (formerly Twitter) Share Button */}
                 <button
                   onClick={() => {
-                    const text = `Check out this cool idea from CoLaunch.It: ${idea.title}`;
+                    const text = `Check out this cool idea from CoLaunch.It: ${parsedIdea?.title}`;
                     const url = window.location.href;
                     window.open(
                       `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
@@ -279,7 +307,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           <div className="p-6">
             <div className="prose prose-lg">
               <p className="text-gray-700 leading-relaxed">
-                {idea.description}
+                {parsedIdea?.description}
               </p>
             </div>
           </div>
@@ -289,30 +317,30 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
         <div className="w-1/3 flex flex-col p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
           {/* Card Header with Metadata */}
           <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
-            <h3 className="text-xl font-bold text-gray-800">Offer Information</h3>
-            {idea.offer ? (
+            <h3 className="text-xl font-bold text-gray-800">Deal Information</h3>
+            {parsedIdea?.offer ? (
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                {idea.offer.created_at && (
+                {parsedIdea?.offer.created_at && (
                   <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                    📅 {idea.offer.created_at}
+                    📅 {parsedIdea?.offer.created_at}
                   </span>
                 )}
-                {idea.offer.active !== undefined && (
-                  <span className={`px-2 py-1 rounded-full ${idea.offer.active
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
+                {parsedIdea?.offer.active !== undefined && (
+                  <span className={`px-2 py-1 rounded-full ${parsedIdea?.offer.active
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
                     }`}>
-                    ⭐ {idea.offer.active ? 'Active' : 'Inactive'}
+                    ⭐ {parsedIdea?.offer.active ? 'Active' : 'Inactive'}
                   </span>
                 )}
-                {idea.offer.type && (
+                {parsedIdea?.offer.type && (
                   <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                    📋 {idea.offer.type}
+                    📋 {parsedIdea?.offer.type}
                   </span>
                 )}
-                {idea.offer.totalDeals && (
+                {parsedIdea?.offer.totalDeals && (
                   <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
-                    🤝 {idea.offer.totalDeals} deals
+                    🤝 {parsedIdea?.offer.totalDeals} deals
                   </span>
                 )}
               </div>
@@ -325,26 +353,26 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
           {/* Card Body */}
           <div className="flex-1 p-6 space-y-6">
-            {idea.offer ? (
+            {parsedIdea?.offer ? (
               <>
                 {/* Commission - Highlighted */}
-                {idea.offer.comission && (
+                {parsedIdea?.offer.comission && (
                   <div className="bg-blue-50 p-4 rounded-xl">
                     <div className="text-3xl font-bold text-blue-600 mb-1">
-                      {idea.offer.comission}%
+                      {parsedIdea?.offer.comission}%
                     </div>
                     <div className="text-sm text-blue-600">Commission Rate</div>
                   </div>
                 )}
 
                 {/* Description - Prominent */}
-                {idea.offer.description && (
+                {parsedIdea?.offer.description && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                       Deal Details
                     </h4>
                     <p className="text-gray-700 leading-relaxed">
-                      {idea.offer.description}
+                      {parsedIdea?.offer.description}
                     </p>
                   </div>
                 )}
@@ -359,18 +387,18 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           {/* Card Action */}
           <div className="p-6 bg-gray-50">
             <button
-              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${!auth.userData || !idea.offer
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:opacity-90 hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98'
+              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${!auth.userData || !parsedIdea?.offer
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:opacity-90 hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98'
                 }`}
-              disabled={!auth.userData || !idea.offer}
+              disabled={!auth.userData || !parsedIdea?.offer}
             >
-              {idea.offer ? 'Make Deal' : 'No Deals Available'}
+              {parsedIdea?.offer ? 'Make Deal' : 'No Deals Available'}
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
               {!auth.userData
                 ? "Please login to make deals."
-                : idea.offer
+                : parsedIdea?.offer
                   ? "By making a deal, you agree to our terms and conditions. Commission rates are subject to change."
                   : "No deals are currently available for this idea."}
             </p>
