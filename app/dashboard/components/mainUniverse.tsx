@@ -150,10 +150,10 @@ export default function MainUniverse() {
         },
     };
 
-    const menuItems = [
+    const industries = [
         {
             id: "software",
-            label: "Software & Tech",
+            label: "Software",
             icon: IoCodeSlashOutline,
             selectedIcon: IoCodeSlashSharp
         },
@@ -198,9 +198,9 @@ export default function MainUniverse() {
                     <SimpleSideBar>
                         <SimpleNavBar />
                         {/* <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} /> */}
-                        <div className="bg-white">
-                            <SimpleNav />
-                            <IdeaComponent ideas={ideas} />
+                        <div className="container mx-auto py-28 overflow-y-auto bg-white">
+                            {/* <SimpleNav /> */}
+                            <IdeaComponent ideas={ideas} industries={industries} />
                         </div>
                     </SimpleSideBar>
 
