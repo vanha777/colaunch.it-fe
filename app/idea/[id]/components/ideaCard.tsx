@@ -192,28 +192,28 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
 
       {/* Split Content */}
       <div className="flex gap-4">
-        {/* Left Section - Redesigned */}
-        <div className="flex-1 p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
+        {/* Left Section - Redesigned with Bubble Style */}
+        <div className="flex-1 p-0 rounded-3xl shadow-lg overflow-hidden bg-base-200">
           {/* Header with Title and Industry */}
-          <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="p-6 bg-base-200">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
                   {idea.title}
                 </h2>
                 {idea.url && (
-                  <a href={idea.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                  <a href={idea.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">
                     <span className="mr-1">🔗</span> {idea.url}
                   </a>
                 )}
                 <div className="flex gap-3 mt-2">
                   {idea.address_detail && (
-                    <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                    <span className="inline-flex items-center text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">
                       <span className="mr-1">📍</span> {idea.address_detail.country}{idea.address_detail.state ? `, ${idea.address_detail.state}` : ''}{idea.address_detail.suburb ? `, ${idea.address_detail.suburb}` : ''}
                     </span>
                   )}
                   {idea.industry && (
-                    <span className="inline-flex items-center text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+                    <span className="inline-flex items-center text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">
                       <span className="mr-1">🏢</span> {idea.industry}
                     </span>
                   )}
@@ -224,7 +224,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleVote('up')}
-                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-xl transition-colors`}
+                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-full shadow-sm transition-all duration-200`}
                   disabled={!auth.userData}
                 >
                   <span>⬆️</span>
@@ -232,7 +232,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                 </button>
                 <button
                   onClick={() => handleVote('down')}
-                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-xl transition-colors`}
+                  className={`flex items-center gap-1 ${!auth.userData ? 'opacity-50 cursor-not-allowed' : 'bg-white hover:bg-gray-50'} px-4 py-2 rounded-full shadow-sm transition-all duration-200`}
                   disabled={!auth.userData}
                 >
                   <span>⬇️</span>
@@ -248,7 +248,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                       '_blank'
                     );
                   }}
-                  className="flex items-center gap-1 bg-black text-white px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-1 bg-black text-white px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -264,7 +264,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
                       '_blank'
                     );
                   }}
-                  className="flex items-center gap-1 bg-[#0A66C2] text-white px-4 py-2 rounded-xl hover:bg-[#004182] transition-colors"
+                  className="flex items-center gap-1 bg-[#0A66C2] text-white px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -285,33 +285,32 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           </div>
         </div>
 
-        {/* Right Section - Redesigned */}
-        <div className="w-1/3 flex flex-col p-0 border border-gray-200 rounded-2xl shadow-lg overflow-hidden bg-white">
+        {/* Right Section - Redesigned with Bubble Style */}
+        <div className="w-1/3 flex flex-col p-0 rounded-3xl shadow-lg overflow-hidden bg-base-200">
           {/* Card Header with Metadata */}
-          <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
-            <h3 className="text-xl font-bold text-gray-800">Offer Information</h3>
+          <div className="p-6 bg-base-200">
+            <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              Offer Information
+            </h3>
             {idea.offer ? (
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 {idea.offer.created_at && (
-                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  <span className="px-3 py-1 bg-white rounded-full text-gray-600 shadow-sm">
                     📅 {idea.offer.created_at}
                   </span>
                 )}
                 {idea.offer.active !== undefined && (
-                  <span className={`px-2 py-1 rounded-full ${idea.offer.active
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                    }`}>
+                  <span className={`px-3 py-1 rounded-full shadow-sm ${idea.offer.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     ⭐ {idea.offer.active ? 'Active' : 'Inactive'}
                   </span>
                 )}
                 {idea.offer.type && (
-                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  <span className="px-3 py-1 bg-white rounded-full text-gray-600 shadow-sm">
                     📋 {idea.offer.type}
                   </span>
                 )}
                 {idea.offer.totalDeals && (
-                  <span className="px-2 py-1 bg-white/80 rounded-full text-gray-600">
+                  <span className="px-3 py-1 bg-white rounded-full text-gray-600 shadow-sm">
                     🤝 {idea.offer.totalDeals} deals
                   </span>
                 )}
@@ -329,7 +328,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
               <>
                 {/* Commission - Highlighted */}
                 {idea.offer.comission && (
-                  <div className="bg-blue-50 p-4 rounded-xl">
+                  <div className="bg-white p-4 rounded-full shadow-sm">
                     <div className="text-3xl font-bold text-blue-600 mb-1">
                       {idea.offer.comission}%
                     </div>
@@ -357,12 +356,13 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           </div>
 
           {/* Card Action */}
-          <div className="p-6 bg-gray-50">
+          <div className="p-6">
             <button
-              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl transition-all duration-200 font-medium shadow-sm ${!auth.userData || !idea.offer
+              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-full transition-all duration-200 font-medium shadow-sm ${
+                !auth.userData || !idea.offer
                   ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:opacity-90 hover:shadow-blue-200 hover:shadow-lg active:transform active:scale-98'
-                }`}
+                  : 'hover:opacity-90 hover:shadow-md active:transform active:scale-98'
+              }`}
               disabled={!auth.userData || !idea.offer}
             >
               {idea.offer ? 'Make Deal' : 'No Deals Available'}
