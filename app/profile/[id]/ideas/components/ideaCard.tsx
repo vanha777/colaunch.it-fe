@@ -84,7 +84,7 @@ export default function IdeaCard() {
   }, []);
 
   return (
-    <div className="w-full px-24">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           My Ideas

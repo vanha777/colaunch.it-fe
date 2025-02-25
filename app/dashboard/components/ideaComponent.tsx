@@ -66,6 +66,20 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
 
   return (
     <div className="flex flex-col w-full">
+      {/* Page Heading with navbar-style bubble */}
+      <div className="navbar bg-gray-50 text-black p-4">
+        <div className="flex-1">
+          <div className="bg-base-200 rounded-full px-6 py-2 shadow-lg flex items-center">
+            <div className="text-lg">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold">
+                Ideas Information
+              </span>
+              <p className="text-sm text-gray-600">Discover and explore innovative business ideas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Location Bar */}
       <div className="mx-auto w-[70%] px-6 py-4 bg-white border-b sticky top-0 z-20">
         <div className="flex gap-4 mb-4">
