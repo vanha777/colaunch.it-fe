@@ -36,7 +36,7 @@ const SimpleSideBar: React.FC<SimpleSideBarProps> = ({
                         <div data-tip="Go to Dashboard">
                             <div 
                                 onClick={() => router.push('/dashboard')}
-                                className="rounded-full bg-base-100 p-2 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center cursor-pointer"
+                                className="rounded-full bg-base-200 p-2 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-center justify-center cursor-pointer"
                             >
                                 <img
                                     src={Logo.src}
@@ -50,7 +50,7 @@ const SimpleSideBar: React.FC<SimpleSideBarProps> = ({
                     <li className="mt-32">
                         <div
                             onClick={() => router.push(`/profile/${auth.userData?.id}/ideas`)}
-                            className="rounded-full bg-base-100 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
+                            className="rounded-full bg-base-200 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -60,7 +60,7 @@ const SimpleSideBar: React.FC<SimpleSideBarProps> = ({
                     <li className="flex justify-center">
                         <div
                             onClick={() => router.push(`/profile/${auth.userData?.id}/offers`)}
-                            className="rounded-full bg-base-100 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
+                            className="rounded-full bg-base-200 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -70,7 +70,7 @@ const SimpleSideBar: React.FC<SimpleSideBarProps> = ({
                     <li className="flex justify-center">
                         <div
                             onClick={() => router.push(`/profile/${auth.userData?.id}/deals`)}
-                            className="rounded-full bg-base-100 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
+                            className="rounded-full bg-base-200 p-4 shadow-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all duration-300 flex items-center justify-center cursor-pointer"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
