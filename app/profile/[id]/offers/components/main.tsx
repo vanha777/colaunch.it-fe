@@ -8,7 +8,7 @@ export default function Main() {
         <>
             <SimpleSideBar>
                 <SimpleNavBar />
-                <div className="container mx-auto py-28 overflow-y-auto bg-white">
+                <div className="container mx-auto py-28 overflow-y-auto">
                     <OfferCard />
                 </div>
             </SimpleSideBar>

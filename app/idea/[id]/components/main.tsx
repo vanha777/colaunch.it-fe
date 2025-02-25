@@ -37,7 +37,7 @@ export default async function Main({ parsedIdea }: { parsedIdea: IdeaProps }) {
         <>
             <SimpleSideBar>
                 <SimpleNavBar />
-                <div className="container mx-auto py-28 overflow-y-auto bg-white">
+                <div className="container mx-auto py-28 overflow-y-auto">
                     <IdeaCard
                         idea={parsedIdea as IdeaProps}
                     />

@@ -26,7 +26,7 @@ const SSOLogin = () => {
           <div className="w-32 h-32 mx-auto bg-white border border-gray-200 rounded-full 
                         flex items-center justify-center relative z-10 shadow-lg">
             <img
-              src="/transLogo.png"
+              src="/apple.png"
               alt="MetaLoot Logo"
               className={`w-20 h-20 ${isSpinning ? 'animate-spin' : ''}`}
             />
@@ -37,9 +37,9 @@ const SSOLogin = () => {
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-gray-600 text-sm tracking-wider">Blockchain API for</h2>
-          <h1 className="text-gray-800 text-5xl font-light tracking-wider">Gaming</h1>
-          <p className="text-gray-500 text-xl">Secure Authentication</p>
+          <h2 className="text-gray-600 text-sm tracking-wider">Welcome to</h2>
+          <h1 className="text-gray-800 text-5xl font-light tracking-wider">CoLaunch</h1>
+          <p className="text-gray-500 text-xl">Share Ideas, Connect & Find Partners</p>
         </div>
 
         {/* Add toggle switch */}

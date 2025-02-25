@@ -72,7 +72,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                Ideas Information
+                Business Marketplace
               </span>
               <p className="text-base text-gray-600 mt-2">Discover and explore innovative business ideas</p>
             </div>

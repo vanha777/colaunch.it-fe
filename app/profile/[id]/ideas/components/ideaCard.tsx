@@ -91,7 +91,7 @@ export default function IdeaCard() {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                My Ideas
+                My Biz Hub
               </span>
               <p className="text-base text-gray-600 mt-2">Manage and view all your business ideas</p>
             </div>
