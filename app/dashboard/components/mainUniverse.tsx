@@ -24,6 +24,8 @@ import SimpleLoading from "./simpleLoading";
 import Navbar from "./navBarV2";
 import IdeaComponent, { Idea } from "./ideaComponent";
 import SimpleNav from "./simpleNav";
+import SimpleSideBar from "./simpleSideBar";
+import SimpleNavBar from "./simpleNavBar";
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
     const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -193,13 +195,16 @@ export default function MainUniverse() {
                 <SimpleLoading />
             ) : (
                 <>
-                    <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} />
-                    <div className="bg-white">
-                        <SimpleNav />
-                        <IdeaComponent ideas={ideas} />
-                    </div>
-                </>
+                    <SimpleSideBar>
+                        <SimpleNavBar />
+                        {/* <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} /> */}
+                        <div className="bg-white">
+                            <SimpleNav />
+                            <IdeaComponent ideas={ideas} />
+                        </div>
+                    </SimpleSideBar>
 
+                </>
             )}
         </>
     );

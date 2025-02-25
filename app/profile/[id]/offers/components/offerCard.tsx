@@ -62,6 +62,12 @@ export default function OfferCard() {
 
   return (
     <div className="w-full px-24">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          My Offers
+        </h1>
+        <p className="text-gray-600">Manage and view all your business offers</p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50">
         {parsedOffers && parsedOffers.length > 0 && parsedOffers.map((offer) => (
           <div
