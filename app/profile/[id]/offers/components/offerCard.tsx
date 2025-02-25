@@ -62,17 +62,25 @@ export default function OfferCard() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          My Offers
-        </h1>
-        <p className="text-gray-600">Manage and view all your business offers</p>
+      {/* Page Heading with navbar-style bubble */}
+      <div className="navbar bg-gray-50 text-black p-6">
+        <div className="flex-1">
+          <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
+            <div className="text-xl">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
+                My Offers
+              </span>
+              <p className="text-base text-gray-600 mt-2">Manage and view all your business offers</p>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50">
         {parsedOffers && parsedOffers.length > 0 && parsedOffers.map((offer) => (
           <div
             key={offer.id}
-            className="card bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
+            className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer"
             onClick={() => {
               setSelectedOffer(offer);
               setShowOfferForm(true);
@@ -92,12 +100,12 @@ export default function OfferCard() {
             </figure>
 
             {/* Card Body */}
-            <div className="p-5 space-y-4">
+            <div className="card-body p-5">
               <div className="flex justify-between items-start">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="card-title text-gray-800 font-semibold">
                   {offer.ideas?.title || 'Offer Information'}
                 </h2>
-                <span className={`px-2 py-1 rounded-full text-sm ${
+                <span className={`px-3 py-1 rounded-full text-sm ${
                   offer.active
                     ? 'bg-green-100 text-green-700'
                     : 'bg-red-100 text-red-700'
@@ -106,27 +114,39 @@ export default function OfferCard() {
                 </span>
               </div>
 
-              {/* Commission and Type */}
-              <div className="flex gap-3">
-                <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-sm">
-                  {offer.comission}% Commission
-                </span>
-                {offer.type && (
-                  <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm">
-                    {offer.type}
+              <div className="mt-3 space-y-3">
+                {/* Commission and Type */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md text-sm">
+                    {offer.comission}% Commission
                   </span>
-                )}
-              </div>
+                  {offer.type && (
+                    <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-md text-sm">
+                      {offer.type}
+                    </span>
+                  )}
+                </div>
 
-              {/* Description */}
-              <p className="text-gray-600 text-sm line-clamp-2">
-                {offer.description}
-              </p>
+                {/* Description */}
+                <p className="text-gray-600 text-sm line-clamp-2">
+                  {offer.description}
+                </p>
 
-              {/* Metadata Footer */}
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>🤝 {offer.totalDeals || 0} deals</span>
-                <span>📅 {offer.created_at}</span>
+                {/* Metadata Footer */}
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                    {offer.totalDeals || 0} deals
+                  </span>
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    {new Date(offer.created_at || '').toLocaleDateString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -135,7 +155,7 @@ export default function OfferCard() {
         {/* Add New Offer Card */}
         <div
           onClick={() => setShowOfferForm(true)}
-          className="card bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-dashed border-gray-200 cursor-pointer h-[400px] flex items-center justify-center"
+          className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-dashed border-2 border-gray-300 cursor-pointer flex items-center justify-center min-h-[300px]"
         >
           <div className="text-center p-6">
             <div className="mb-4">
@@ -144,7 +164,6 @@ export default function OfferCard() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-600">Create New Offer</h3>
-            <p className="text-sm text-gray-500 mt-2">Click to add a new offer</p>
           </div>
         </div>
       </div>

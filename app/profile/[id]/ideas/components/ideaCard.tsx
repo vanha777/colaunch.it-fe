@@ -85,18 +85,26 @@ export default function IdeaCard() {
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          My Ideas
-        </h1>
-        <p className="text-gray-600">Manage and view all your business ideas</p>
+      {/* Page Heading with navbar-style bubble */}
+      <div className="navbar bg-gray-50 text-black p-6">
+        <div className="flex-1">
+          <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
+            <div className="text-xl">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
+                My Ideas
+              </span>
+              <p className="text-base text-gray-600 mt-2">Manage and view all your business ideas</p>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50">
         {/* Existing Idea Cards */}
         {parsedIdeas.map((idea) => (
           <div
             key={idea.id}
-            className="card bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
+            className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
             onClick={() => {
               setSelectedIdea(idea);
               setShowIdeaForm(true);
@@ -104,50 +112,69 @@ export default function IdeaCard() {
           >
             {/* Image Section */}
             {idea.media && idea.media.length > 0 && (
-              <div className="relative h-48">
+              <figure className="relative">
                 <img
                   src={idea.media[0]}
                   alt={idea.title}
-                  className="w-full h-full object-cover rounded-t-xl"
+                  className="w-full h-52 object-cover"
                 />
-              </div>
+              </figure>
             )}
 
             {/* Content Section */}
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">{idea.title}</h2>
-
-              {/* Location and Industry Tags */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                {idea.address_detail && (
-                  <span className="inline-flex items-center text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                    📍 {idea.address_detail.country}
-                    {idea.address_detail.state ? `, ${idea.address_detail.state}` : ''}
+            <div className="card-body p-5">
+              <div className="flex justify-between items-start">
+                <h2 className="card-title text-gray-800 font-semibold">{idea.title}</h2>
+                <div className="flex gap-3 text-sm font-medium">
+                  <span className="flex items-center text-emerald-600">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                    </svg>
+                    {idea.upvotes || 0}
                   </span>
-                )}
-                {idea.industry && (
-                  <span className="inline-flex items-center text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                    🏢 {idea.industry}
+                  <span className="flex items-center text-rose-600">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm3.707 8.707l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L9 10.586V7a1 1 0 112 0v3.586l1.293-1.293a1 1 0 011.414 1.414z" clipRule="evenodd" />
+                    </svg>
+                    {idea.downvotes || 0}
                   </span>
-                )}
+                </div>
               </div>
 
-              {/* Description */}
-              <p className="text-gray-600 mb-4 line-clamp-2">{idea.description}</p>
-
-              {/* Footer */}
-              <div className="flex justify-between items-center">
-                <div className="flex gap-3">
-                  <span className="text-sm text-gray-500">⬆️ {idea.upvotes || 0}</span>
-                  <span className="text-sm text-gray-500">⬇️ {idea.downvotes || 0}</span>
+              <div className="mt-3 space-y-3">
+                {/* Location and Industry Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {idea.industry && (
+                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md">
+                      {idea.industry}
+                    </span>
+                  )}
+                  {idea.address_detail && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      {idea.address_detail.suburb && `${idea.address_detail.suburb}, `}
+                      {idea.address_detail.state && `${idea.address_detail.state}, `}
+                      {idea.address_detail.country}
+                    </div>
+                  )}
                 </div>
+
+                {/* Description */}
+                <p className="text-gray-600 line-clamp-2">{idea.description}</p>
+
+                {/* Offer Status */}
                 {idea.offer && (
-                  <span className={`px-3 py-1 rounded-full text-sm ${idea.offer.active
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                  <div className="pt-2">
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      idea.offer.active
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
                     }`}>
-                    {idea.offer.active ? 'Active Deal' : 'Inactive Deal'}
-                  </span>
+                      {idea.offer.active ? 'Active Deal' : 'Inactive Deal'}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -156,7 +183,7 @@ export default function IdeaCard() {
         {/* Add New Idea Card */}
         <div
           onClick={() => setShowIdeaForm(true)}
-          className="card bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 border-dashed cursor-pointer flex items-center justify-center min-h-[300px]"
+          className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-dashed border-2 border-gray-300 cursor-pointer flex items-center justify-center min-h-[300px]"
         >
           <div className="text-center">
             <div className="mb-4">

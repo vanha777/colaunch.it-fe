@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import IdeaCard, { IdeaProps, OfferProps } from "./components/ideaCard";
-import SimpleNavBar from "./components/simpleNavBar";
 import { Db, Server } from "@/app/utils/db";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
+import SimpleSideBar from "@/app/dashboard/components/simpleSideBar";
+import SimpleNavBar from "@/app/dashboard/components/simpleNavBar";
+import Main from "./components/main";
 export const revalidate = 0
 export default async function IdeaPage({ params }: { params: { id: string } }) {
   console.log('Path ID:', params.id);
@@ -33,14 +35,7 @@ export default async function IdeaPage({ params }: { params: { id: string } }) {
   }
   console.log("parsedIdea", parsedIdea);
   return (
-    <>
-      <SimpleNavBar />
-      <div className="container mx-auto p-4">
-        <IdeaCard
-          idea={parsedIdea as IdeaProps}
-        />
-      </div>
-    </>
+    <Main parsedIdea={parsedIdea} />
 
   );
 }

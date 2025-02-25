@@ -102,7 +102,7 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   };
 
   return (
-    <div className="w-full px-48">
+    <div className="w-full">
       {/* Carousel Section */}
       {idea.media && idea.media.length > 0 && (
         <div className="relative w-full h-[400px] mb-4 grid grid-cols-4 gap-2 rounded-xl overflow-hidden">
