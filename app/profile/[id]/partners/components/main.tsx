@@ -1,7 +1,6 @@
 'use client'
 import SimpleNavBar from "@/app/dashboard/components/simpleNavBar";
 import SimpleSideBar from "@/app/dashboard/components/simpleSideBar";
-import OfferCard from "./offerCard";
 import WebhookSection from "./WebhookSection";
 
 export default function Main() {
