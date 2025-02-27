@@ -32,35 +32,31 @@ export default function OfferCard() {
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<OfferProps | undefined>(undefined);
 
-  useEffect(() => {
-    const fetchIdeas = async () => {
-      let user = auth.userData;
+  const fetchOffers = async () => {
+    let user = auth.userData;
+    if (!user) {
+      user = getUser();
       if (!user) {
-        user = getUser();
-        console.log("welcome back", user);
-        if (!user) {
-          router.push('/not-found');
-        }
+        router.push('/not-found');
       }
-      // Update the query to include ideas
-      const { data: offersData, error: offersError } = await Db
-        .from('offers')
-        .select(`
-          *,
+    }
+    const { data: offersData, error: offersError } = await Db
+      .from('offers')
+      .select(`
+        *,
         ideas!idea_id (
           *
-          )
-        `)
-        .eq('user_id', user?.id);
+        )
+      `)
+      .eq('user_id', user?.id);
 
-      if (!offersData || offersData.length === 0) {
-        console.log("offersData not found");
-        // router.push('/not-found');
-      }
-      console.log("parsedOffers", offersData);
+    if (offersData) {
       setParsedOffers(offersData as OfferProps[]);
     }
-    fetchIdeas();
+  };
+
+  useEffect(() => {
+    fetchOffers();
   }, []);
 
   return (
@@ -215,6 +211,7 @@ export default function OfferCard() {
                 }
               }}
               selectedOffer={selectedOffer}
+              onSubmitSuccess={fetchOffers}
             />
           </div>
         </div>

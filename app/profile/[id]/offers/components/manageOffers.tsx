@@ -34,6 +34,7 @@ interface OfferFormData {
 interface ManageOfferFormProps {
     setShowOfferForm: (show: boolean) => void;
     selectedOffer?: OfferProps;
+    onSubmitSuccess?: () => void;
 }
 
 const OFFER_TYPES = [
@@ -43,7 +44,7 @@ const OFFER_TYPES = [
     "Revenue Share"
 ];
 
-export default function ManageOfferForm({ setShowOfferForm, selectedOffer }: ManageOfferFormProps) {
+export default function ManageOfferForm({ setShowOfferForm, selectedOffer, onSubmitSuccess }: ManageOfferFormProps) {
     const { auth } = useAppContext();
     const user = auth?.userData;
     const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +133,7 @@ export default function ManageOfferForm({ setShowOfferForm, selectedOffer }: Man
                 if (offerError) throw offerError;
             }
             setShowOfferForm(false);
+            onSubmitSuccess?.();
         } catch (error) {
             console.error('Error managing offer:', error);
             alert('Failed to manage offer. Please try again.');
