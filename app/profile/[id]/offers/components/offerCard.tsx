@@ -19,7 +19,7 @@ export interface OfferProps {
   created_at?: string;
   totalDeals?: number;
   active?: boolean;
-  comission?: number;
+  commission?: number;
   type?: string;
   description?: string;
   ideas?: IdeaProps;
@@ -92,7 +92,7 @@ export default function OfferCard() {
             {/* Commission Circle - Floating Design */}
             <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex flex-col items-center justify-center text-white transform rotate-12 group-hover:rotate-0 transition-transform duration-300">
               <div className="text-2xl font-bold -rotate-12 group-hover:rotate-0 transition-transform duration-300">
-                {offer.comission}%
+                {offer.commission}%
               </div>
             </div>
 

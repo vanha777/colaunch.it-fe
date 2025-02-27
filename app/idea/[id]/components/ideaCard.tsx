@@ -15,7 +15,7 @@ export interface OfferProps {
   created_at?: string;
   totalDeals?: number;
   active?: boolean;
-  comission?: number;
+  commission?: number;
   type?: string;
   description?: string;
   payment_link?: string;
@@ -329,10 +329,10 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
             {idea.offer ? (
               <>
                 {/* Commission - Highlighted */}
-                {idea.offer.comission && (
+                {idea.offer.commission && (
                   <div className="bg-white p-4 rounded-full shadow-sm">
                     <div className="text-3xl font-bold text-blue-600 mb-1">
-                      {idea.offer.comission}%
+                      {idea.offer.commission}%
                     </div>
                     <div className="text-sm text-blue-600">Commission Rate</div>
                   </div>
