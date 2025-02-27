@@ -11,5 +11,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const Db = createClient(supabaseUrl, supabaseAnonKey)
 export const Server = process.env.METALOOT_SERVER || ""
-export const FrontEnd = process.env.FRONT_END_URL || ""
+export const FrontEnd = process.env.FRONT_END_URL || "http://localhost:3000"
 export const PrivateKey = process.env.PRIVATE_KEY || "123123"

@@ -5,7 +5,7 @@ import { FaPlus, FaTimes, FaGhost, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Alert from "@/components/Alert";
 import { GameData } from "@/app/utils/AppContext";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
-import { Db, Server } from "@/app/utils/db";
+import { Db, Server, FrontEnd } from "@/app/utils/db";
 import router from "next/router";
 import { OfferProps } from "../../components/ideaCard";
 import ComingSoon from "@/app/dashboard/components/commingSoon";
@@ -33,6 +33,32 @@ export default function WebhookSection() {
     type: 'info' as 'success' | 'error' | 'info'
   });
 
+  const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>, email: string, deal: DealDetails) => {
+    let dealLink = `${FrontEnd}/idea/${deal.offer?.ideas?.id}`;
+    e.preventDefault();
+
+    const emailSubject = `Regarding our ${deal.offer.type} partnership deal`;
+    const emailBody = `
+Hi ${deal.from_user.name},
+
+I'm writing regarding our partnership deal:
+- Business Name: ${deal.offer?.ideas?.title}
+- Payment Link: ${deal.offer.payment_link}
+- Promotion Code: ${deal.offer.promotion_code || 'N/A'}
+- Business Link: ${dealLink}
+
+I'm would like to discuss .......
+
+Looking forward to discussing this further.
+
+Best regards,
+${auth.userData?.name || 'Me'}
+    `.trim();
+
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.location.href = mailtoUrl;
+  };
+
   useEffect(() => {
     let user = auth.userData;
     if (!user) {
@@ -52,7 +78,10 @@ export default function WebhookSection() {
           *,
           from_user:users!deals_from_user_fkey(*),
     to_user:users!deals_to_user_fkey(*),
-           offer:offers(*)
+           offer:offers(
+             *,
+             ideas:ideas(*)
+           )
         `)
           .eq('from_user', user?.id);
         // console.log('Fetched offers:', offersData);
@@ -171,7 +200,13 @@ export default function WebhookSection() {
                     )}
                     <div className="text-gray-900">
                       <div className="font-medium">{deal.to_user.name || 'N/A'}</div>
-                      <div className="text-gray-500 text-sm">{deal.to_user.email || 'No email'}</div>
+                      <a
+                        href="#"
+                        onClick={(e) => handleEmailClick(e, deal.to_user.email || '', deal)}
+                        className="text-gray-500 text-sm hover:text-blue-600 hover:underline transition-colors duration-200"
+                      >
+                        {deal.to_user.email || 'No email'}
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -186,10 +221,10 @@ export default function WebhookSection() {
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button className="p-2 hover:bg-gray-200 rounded-full transition-all">
-                      <FaPencilAlt className="text-gray-600 hover:text-gray-900 text-xs" />
+                      <FaPencilAlt onClick={() => setShowCreateForm(true)} className="text-gray-600 hover:text-gray-900 text-xs" />
                     </button>
                     <button className="p-2 hover:bg-red-100 rounded-full transition-all">
-                      <FaTrash className="text-red-600 hover:text-red-700 text-xs" />
+                      <FaTrash onClick={() => setShowCreateForm(true)} className="text-red-600 hover:text-red-700 text-xs" />
                     </button>
                   </div>
                 </div>

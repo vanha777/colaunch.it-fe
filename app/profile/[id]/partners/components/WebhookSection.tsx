@@ -5,7 +5,7 @@ import { FaPlus, FaTimes, FaGhost, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Alert from "@/components/Alert";
 import { GameData } from "@/app/utils/AppContext";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
-import { Db, Server } from "@/app/utils/db";
+import { Db, Server,FrontEnd } from "@/app/utils/db";
 import router from "next/router";
 import { OfferProps } from "../../components/ideaCard";
 import { useRouter } from 'next/navigation';
@@ -86,6 +86,7 @@ export default function WebhookSection() {
   }, []);
 
   const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>, email: string, deal: DealDetails) => {
+    let dealLink = `${FrontEnd}/idea/${deal.offer?.ideas?.id}`;
     e.preventDefault();
 
     const emailSubject = `Regarding our ${deal.offer.type} partnership deal`;
@@ -93,9 +94,12 @@ export default function WebhookSection() {
 Hi ${deal.from_user.name},
 
 I'm writing regarding our partnership deal:
-- Deal Type: ${deal.offer.type}
-- Status: ${deal.status ? 'Active' : 'Inactive'}
+- Business Name: ${deal.offer?.ideas?.title}
+- Payment Link: ${deal.offer.payment_link}
 - Promotion Code: ${deal.offer.promotion_code || 'N/A'}
+- Business Link: ${dealLink}
+
+I'm would like to discuss .......
 
 Looking forward to discussing this further.
 
@@ -250,10 +254,10 @@ ${auth.userData?.name || 'Me'}
                     {deal.status === true ? 'Active' : 'Inactive'}
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 hover:bg-gray-200 rounded-full transition-all">
+                    <button  onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-gray-200 rounded-full transition-all">
                       <FaPencilAlt className="text-gray-600 hover:text-gray-900 text-xs" />
                     </button>
-                    <button className="p-2 hover:bg-red-100 rounded-full transition-all">
+                    <button  onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-red-100 rounded-full transition-all">
                       <FaTrash className="text-red-600 hover:text-red-700 text-xs" />
                     </button>
                   </div>
