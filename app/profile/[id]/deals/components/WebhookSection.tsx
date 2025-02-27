@@ -107,8 +107,9 @@ export default function WebhookSection() {
         <div className="bg-base-200 rounded-3xl overflow-hidden shadow-sm">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 p-6 border-b border-gray-200/10 text-gray-600 text-sm font-medium">
-            <div className="col-span-5">What Happened</div>
-            <div className="col-span-4">Who To Call</div>
+            <div className="col-span-3">What Happened</div>
+            <div className="col-span-3">Who To Call</div>
+            <div className="col-span-3">Dealing With</div>
             <div className="col-span-3 text-right">Status</div>
           </div>
 
@@ -117,7 +118,7 @@ export default function WebhookSection() {
             {deals.map(deal => (
               <div key={deal.id}
                 className="grid grid-cols-12 gap-4 p-6 hover:bg-gray-100/50 group transition-all duration-200">
-                <div className="col-span-4">
+                <div className="col-span-3">
                   <div className="flex flex-wrap gap-2">
                     <span key={deal.id}
                       className={`px-3 py-1 text-sm font-medium rounded-full ${!deal.status
@@ -130,19 +131,46 @@ export default function WebhookSection() {
                     </span>
                   </div>
                 </div>
-                <div className="col-span-5">
+                <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
                       <MdWebhook className="text-xl text-blue-600" />
                     </div>
                     <div>
                       <div className="text-gray-900 font-medium break-all">
-                        {deal.offer.payment_link}
+                        <a
+                          href={deal.offer.payment_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-blue-600 hover:underline transition-colors duration-200"
+                        >
+                          {deal.offer.payment_link}
+                        </a>
                       </div>
                       <div className="text-gray-500 text-sm mt-1">
-                        {/* Created {new Date(deal.offer.created_at).toLocaleDateString()} */}
-                        Created {deal.offer.created_at}
+                        Promotion Code: {deal.offer.promotion_code}
                       </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-3">
+                    {deal.to_user.photo ? (
+                      <img 
+                        src={deal.to_user.photo} 
+                        alt={deal.to_user.name || 'User photo'} 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-500 text-lg font-medium">
+                          {(deal.to_user.name || 'U')[0].toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-gray-900">
+                      <div className="font-medium">{deal.to_user.name || 'N/A'}</div>
+                      <div className="text-gray-500 text-sm">{deal.to_user.email || 'No email'}</div>
                     </div>
                   </div>
                 </div>
