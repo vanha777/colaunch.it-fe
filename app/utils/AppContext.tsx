@@ -9,6 +9,11 @@ export interface UserData {
     name?: string;
     photo?: string;
     type?: string;
+    x?: string;
+    github?: string;
+    website?: string;
+    instagram?: string;
+    linkedin?: string;
     [key: string]: any;
 }
 

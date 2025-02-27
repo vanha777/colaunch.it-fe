@@ -1,8 +1,9 @@
 import { IoSettingsSharp } from "react-icons/io5";
 import { FaCrown, FaRegCreditCard, FaTwitter, FaGithub, FaLinkedin, FaGlobe, FaInstagram } from "react-icons/fa";
 import Alert from "@/components/Alert";
-import { GameData, useAppContext } from "@/app/utils/AppContext";
+import { GameData, useAppContext, UserData } from "@/app/utils/AppContext";
 import { useEffect, useState } from "react";
+import { Db } from "@/app/utils/db";
 
 // Add social media interface
 interface SocialMedia {
@@ -10,28 +11,44 @@ interface SocialMedia {
   url: string;
 }
 
-// Add social media configuration
-const socialIcons = {
-  twitter: { icon: FaTwitter, color: 'text-[#1DA1F2] bg-blue-50' },
-  github: { icon: FaGithub, color: 'text-gray-900 bg-gray-50' },
-  linkedin: { icon: FaLinkedin, color: 'text-[#0A66C2] bg-blue-50' },
-  website: { icon: FaGlobe, color: 'text-emerald-600 bg-emerald-50' },
-  instagram: { icon: FaInstagram, color: 'text-[#E4405F] bg-pink-50' }
-};
-
-export default function SettingsSection() {
+export default function SettingsSection({ user_id }: { user_id: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const { auth, getUser } = useAppContext();
+  const [userInfo, setUserInfo] = useState<UserData | null>(null);
 
   useEffect(() => {
     console.log("Re-render SettingsSection");
-    if (!auth.userData?.email) {
-      getUser();
+    const user = getUser();
+    if (user?.email) {
+      setUserInfo(user);
+    } else {
+      const fetchUser = async () => {
+        const { data: userData, error: userError } = await Db
+          .from("users")
+          .select("*")
+          .eq("id", user_id)
+          .single();
+        const parsedUser = userData as UserData;
+        if (userError) {
+          console.error("Error fetching user data:", userError);
+        } else {
+          setUserInfo(parsedUser);
+        }
+      };
+      fetchUser();
     }
   }, [auth.userData]);
 
+  // Add social media configuration
+  const socialIcons = {
+    twitter: { icon: FaTwitter, color: 'text-[#1DA1F2] bg-blue-50', link: auth.userData?.x },
+    github: { icon: FaGithub, color: 'text-gray-900 bg-gray-50', link: auth.userData?.github },
+    linkedin: { icon: FaLinkedin, color: 'text-[#0A66C2] bg-blue-50', link: auth.userData?.linkedin },
+    website: { icon: FaGlobe, color: 'text-emerald-600 bg-emerald-50', link: auth.userData?.website },
+    instagram: { icon: FaInstagram, color: 'text-[#E4405F] bg-pink-50', link: auth.userData?.instagram }
+  };
+
   const [currentPlan, setCurrentPlan] = useState('free');
-  const userInfo = auth.userData;
   const [alert, setAlert] = useState({
     show: false,
     message: '',
@@ -150,9 +167,10 @@ export default function SettingsSection() {
         </div>
 
         {/* Subscription Plans Card */}
-        <div className="bg-base-200 p-8 rounded-3xl shadow-sm">
-          <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-6">
-            Subscription Plans
+        {auth.userData?.email && (
+          <div className="bg-base-200 p-8 rounded-3xl shadow-sm">
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-6">
+              Subscription Plans
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {plans.map((plan) => (
@@ -189,9 +207,10 @@ export default function SettingsSection() {
                   <span>{currentPlan === plan.id ? 'Current Plan' : 'Select Plan'}</span>
                 </button>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Remove floating elements as they don't match the new style */}
