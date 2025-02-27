@@ -27,6 +27,8 @@ interface OfferFormData {
     commission: number;
     active: boolean;
     idea_id: number;
+    payment_link?: string;
+    promotion_code?: string;
 }
 
 interface ManageOfferFormProps {
@@ -51,7 +53,9 @@ export default function ManageOfferForm({ setShowOfferForm, selectedOffer }: Man
         description: selectedOffer?.description || '',
         commission: selectedOffer?.comission || 0,
         active: selectedOffer?.active || true,
-        idea_id: selectedOffer?.ideas_id?.id || 0
+        idea_id: selectedOffer?.ideas_id?.id || 0,
+        payment_link: selectedOffer?.payment_link || '',
+        promotion_code: selectedOffer?.promotion_code || ''
     });
 
     useEffect(() => {
@@ -96,6 +100,8 @@ export default function ManageOfferForm({ setShowOfferForm, selectedOffer }: Man
                         description: offerForm.description,
                         commission: offerForm.commission,
                         active: offerForm.active,
+                        payment_link: offerForm.payment_link,
+                        promotion_code: offerForm.promotion_code
                     })
                     .eq('id', selectedOffer.id);
 
@@ -197,6 +203,24 @@ export default function ManageOfferForm({ setShowOfferForm, selectedOffer }: Man
                             />
                             <span>Active Offer</span>
                         </label>
+
+                        <input
+                            type="url"
+                            name="payment_link"
+                            value={offerForm.payment_link}
+                            onChange={handleOfferChange}
+                            placeholder="Payment Link (optional)"
+                            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2"
+                        />
+
+                        <input
+                            type="text"
+                            name="promotion_code"
+                            value={offerForm.promotion_code}
+                            onChange={handleOfferChange}
+                            placeholder="Promotion Code (optional)"
+                            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2"
+                        />
 
                         <div className="flex gap-4 mt-6">
                             <button
