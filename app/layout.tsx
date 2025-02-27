@@ -10,16 +10,16 @@ config.autoAddCss = false
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MetaLoot - Blockchain API For Gaming',
-  description: 'Ship faster, cheaper and better with our API.',
+  title: 'CoLaunch - Connect Business and Scale Up',
+  description: 'CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow.',
   openGraph: {
-    title: 'MetaLoot - Blockchain API For Gaming',
-    description: 'Ship faster, cheaper and better with our API.',
-    url: 'https://www.metaloot.dev/',
+    title: 'CoLaunch - Connect Business and Scale Up',
+    description: 'CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow.',
+    // url: 'https://www.metaloot.dev/',
     images: [
       {
-        url: 'https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/biz_touch/banner.png',
-        alt: 'MetaLoot blockchain API For Gaming',
+        url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//ICON.png',
+        alt: 'CoLaunch - Connect Business and Scale Up',
       },
     ],
   },

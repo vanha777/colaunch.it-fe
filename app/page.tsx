@@ -28,7 +28,7 @@ export default function Home() {
     <Suspense fallback={<div>Loading...</div>}>
       <main className="bg-base-100 min-h-screen relative">
         {/* Solana Stamp */}
-        <div className="fixed left-4 bottom-4 bg-gradient-to-r from-[#0CC0DF] to-[#14F195] p-[1px] rounded-lg rotate-[-4deg] shadow-lg hover:rotate-0 transition-all duration-300 z-50">
+        {/* <div className="fixed left-4 bottom-4 bg-gradient-to-r from-[#0CC0DF] to-[#14F195] p-[1px] rounded-lg rotate-[-4deg] shadow-lg hover:rotate-0 transition-all duration-300 z-50">
           <div className="bg-black/90 backdrop-blur-sm px-4 py-2 rounded-lg">
             <div className="flex items-center gap-2">
               <svg width="20" height="16" viewBox="0 0 508.07 398.17" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -47,18 +47,19 @@ export default function Home() {
               </span>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <NavBar />
         <div className="flex flex-col">
           <Hero2 />
-          <Partner />
-          <Demo />
+
+          {/* <Demo /> */}
           {/* <Hero /> */}
           {/* <About /> */}
-          <Satements />
+          {/* <Satements /> */}
           <Features />
           <BigStatement />
+          <Partner />
           <Starters />
           {/* <Coin /> */}
           {/* <Roadmap /> */}

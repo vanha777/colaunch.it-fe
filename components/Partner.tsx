@@ -25,15 +25,18 @@ export default function Partner() {
   ]
 
   return (
-    <section className="bg-[#010205] relative overflow-hidden py-24">
-      <div className="absolute inset-0">
-        <div className="absolute w-full h-full bg-gradient-to-b from-[#010205] via-[#010205]/90 to-[#010205]" />
-      </div>
+    <section className="relative overflow-hidden py-24">
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50" />
+      
+      {/* Subtle decorative blurs */}
+      <div className="absolute top-20 -right-20 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
+      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
 
       <div className="relative z-10">
         <h2 className="text-sm md:text-base text-center mb-16">
-          <span className="text-white">Built on and Partnered with</span>{" "}
-          <span className="bg-gradient-to-r from-[#0CC0DF] to-[#14F195] bg-clip-text text-transparent">Leading Web3 Protocols</span>
+          <span className="text-gray-800">Built on and Partnered with</span>{" "}
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Leading Web3 Protocols</span>
         </h2>
 
         <div className="relative flex overflow-x-hidden">
@@ -54,14 +57,14 @@ export default function Partner() {
             {[...partners, ...partners].map((partner, index) => (
               <div
                 key={index}
-                className="relative w-32 h-32 flex items-center justify-center"
+                className="relative w-32 h-32 flex items-center justify-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-4 border border-gray-100"
               >
                 <div className="relative w-24 h-24">
                   <Image
                     src={partner.image}
                     alt={partner.name}
                     fill
-                    className="object-contain filter brightness-100 hover:brightness-125 transition-all duration-300"
+                    className="object-contain transition-all duration-300 hover:scale-110"
                   />
                 </div>
               </div>
