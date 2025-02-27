@@ -5,7 +5,7 @@ import { FaPlus, FaTimes, FaGhost, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Alert from "@/components/Alert";
 import { GameData } from "@/app/utils/AppContext";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
-import { Db, Server,FrontEnd } from "@/app/utils/db";
+import { Db, Server, FrontEnd } from "@/app/utils/db";
 import router from "next/router";
 import { OfferProps } from "../../components/ideaCard";
 import { useRouter } from 'next/navigation';
@@ -220,11 +220,18 @@ ${auth.userData?.name || 'Me'}
                 <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     {deal.from_user.photo ? (
-                      <img
-                        src={deal.from_user.photo}
-                        alt={deal.from_user.name || 'User photo'}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <a
+                        href={`${FrontEnd}/profile/${deal.to_user.id}/public`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={deal.from_user.photo}
+                          alt={deal.from_user.name || 'User photo'}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 hover:border-blue-400 transition-colors"
+                        />
+                      </a>
+
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-500 text-lg font-medium">
@@ -233,13 +240,21 @@ ${auth.userData?.name || 'Me'}
                       </div>
                     )}
                     <div className="text-gray-900">
-                      <div className="font-medium">{deal.from_user.name || 'N/A'}</div>
+                      {/* <div className="font-medium">{deal.from_user.name || 'N/A'}</div> */}
+                      <a
+                        href={`${FrontEnd}/profile/${deal.to_user.id}/public`}
+                        className="font-medium"
+                      >
+                        {deal.from_user.name || 'N/A'}
+                      </a>
+                      <br />
                       <a
                         href="#"
                         onClick={(e) => handleEmailClick(e, deal.from_user.email || '', deal)}
                         className="text-gray-500 text-sm hover:text-blue-600 hover:underline transition-colors duration-200"
                       >
-                        {deal.from_user.email || 'No email'}
+                        {/* {deal.from_user.email || 'No email'} */}
+                        Talk To Me
                       </a>
                     </div>
                   </div>
@@ -254,10 +269,10 @@ ${auth.userData?.name || 'Me'}
                     {deal.status === true ? 'Active' : 'Inactive'}
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button  onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-gray-200 rounded-full transition-all">
+                    <button onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-gray-200 rounded-full transition-all">
                       <FaPencilAlt className="text-gray-600 hover:text-gray-900 text-xs" />
                     </button>
-                    <button  onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-red-100 rounded-full transition-all">
+                    <button onClick={() => setShowCreateForm(true)} className="p-2 hover:bg-red-100 rounded-full transition-all">
                       <FaTrash className="text-red-600 hover:text-red-700 text-xs" />
                     </button>
                   </div>

@@ -186,11 +186,17 @@ ${auth.userData?.name || 'Me'}
                 <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     {deal.to_user.photo ? (
-                      <img
-                        src={deal.to_user.photo}
-                        alt={deal.to_user.name || 'User photo'}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
+                           <a 
+                           href={`${FrontEnd}/profile/${deal.to_user.id}/public`}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                         >
+                           <img
+                             src={deal.to_user.photo}
+                             alt={deal.to_user.name || 'User photo'}
+                           className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 hover:border-blue-400 transition-colors"
+                           />
+                         </a>
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                         <span className="text-gray-500 text-lg font-medium">
@@ -199,13 +205,21 @@ ${auth.userData?.name || 'Me'}
                       </div>
                     )}
                     <div className="text-gray-900">
-                      <div className="font-medium">{deal.to_user.name || 'N/A'}</div>
+                      <a
+                        href={`${FrontEnd}/profile/${deal.to_user.id}/public`}
+                        className="font-medium"
+                      >
+                        {deal.to_user.name || 'N/A'}
+                      </a>
+                      <br/>
+                      {/* <div className="font-medium">{deal.to_user.name || 'N/A'}</div> */}
                       <a
                         href="#"
                         onClick={(e) => handleEmailClick(e, deal.to_user.email || '', deal)}
                         className="text-gray-500 text-sm hover:text-blue-600 hover:underline transition-colors duration-200"
                       >
-                        {deal.to_user.email || 'No email'}
+                        {/* {deal.to_user.email || 'No email'} */}
+                        Talk To Me
                       </a>
                     </div>
                   </div>

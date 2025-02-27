@@ -32,9 +32,6 @@ export default function DashboardClient({ rawUser }: InitialUserProps) {
                 }
                 setIsLoading(true);
                 console.log("this is data", initialUser);
-                // // Fetch game data
-                // const { data: userData, error: gameError } = await Db.from('users').select('*').eq('email', initialUser.email);
-                // console.log("userData", userData);
                 setUser(initialUser);
             } catch (error) {
                 console.error('Error fetching data:', error);

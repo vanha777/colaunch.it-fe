@@ -1,51 +1,80 @@
 import { IoSettingsSharp } from "react-icons/io5";
-import { FaCrown, FaRegCreditCard, FaTwitter, FaGithub, FaLinkedin, FaGlobe, FaInstagram } from "react-icons/fa";
+import { FaCrown, FaRegCreditCard, FaGithub, FaLinkedin, FaGlobe, FaInstagram } from "react-icons/fa";
+import { RiTwitterXFill } from "react-icons/ri";
 import Alert from "@/components/Alert";
 import { GameData, useAppContext, UserData } from "@/app/utils/AppContext";
 import { useEffect, useState } from "react";
 import { Db } from "@/app/utils/db";
 
-// Add social media interface
-interface SocialMedia {
-  platform: 'twitter' | 'github' | 'linkedin' | 'website' | 'instagram';
-  url: string;
-}
-
-export default function SettingsSection({ user_id }: { user_id: string }) {
+export default function SettingsSection() {
   const [isLoading, setIsLoading] = useState(false);
-  const { auth, getUser } = useAppContext();
-  const [userInfo, setUserInfo] = useState<UserData | null>(null);
+  const { auth, getUser, setUser } = useAppContext();
+  const [formData, setFormData] = useState<Partial<UserData>>({});
 
   useEffect(() => {
-    console.log("Re-render SettingsSection");
-    const user = getUser();
-    if (user?.email) {
-      setUserInfo(user);
+    if (auth.userData) {
+      // Initialize form data with user data
+      setFormData({
+        name: auth.userData.name || '',
+        email: auth.userData.email || '',
+        x: auth.userData.x || '',
+        github: auth.userData.github || '',
+        linkedin: auth.userData.linkedin || '',
+        website: auth.userData.website || '',
+        instagram: auth.userData.instagram || '',
+      });
     } else {
-      const fetchUser = async () => {
-        const { data: userData, error: userError } = await Db
-          .from("users")
-          .select("*")
-          .eq("id", user_id)
-          .single();
-        const parsedUser = userData as UserData;
-        if (userError) {
-          console.error("Error fetching user data:", userError);
-        } else {
-          setUserInfo(parsedUser);
-        }
-      };
-      fetchUser();
+      getUser();
     }
   }, [auth.userData]);
 
-  // Add social media configuration
+  // Update social media configuration
   const socialIcons = {
-    twitter: { icon: FaTwitter, color: 'text-[#1DA1F2] bg-blue-50', link: auth.userData?.x },
-    github: { icon: FaGithub, color: 'text-gray-900 bg-gray-50', link: auth.userData?.github },
-    linkedin: { icon: FaLinkedin, color: 'text-[#0A66C2] bg-blue-50', link: auth.userData?.linkedin },
-    website: { icon: FaGlobe, color: 'text-emerald-600 bg-emerald-50', link: auth.userData?.website },
-    instagram: { icon: FaInstagram, color: 'text-[#E4405F] bg-pink-50', link: auth.userData?.instagram }
+    x: { icon: RiTwitterXFill, color: 'text-[#1DA1F2] bg-blue-50', label: 'X' },
+    github: { icon: FaGithub, color: 'text-gray-900 bg-gray-50', label: 'GitHub' },
+    linkedin: { icon: FaLinkedin, color: 'text-[#0A66C2] bg-blue-50', label: 'LinkedIn' },
+    website: { icon: FaGlobe, color: 'text-emerald-600 bg-emerald-50', label: 'Website' },
+    instagram: { icon: FaInstagram, color: 'text-[#E4405F] bg-pink-50', label: 'Instagram' }
+  };
+
+  const handleInputChange = (key: keyof UserData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!auth.userData?.id) return;
+
+    setIsLoading(true);
+    try {
+      const { data: userData, error } = await Db
+        .from('users')
+        .update(formData)
+        .eq('id', auth.userData.id).select().single();
+
+      if (error) throw error;
+      const user = userData as UserData;
+      setUser(user);
+      setAlert({
+        show: true,
+        message: 'Profile updated successfully!',
+        type: 'success'
+      });
+
+      // Refresh user data
+      getUser();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setAlert({
+        show: true,
+        message: 'Failed to update profile',
+        type: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const [currentPlan, setCurrentPlan] = useState('free');
@@ -95,9 +124,9 @@ export default function SettingsSection({ user_id }: { user_id: string }) {
         <div className="flex-1">
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center gap-6">
             <div className="w-16 h-16 rounded-full overflow-hidden shadow-md">
-              {userInfo?.photo ? (
+              {auth.userData?.photo ? (
                 <img
-                  src={userInfo.photo}
+                  src={auth.userData.photo}
                   alt="User avatar"
                   className="w-full h-full object-cover"
                 />
@@ -109,7 +138,7 @@ export default function SettingsSection({ user_id }: { user_id: string }) {
             </div>
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                {userInfo?.name}
+                {auth.userData?.name}
               </span>
               <p className="text-base text-gray-600 mt-2">Account Settings</p>
             </div>
@@ -124,53 +153,71 @@ export default function SettingsSection({ user_id }: { user_id: string }) {
             User Information
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {userInfo && Object.entries(userInfo)
-              .filter(([key]) => !['id', 'photo', 'referal', 'favourite_game', 'type', 'studio_name', 'social_media'].includes(key.toLowerCase()))
-              .map(([key, value]) => (
-                <div key={key} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <p className="text-gray-500 text-sm mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}</p>
-                  <p className="text-gray-900 font-medium">{value}</p>
-                </div>
-              ))}
+            {/* Basic Info Fields */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Name</p>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className="w-full text-gray-900 font-medium bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
+              />
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-gray-500 text-sm mb-1">Email</p>
+              <input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="w-full text-gray-900 font-medium bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
+              />
+            </div>
           </div>
 
           {/* Social Media Section */}
           <div className="mt-8">
-            <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-4">Social Media</h4>
+            <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-4">
+              Social Media
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(socialIcons).map(([platform, { icon: Icon, color }]) => (
-                <div key={platform} className="bg-white rounded-2xl p-4 shadow-sm">
+              {Object.entries(socialIcons).map(([key, { icon: Icon, color, label }]) => (
+                <div key={key} className="bg-white rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
                       <Icon className="text-xl" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-gray-500 text-sm">{platform.charAt(0).toUpperCase() + platform.slice(1)}</p>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder={`Enter your ${platform} URL`}
-                          className="w-full text-sm text-gray-900 bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
-                          value={userInfo?.social_media?.[platform as keyof typeof socialIcons]?.url || ''}
-                          onChange={(e) => {
-                            // Handle social media update
-                            console.log(`Updating ${platform} URL:`, e.target.value);
-                          }}
-                        />
-                      </div>
+                      <p className="text-gray-500 text-sm">{label}</p>
+                      <input
+                        type="text"
+                        placeholder={`Enter your ${label} URL`}
+                        className="w-full text-sm text-gray-900 bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
+                        value={formData[key as keyof UserData] || ''}
+                        onChange={(e) => handleInputChange(key as keyof UserData, e.target.value)}
+                      />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Save Button */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full hover:shadow-md transition-all duration-300 disabled:opacity-50"
+              >
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Subscription Plans Card */}
-        {auth.userData?.email && (
-          <div className="bg-base-200 p-8 rounded-3xl shadow-sm">
-            <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-6">
-              Subscription Plans
+        {/* <div className="bg-base-200 p-8 rounded-3xl shadow-sm">
+          <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-6">
+            Subscription Plans
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {plans.map((plan) => (
@@ -207,10 +254,9 @@ export default function SettingsSection({ user_id }: { user_id: string }) {
                   <span>{currentPlan === plan.id ? 'Current Plan' : 'Select Plan'}</span>
                 </button>
               </div>
-              ))}
-            </div>
+            ))}
           </div>
-        )}
+        </div> */}
       </div>
 
       {/* Remove floating elements as they don't match the new style */}
