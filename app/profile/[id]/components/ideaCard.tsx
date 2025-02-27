@@ -19,6 +19,7 @@ export interface OfferProps {
   comission?: number;
   type?: string;
   description?: string;
+  ideas?: IdeaProps;
   payment_link?: string;
   promotion_code?: string;
 }

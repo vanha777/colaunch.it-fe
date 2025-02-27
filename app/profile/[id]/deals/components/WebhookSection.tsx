@@ -8,6 +8,7 @@ import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 import { Db, Server } from "@/app/utils/db";
 import router from "next/router";
 import { OfferProps } from "../../components/ideaCard";
+import ComingSoon from "@/app/dashboard/components/commingSoon";
 
 interface DealDetails {
   id: string;
@@ -87,7 +88,7 @@ export default function WebhookSection() {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                Business Deals
+                Partner Deals
               </span>
               <p className="text-base text-gray-600 mt-2">{deals.length} active offers</p>
             </div>
@@ -156,9 +157,9 @@ export default function WebhookSection() {
                 <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     {deal.to_user.photo ? (
-                      <img 
-                        src={deal.to_user.photo} 
-                        alt={deal.to_user.name || 'User photo'} 
+                      <img
+                        src={deal.to_user.photo}
+                        alt={deal.to_user.name || 'User photo'}
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
@@ -213,11 +214,10 @@ export default function WebhookSection() {
       </div>
 
       {/* Modal remains unchanged */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          {/* ... existing modal code ... */}
-        </div>
-      )}
+      <ComingSoon
+        showCreateForm={showCreateForm}
+        setShowCreateForm={setShowCreateForm}
+      />
 
       <Alert
         isOpen={alert.show}

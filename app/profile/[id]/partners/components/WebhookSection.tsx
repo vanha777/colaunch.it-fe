@@ -8,6 +8,8 @@ import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 import { Db, Server } from "@/app/utils/db";
 import router from "next/router";
 import { OfferProps } from "../../components/ideaCard";
+import { useRouter } from 'next/navigation';
+import ComingSoon from "@/app/dashboard/components/commingSoon";
 
 interface DealDetails {
   id: string;
@@ -31,6 +33,7 @@ export default function WebhookSection() {
     message: '',
     type: 'info' as 'success' | 'error' | 'info'
   });
+  const router = useRouter();
 
   useEffect(() => {
     let user = auth.userData;
@@ -51,7 +54,10 @@ export default function WebhookSection() {
           *,
           from_user:users!deals_from_user_fkey(*),
     to_user:users!deals_to_user_fkey(*),
-           offer:offers(*)
+           offer:offers(
+             *,
+             ideas:ideas(*)
+           )
         `)
           .eq('to_user', user?.id);
         // console.log('Fetched offers:', offersData);
@@ -68,7 +74,7 @@ export default function WebhookSection() {
           to_user: deal.to_user,
           offer: deal.offer
         })) || [];
-        console.log('Parsed deals:', parsedDeals);
+        console.log('Parsed deals with ideas:', parsedDeals);
         setDeals(parsedDeals);
       } catch (error) {
         console.error('Error fetching offers:', error);
@@ -81,7 +87,7 @@ export default function WebhookSection() {
 
   const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>, email: string, deal: DealDetails) => {
     e.preventDefault();
-    
+
     const emailSubject = `Regarding our ${deal.offer.type} partnership deal`;
     const emailBody = `
 Hi ${deal.from_user.name},
@@ -96,9 +102,15 @@ Looking forward to discussing this further.
 Best regards,
 ${auth.userData?.name || 'Me'}
     `.trim();
-    
+
     const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoUrl;
+  };
+
+  const handleBusinessClick = (ideaId?: number) => {
+    if (ideaId) {
+      router.push(`/idea/${ideaId}`);
+    }
   };
 
   return (
@@ -109,7 +121,7 @@ ${auth.userData?.name || 'Me'}
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                Partner Deals
+                Business Deals
               </span>
               <p className="text-base text-gray-600 mt-2">{deals.length} active offers</p>
             </div>
@@ -129,10 +141,11 @@ ${auth.userData?.name || 'Me'}
         <div className="bg-base-200 rounded-3xl overflow-hidden shadow-sm">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 p-6 border-b border-gray-200/10 text-gray-600 text-sm font-medium">
-            <div className="col-span-3">What Happened</div>
+            <div className="col-span-2">What Happened</div>
+            <div className="col-span-2">Business</div>
             <div className="col-span-3">Who To Call</div>
             <div className="col-span-3">Dealing With</div>
-            <div className="col-span-3 text-right">Status</div>
+            <div className="col-span-2 text-right">Status</div>
           </div>
 
           {/* Table Body */}
@@ -140,9 +153,9 @@ ${auth.userData?.name || 'Me'}
             {deals.map(deal => (
               <div key={deal.id}
                 className="grid grid-cols-12 gap-4 p-6 hover:bg-gray-100/50 group transition-all duration-200">
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <div className="flex flex-wrap gap-2">
-                    <span key={deal.id}
+                    <span
                       className={`px-3 py-1 text-sm font-medium rounded-full ${!deal.status
                         ? 'bg-purple-100 text-purple-700 border border-purple-200'
                         : deal.status
@@ -153,6 +166,31 @@ ${auth.userData?.name || 'Me'}
                     </span>
                   </div>
                 </div>
+
+                <div className="col-span-2">
+                  {deal.offer.ideas && (
+                    <div
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-75 transition-opacity"
+                      onClick={() => handleBusinessClick(deal.offer.ideas?.id)}
+                    >
+                      {deal.offer.ideas?.media?.[0] ? (
+                        <img
+                          src={deal.offer.ideas.media[0]}
+                          alt={deal.offer.ideas.title}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                          <FaGhost className="text-gray-400" />
+                        </div>
+                      )}
+                      <div className="text-sm font-medium text-gray-900 line-clamp-2">
+                        {deal.offer.ideas.title}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
@@ -178,9 +216,9 @@ ${auth.userData?.name || 'Me'}
                 <div className="col-span-3">
                   <div className="flex items-center gap-3">
                     {deal.from_user.photo ? (
-                      <img 
-                        src={deal.from_user.photo} 
-                        alt={deal.from_user.name || 'User photo'} 
+                      <img
+                        src={deal.from_user.photo}
+                        alt={deal.from_user.name || 'User photo'}
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
@@ -192,7 +230,7 @@ ${auth.userData?.name || 'Me'}
                     )}
                     <div className="text-gray-900">
                       <div className="font-medium">{deal.from_user.name || 'N/A'}</div>
-                      <a 
+                      <a
                         href="#"
                         onClick={(e) => handleEmailClick(e, deal.from_user.email || '', deal)}
                         className="text-gray-500 text-sm hover:text-blue-600 hover:underline transition-colors duration-200"
@@ -202,7 +240,7 @@ ${auth.userData?.name || 'Me'}
                     </div>
                   </div>
                 </div>
-                <div className="col-span-3 flex items-center justify-end gap-4">
+                <div className="col-span-2 flex items-center justify-end gap-4">
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${deal.status === true
                     ? 'bg-green-100 text-green-700 border border-green-200'
                     : 'bg-red-100 text-red-700 border border-red-200'
@@ -241,11 +279,10 @@ ${auth.userData?.name || 'Me'}
       </div>
 
       {/* Modal remains unchanged */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          {/* ... existing modal code ... */}
-        </div>
-      )}
+      <ComingSoon
+        showCreateForm={showCreateForm}
+        setShowCreateForm={setShowCreateForm}
+      />
 
       <Alert
         isOpen={alert.show}

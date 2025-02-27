@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Db, Server } from "@/app/utils/db";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
-import { redirect } from 'next/navigation';
 import ManageIdeaForm from '@/app/dashboard/components/manageIdeas';
 import router from 'next/router';
 export interface LocationProps {
@@ -61,7 +60,7 @@ export default function IdeaCard() {
 
       if (!ideasData || ideasData.length === 0) {
         console.log("ideasData not found");
-        redirect('/not-found');
+        return;
       }
 
       // Fetch offers for all ideas

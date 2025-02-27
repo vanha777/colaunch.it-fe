@@ -3,6 +3,7 @@ import { MdWebhook } from "react-icons/md";
 import { FaPlus, FaTimes, FaGhost, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Alert from "@/components/Alert";
 import { GameData } from "@/app/utils/AppContext";
+import ComingSoon from "./commingSoon";
 
 interface Webhook {
   id: string;
@@ -29,7 +30,7 @@ export default function WebhookSection({ selectedGame }: { selectedGame: GameDat
     const fetchWebhooks = async () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setWebhooks([
         {
           id: '1',
@@ -85,17 +86,17 @@ export default function WebhookSection({ selectedGame }: { selectedGame: GameDat
             <div className="col-span-4">What Happened</div>
             <div className="col-span-3 text-right">What To Send</div>
           </div>
-          
+
           {/* Table Body */}
           <div className="divide-y divide-white/[0.06]">
             {webhooks.map(webhook => (
-              <div key={webhook.id} 
-                   className="grid grid-cols-12 gap-4 p-6 hover:bg-white/[0.02] group transition-all duration-200">
+              <div key={webhook.id}
+                className="grid grid-cols-12 gap-4 p-6 hover:bg-white/[0.02] group transition-all duration-200">
                 <div className="col-span-4">
                   <div className="flex flex-wrap gap-2">
                     {webhook.events.map(event => (
-                      <span key={event} 
-                            className="px-2.5 py-1 bg-[#0CC0DF]/10 rounded-full text-[#0CC0DF] text-xs font-medium">
+                      <span key={event}
+                        className="px-2.5 py-1 bg-[#0CC0DF]/10 rounded-full text-[#0CC0DF] text-xs font-medium">
                         {event}
                       </span>
                     ))}
@@ -117,11 +118,10 @@ export default function WebhookSection({ selectedGame }: { selectedGame: GameDat
                   </div>
                 </div>
                 <div className="col-span-3 flex items-center justify-end gap-4">
-                  <span className={`px-3 py-1 rounded-full text-xs ${
-                    webhook.status === 'active' 
-                      ? 'bg-[#14F195]/10 text-[#14F195]' 
+                  <span className={`px-3 py-1 rounded-full text-xs ${webhook.status === 'active'
+                      ? 'bg-[#14F195]/10 text-[#14F195]'
                       : 'bg-white/[0.03] text-white/40'
-                  }`}>
+                    }`}>
                     {webhook.status}
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -155,11 +155,10 @@ export default function WebhookSection({ selectedGame }: { selectedGame: GameDat
       </div>
 
       {/* Create Webhook Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
-          {/* ... Similar modal structure as TokenomicsSection ... */}
-        </div>
-      )}
+      <ComingSoon
+        showCreateForm={showCreateForm}
+        setShowCreateForm={setShowCreateForm}
+      />
 
       <Alert
         isOpen={alert.show}
