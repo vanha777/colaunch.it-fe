@@ -12,6 +12,8 @@ export interface LocationProps {
 
 export interface OfferProps {
   id?: number;
+  user_id?: number;
+  deal_counts?: number;
   created_at?: string;
   totalDeals?: number;
   active?: boolean;
@@ -100,6 +102,45 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
       } else {
         setDownvotes(prev => prev - 1);
       }
+    }
+  };
+
+  const handleMakeDeal = async () => {
+    if (!auth.userData) {
+      console.log('User must be logged in to deals');
+      return;
+    }
+    try {
+
+      // Update the database
+      const { error } = await Db
+        .from('deals')
+        .insert({
+          to_user: auth.userData?.id,
+          from_user: idea.offer?.user_id,
+          offer: idea.offer?.id,
+          status: true,
+        });
+
+      if (error) {
+        console.error('Error updating votes:', error);
+        throw error;
+      } else {
+        const { error } = await Db
+          .from('offers')
+          .update({
+            deal_counts: idea.offer?.deal_counts ? idea.offer?.deal_counts + 1 : 1,
+          })
+          .eq('id', idea.offer?.id);
+
+        if (error) {
+          console.error('Error updating votes:', error);
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('Error handling vote:', error);
+      return;
     }
   };
 
@@ -360,12 +401,12 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
           {/* Card Action */}
           <div className="p-6">
             <button
-              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-full transition-all duration-200 font-medium shadow-sm ${
-                !auth.userData || !idea.offer
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:opacity-90 hover:shadow-md active:transform active:scale-98'
-              }`}
+              className={`w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-full transition-all duration-200 font-medium shadow-sm ${!auth.userData || !idea.offer
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:opacity-90 hover:shadow-md active:transform active:scale-98'
+                }`}
               disabled={!auth.userData || !idea.offer}
+              onClick={handleMakeDeal}
             >
               {idea.offer ? 'Make Deal' : 'No Deals Available'}
             </button>
