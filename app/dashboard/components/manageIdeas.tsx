@@ -319,7 +319,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="title"
                                         value={collectionForm.title}
                                         onChange={handleCollectionChange}
-                                        placeholder="Idea Title"
+                                        placeholder="Product Title"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />
@@ -342,7 +342,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="url"
                                         value={collectionForm.url}
                                         onChange={handleCollectionChange}
-                                        placeholder="Project URL (optional)"
+                                        placeholder="Product URL (optional)"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                     />
                                 </div>
@@ -354,7 +354,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="description"
                                         value={collectionForm.description}
                                         onChange={handleCollectionChange}
-                                        placeholder="Collection Description"
+                                        placeholder="Product Description"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800 h-32"
                                         required
                                     />
@@ -363,7 +363,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="country"
                                         value={collectionForm.country}
                                         onChange={handleCollectionChange}
-                                        placeholder="Idea Country"
+                                        placeholder="Product Country"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />
@@ -372,7 +372,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="city"
                                         value={collectionForm.city}
                                         onChange={handleCollectionChange}
-                                        placeholder="Idea City"
+                                        placeholder="Product City"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />
@@ -381,7 +381,7 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
                                         name="state"
                                         value={collectionForm.state}
                                         onChange={handleCollectionChange}
-                                        placeholder="Idea State"
+                                        placeholder="Product State"
                                         className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-gray-800"
                                         required
                                     />

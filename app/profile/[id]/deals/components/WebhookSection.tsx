@@ -1,19 +1,26 @@
+'use client'
 import { useState, useEffect } from "react";
 import { MdWebhook } from "react-icons/md";
 import { FaPlus, FaTimes, FaGhost, FaPencilAlt, FaTrash } from "react-icons/fa";
 import Alert from "@/components/Alert";
 import { GameData } from "@/app/utils/AppContext";
+import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
+import { Db, Server } from "@/app/utils/db";
+import router from "next/router";
+import { OfferProps } from "../../components/ideaCard";
 
-interface Webhook {
+interface DealDetails {
   id: string;
-  url: string;
-  events: string[];
-  status: 'active' | 'inactive';
-  createdAt: string;
+  created_at: string;
+  status: boolean;
+  from_user: UserData;
+  to_user: UserData;
+  offer: OfferProps;
 }
 
 export default function WebhookSection() {
-  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const { auth, getUser } = useAppContext();
+  const [deals, setDeals] = useState<DealDetails[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     url: '',
@@ -26,29 +33,50 @@ export default function WebhookSection() {
   });
 
   useEffect(() => {
-    const fetchWebhooks = async () => {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setWebhooks([
-        {
-          id: '1',
-          url: 'https://api.example.com/webhook1',
-          events: ['account.created', 'subscription.updated'],
-          status: 'active',
-          createdAt: '2024-03-20'
-        },
-        {
-          id: '2',
-          url: 'https://api.example.com/webhook2',
-          events: ['transaction.completed'],
-          status: 'inactive',
-          createdAt: '2024-03-19'
+    let user = auth.userData;
+    if (!user) {
+      user = getUser();
+      console.log("welcome back", user);
+      if (!user) {
+        router.push('/not-found');
+      }
+    }
+    // fetching all offers for this users
+    // for each offer we fetch table referral_link - relationship 1 - 1
+    const fetchData = async () => {
+      try {
+        const { data: offersData, error: offersError } = await Db
+          .from("deals")
+          .select(`
+          *,
+          from_user:users!deals_from_user_fkey(*),
+    to_user:users!deals_to_user_fkey(*),
+           offer:offers(*)
+        `)
+          .eq('from_user', user?.id);
+        // console.log('Fetched offers:', offersData);
+        if (offersError) {
+          console.error('Error fetching offers:', offersError);
+          throw new Error('Error fetching offers');
         }
-      ]);
-    };
+        // Parse the data into DealDetails array
+        const parsedDeals: DealDetails[] = offersData?.map(deal => ({
+          id: deal.id,
+          created_at: deal.created_at,
+          status: deal.status,
+          from_user: deal.from_user,
+          to_user: deal.to_user,
+          offer: deal.offer
+        })) || [];
+        console.log('Parsed deals:', parsedDeals);
+        setDeals(parsedDeals);
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+        throw new Error('Error fetching offers');
+      }
+    }
 
-    fetchWebhooks();
+    fetchData();
   }, []);
 
   return (
@@ -59,9 +87,9 @@ export default function WebhookSection() {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                My Deals Hub
+                Business Deals
               </span>
-              <p className="text-base text-gray-600 mt-2">{webhooks.length} active deals</p>
+              <p className="text-base text-gray-600 mt-2">{deals.length} active offers</p>
             </div>
           </div>
         </div>
@@ -86,22 +114,20 @@ export default function WebhookSection() {
 
           {/* Table Body */}
           <div className="divide-y divide-gray-200/10">
-            {webhooks.map(webhook => (
-              <div key={webhook.id}
+            {deals.map(deal => (
+              <div key={deal.id}
                 className="grid grid-cols-12 gap-4 p-6 hover:bg-gray-100/50 group transition-all duration-200">
                 <div className="col-span-4">
                   <div className="flex flex-wrap gap-2">
-                    {webhook.events.map(event => (
-                      <span key={event}
-                        className={`px-3 py-1 text-sm font-medium rounded-full ${event.includes('created')
-                            ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                            : event.includes('updated')
-                              ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                              : 'bg-blue-100 text-blue-700 border border-blue-200'
-                          }`}>
-                        {event}
-                      </span>
-                    ))}
+                    <span key={deal.id}
+                      className={`px-3 py-1 text-sm font-medium rounded-full ${!deal.status
+                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                        : deal.status
+                          ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                          : 'bg-blue-100 text-blue-700 border border-blue-200'
+                        }`}>
+                      {deal.offer.type}
+                    </span>
                   </div>
                 </div>
                 <div className="col-span-5">
@@ -111,22 +137,23 @@ export default function WebhookSection() {
                     </div>
                     <div>
                       <div className="text-gray-900 font-medium break-all">
-                        {webhook.url}
+                        {deal.offer.payment_link}
                       </div>
                       <div className="text-gray-500 text-sm mt-1">
-                        Created {new Date(webhook.createdAt).toLocaleDateString()}
+                        {/* Created {new Date(deal.offer.created_at).toLocaleDateString()} */}
+                        Created {deal.offer.created_at}
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="col-span-3 flex items-center justify-end gap-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${webhook.status === 'active'
-                      ? 'bg-green-100 text-green-700 border border-green-200'
-                      : 'bg-red-100 text-red-700 border border-red-200'
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${deal.status === true
+                    ? 'bg-green-100 text-green-700 border border-green-200'
+                    : 'bg-red-100 text-red-700 border border-red-200'
                     }`}>
-                    <span className={`w-2 h-2 rounded-full ${webhook.status === 'active' ? 'bg-green' : 'bg-red-500'
+                    <span className={`w-2 h-2 rounded-full ${deal.status === true ? 'bg-green' : 'bg-red-500'
                       } animate-pulse mr-2`}></span>
-                    {webhook.status}
+                    {deal.status === true ? 'Active' : 'Inactive'}
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button className="p-2 hover:bg-gray-200 rounded-full transition-all">
@@ -143,7 +170,7 @@ export default function WebhookSection() {
         </div>
 
         {/* Empty State - Updated styling */}
-        {webhooks.length === 0 && (
+        {deals.length === 0 && (
           <div className="text-center py-16 bg-base-200 rounded-3xl shadow-sm border border-gray-200/20">
             <FaGhost className="text-gray-400 text-5xl mx-auto mb-4" />
             <p className="text-gray-600 font-light">No webhook connections yet</p>

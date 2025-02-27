@@ -38,6 +38,9 @@ export default function OfferCard() {
       if (!user) {
         user = getUser();
         console.log("welcome back", user);
+        if (!user) {
+          router.push('/not-found');
+        }
       }
       // Update the query to include ideas
       const { data: offersData, error: offersError } = await Db
@@ -68,7 +71,7 @@ export default function OfferCard() {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                My Offers Hub
+                Your Offers
               </span>
               <p className="text-base text-gray-600 mt-2">Manage and view all your business offers</p>
             </div>

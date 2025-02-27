@@ -51,7 +51,7 @@ const SSOLogin = () => {
             checked={userType === 'distributor'}
             onChange={(e) => setUserType(e.target.checked ? 'distributor' : 'founder')}
           />
-          <span className={`text-sm ${userType === 'distributor' ? 'text-gray-800' : 'text-gray-500'}`}>Distributor</span>
+          <span className={`text-sm ${userType === 'distributor' ? 'text-gray-800' : 'text-gray-500'}`}>Business Partner</span>
         </div>
 
         <div className="space-y-4 w-80">

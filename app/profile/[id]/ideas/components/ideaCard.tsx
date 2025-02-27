@@ -5,6 +5,7 @@ import { Db, Server } from "@/app/utils/db";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
 import { redirect } from 'next/navigation';
 import ManageIdeaForm from '@/app/dashboard/components/manageIdeas';
+import router from 'next/router';
 export interface LocationProps {
   id?: number;
   country?: string;
@@ -48,8 +49,10 @@ export default function IdeaCard() {
       if (!user) {
         user = getUser();
         console.log("welcome back", user);
+        if (!user) {
+          router.push('/not-found');
+        }
       }
-
       // Fetch all ideas from supabase with related data
       const { data: ideasData, error: ideasError } = await Db
         .from('ideas')
@@ -91,9 +94,9 @@ export default function IdeaCard() {
           <div className="bg-base-200 rounded-full px-8 py-4 shadow-lg flex items-center">
             <div className="text-xl">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text font-bold text-2xl">
-                My Biz Hub
+                Your Products
               </span>
-              <p className="text-base text-gray-600 mt-2">Manage and view all your business ideas</p>
+              <p className="text-base text-gray-600 mt-2">Manage and view all your business products</p>
             </div>
           </div>
         </div>
@@ -167,11 +170,10 @@ export default function IdeaCard() {
                 {/* Offer Status */}
                 {idea.offer && (
                   <div className="pt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      idea.offer.active
+                    <span className={`px-3 py-1 rounded-full text-sm ${idea.offer.active
                         ? 'bg-green-100 text-green-700'
                         : 'bg-red-100 text-red-700'
-                    }`}>
+                      }`}>
                       {idea.offer.active ? 'Active Deal' : 'Inactive Deal'}
                     </span>
                   </div>
@@ -191,7 +193,7 @@ export default function IdeaCard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-600">Create New Idea</h3>
+            <h3 className="text-lg font-medium text-gray-600">Add new Product</h3>
           </div>
         </div>
       </div>
