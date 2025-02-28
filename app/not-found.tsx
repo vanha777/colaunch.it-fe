@@ -14,7 +14,7 @@ export default function NotFound() {
           changed, or is temporarily unavailable.
         </p>
         <Link
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-2 bg-green hover:bg-green/90 text-grey px-6 py-3 rounded-lg font-medium transition-colors"
         >
           <FaHome className="text-lg" />
