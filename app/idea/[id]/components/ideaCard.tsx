@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Db, Server } from "@/app/utils/db";
 import { AppProvider, useAppContext, UserData } from "@/app/utils/AppContext";
+import { useRouter } from 'next/navigation';
+
 export interface LocationProps {
   id?: number;
   country?: string;
@@ -41,6 +43,7 @@ export interface IdeaProps {
 
 export default function IdeaCard({ idea }: { idea: IdeaProps }) {
   const { auth, setUser, getUser } = useAppContext();
+  const router = useRouter();
   useEffect(() => {
     if (!auth.userData) {
       const user = getUser();
@@ -111,7 +114,6 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
       return;
     }
     try {
-
       // Update the database
       const { error } = await Db
         .from('deals')
@@ -126,17 +128,20 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
         console.error('Error updating votes:', error);
         throw error;
       } else {
-        const { error } = await Db
+        const { error: offerError } = await Db
           .from('offers')
           .update({
             deal_counts: idea.offer?.deal_counts ? idea.offer?.deal_counts + 1 : 1,
           })
           .eq('id', idea.offer?.id);
 
-        if (error) {
-          console.error('Error updating votes:', error);
-          throw error;
+        if (offerError) {
+          console.error('Error updating votes:', offerError);
+          throw offerError;
         }
+
+        // If both operations are successful, redirect to the partners page
+        router.push(`/profile/${auth.userData.id}/partners`);
       }
     } catch (error) {
       console.error('Error handling vote:', error);
