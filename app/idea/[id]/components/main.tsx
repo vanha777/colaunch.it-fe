@@ -36,7 +36,7 @@ export default async function Main({ parsedIdea }: { parsedIdea: IdeaProps }) {
     return (
         <>
             <SimpleSideBar>
-                <SimpleNavBar />
+                {/* <SimpleNavBar /> */}
                 <div className="container mx-auto py-28 overflow-y-auto">
                     <IdeaCard
                         idea={parsedIdea as IdeaProps}

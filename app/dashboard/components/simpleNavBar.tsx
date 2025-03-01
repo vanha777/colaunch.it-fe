@@ -41,38 +41,6 @@ export default function Navbar() {
                 {auth.userData?.name}
               </span>
             </div>
-
-            {/* Integration Partner */}
-            {/* <div className="dropdown dropdown-end">
-              <div className="tooltip tooltip-bottom" data-tip={`Current Integration: ${integrationPartner?.integration_partner || 'None'}`}>
-                <label tabIndex={0} className="btn btn-ghost btn-circle">
-                  <Server className="h-6 w-6" />
-                </label>
-              </div>
-              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                <li>
-                  <a className={`tooltip tooltip-right flex items-center gap-2 ${integrationPartner?.integration_partner === 'emis' ? 'bg-[#14F195]/20' : ''}`} data-tip="Connect to EMIS Clinical System" onClick={() => setIntegrationPartner({ integration_partner: 'emis' })}>
-                    EMIS
-                  </a>
-                </li>
-                <li>
-                    <a className={`tooltip tooltip-right flex items-center gap-2 ${integrationPartner?.integration_partner === 'rxweb' ? 'bg-[#14F195]/20' : ''}`} data-tip="Connect to RxWeb Pharmacy System" onClick={() => setIntegrationPartner({ integration_partner: 'rxweb' })}>
-                      RxWeb
-                    </a>
-                </li>
-                
-                <li>
-                  <a className={`tooltip tooltip-right flex items-center gap-2 ${integrationPartner?.integration_partner === 'titan' ? 'bg-[#14F195]/20' : ''}`} data-tip="Connect to Titan System" onClick={() => setIntegrationPartner({ integration_partner: 'titan' })}>
-                    Titan
-                  </a>
-                </li>
-                <li>
-                  <a className={`tooltip tooltip-right flex items-center gap-2 ${integrationPartner?.integration_partner === 'pharma_outcomes' ? 'bg-[#14F195]/20' : ''}`} data-tip="Connect to PharmOutcomes Platform" onClick={() => setIntegrationPartner({ integration_partner: 'pharma_outcomes' })}>
-                    Pharma Outcomes
-                  </a>
-                </li>
-              </ul>
-            </div> */}
           </div>
         )}
       </div>
@@ -80,9 +48,6 @@ export default function Navbar() {
       {/* Right side - with bubble style */}
       <div className="flex-none">
         <div className="bg-base-200 rounded-full px-6 py-2 shadow-lg flex items-center gap-2">
-          {/* <SettingsPage>
-            <button className="btn btn-ghost">Settings</button>
-          </SettingsPage> */}
 
           {auth.userData?.email && (
             <button

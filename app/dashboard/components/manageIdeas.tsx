@@ -129,29 +129,50 @@ export default function ManageIdeaForm({ setShowCreateForm, selectedIdea }: Crea
             return;
         }
         try {
+            console.log("these are images : ", collectionForm.images);
+            console.log("these are display images : ", displayImages);
             setIsLoading(true);
-            let photoUrls: string[] = [];
-            
-            // Keep existing images if updating
-            if (selectedIdea?.media) {
-                photoUrls = [...selectedIdea.media];
-            }
 
-            // Upload new images
-            for (const image of collectionForm.images) {
-                const upload_name = `${crypto.randomUUID()}`;
-                const { data: uploadData, error: uploadError } = await Db.storage
-                    .from('idea_media')
-                    .upload(upload_name, image);
-                if (uploadError) {
-                    console.error('Error uploading photo:', uploadError);
-                    continue;
+            let photoUrls: string[] = [];
+            let removeImages: string[] = [];
+            let canvasImages = displayImages;
+
+            for (const image of canvasImages) {
+                if (image instanceof File) {
+                    const upload_name = `${crypto.randomUUID()}`;
+                    const { data: uploadData, error: uploadError } = await Db.storage
+                        .from('idea_media')
+                        .upload(upload_name, image);
+                    if (uploadError) {
+                        console.error('Error uploading photo:', uploadError);
+                        continue;
+                    }
+                    const { data: { publicUrl } } = Db.storage
+                        .from('idea_media')
+                        .getPublicUrl(uploadData.path);
+                    
+                    // Replace the File instance with the publicUrl in canvasImages
+                    const imageIndex = canvasImages.indexOf(image);
+                    if (imageIndex !== -1) {
+                        canvasImages[imageIndex] = publicUrl;
+                    }
                 }
-                const { data: { publicUrl } } = Db.storage
-                    .from('idea_media')
-                    .getPublicUrl(uploadData.path);
-                photoUrls.push(publicUrl);
-            }
+                //TODO
+                // then also check if image in selectedIdea?.media has been removed from canvasImages
+                // then remove it from database
+            }; // Changed semicolon to just period since this is the end of a for loop
+
+            // // also remove old images
+            // // Todo: remove old images
+            // if (removeImages.length > 0) {
+            //     const { error: deleteError } = await Db.storage
+            //         .from('idea_media')
+            //         .remove(removeImages.map(imgUrl => imgUrl?.split('/').pop()).filter((name): name is string => name !== undefined)); // Extract file names and filter out undefined
+            //     if (deleteError) {
+            //         console.error('Error deleting images:', deleteError);
+            //     }
+            // }
+            //end.
 
             if (selectedIdea) {
                 // Update existing idea

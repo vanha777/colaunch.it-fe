@@ -196,12 +196,12 @@ export default function MainUniverse() {
             ) : (
                 <>
                     <SimpleSideBar>
-                        <SimpleNavBar />
+                        {/* <SimpleNavBar /> */}
                         {/* <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} /> */}
-                        <div className="container mx-auto py-28 overflow-y-auto">
+                        {/* <div className="container mx-auto py-28 overflow-y-auto"> */}
                             {/* <SimpleNav /> */}
                             <IdeaComponent ideas={ideas} industries={industries} />
-                        </div>
+                        {/* </div> */}
                     </SimpleSideBar>
 
                 </>
