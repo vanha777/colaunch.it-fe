@@ -1,5 +1,6 @@
 import Main from "./components/main";
 import type { Metadata } from 'next'
+
 export const metadata: Metadata = {
   title: 'CoLaunch - Connect Business and Scale Up',
   description: 'CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow.',
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
     // url: 'https://www.metaloot.dev/',
     images: [
       {
-        url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//ICON.png',
+        url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg',
         alt: 'CoLaunch - Connect Business and Scale Up',
       },
     ],

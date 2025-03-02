@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     // url: 'https://www.metaloot.dev/',
     images: [
       {
-        url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//ICON.png',
+        url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg',
         alt: 'CoLaunch - Connect Business and Scale Up',
       },
     ],
@@ -43,15 +43,15 @@ export default function RootLayout({
     <html lang="en" data-theme="light">
       <Head>
         {/* General Meta Tags */}
-        <meta name="title" content="MetaLoot - Gaming Digital Asset Register" />
-        <meta name="description" content="Ship faster, cheaper and better with our API." />
+        <meta name="title" content="CoLaunch - Connect Business and Scale Up" />
+        <meta name="description" content="CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow." />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.metaloot.dev/" />
         <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
         <meta property="og:description" content="Ship faster, cheaper and better with our API." />
-        <meta property="og:image" content="https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/metaloot/webmetadata/metaloot.png" />
+        <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
         <meta property="og:image:alt" content="A stunning preview of MetaLoot's multiverse gaming platform" />
 
         {/* Twitter */}
@@ -59,7 +59,7 @@ export default function RootLayout({
         <meta name="twitter:url" content="https://www.metaloot.dev/" />
         <meta name="twitter:title" content="MetaLoot - Gaming Digital Asset Register" />
         <meta name="twitter:description" content="Ship faster, cheaper and better with our API." />
-        <meta name="twitter:image" content="https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/metaloot/webmetadata/metaloot.png" />
+        <meta name="twitter:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
         <meta name="twitter:image:alt" content="A stunning preview of MetaLoot's multiverse gaming platform" />
         <meta name="twitter:site" content="@playmetaloot" />
         <meta name="twitter:creator" content="@playmetaloot" />
@@ -67,13 +67,13 @@ export default function RootLayout({
         {/* Telegram */}
         <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
         <meta property="og:description" content="Ship faster, cheaper and better with our API." />
-        <meta property="og:image" content="https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/metaloot/webmetadata/metaloot.png" />
+        <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
         <meta property="og:url" content="https://www.metaloot.dev/" />
 
         {/* Discord */}
         <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
         <meta property="og:description" content="Ship faster, cheaper and better with our API." />
-        <meta property="og:image" content="https://tzqzzuafkobkhygtccse.supabase.co/storage/v1/object/public/metaloot/webmetadata/metaloot.png" />
+        <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
         <meta property="og:type" content="website" />
       </Head>
       <body suppressHydrationWarning={true} className={inter.className}>
