@@ -15,6 +15,7 @@ export interface Idea {
   address_detail: LocationProps;
   industry: string;
   create_at: string;
+  verified?: string;
   tags: string[];
   // Add more properties as needed
 }
@@ -138,7 +139,8 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
                     <span>{industry.label}</span>
                   </div>
                 </button>
-              )}
+              )
+            }
             )}
           </div>
         </div>
@@ -149,7 +151,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
         {filteredIdeas.map((idea) => (
           <div
             key={idea.id}
-            className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+            className="card bg-base-200 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative"
             onClick={() => handleCardClick(idea.id)}
           >
             <figure className="relative">
@@ -169,7 +171,16 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
             </figure>
             <div className="card-body p-5">
               <div className="flex justify-between items-start">
-                <h2 className="card-title text-gray-800 font-semibold">{idea.title}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="card-title text-gray-800 font-semibold">{idea.title}</h2>
+                  {idea.verified && (
+                    <div className="bg-emerald-500 text-white p-1 rounded-full shadow-sm flex items-center justify-center" title="Verified On-Chain">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-3 text-sm font-medium">
                   <span className="flex items-center text-emerald-600">
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -186,8 +197,16 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
                 </div>
               </div>
               <div className="mt-3 space-y-1">
-                <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md">{idea.industry}</span>
+                  {idea.verified && (
+                    <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Verified On-Chain
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">

@@ -413,14 +413,14 @@ export default function IdeaCard({ idea }: { idea: IdeaProps }) {
               disabled={!auth.userData || !idea.offer}
               onClick={handleMakeDeal}
             >
-              {idea.offer ? 'Make Deal' : 'No Deals Available'}
+              {idea.offer ? "Let's Collaborate" : 'Not Available'}
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
               {!auth.userData
-                ? "Please login to make deals."
+                ? "Please login to collaborate."
                 : idea.offer
-                  ? "By making a deal, you agree to our terms and conditions. Commission rates are subject to change."
-                  : "No deals are currently available for this idea."}
+                  ? "By collaborating, you agree to our terms and conditions. Commission rates are subject to change."
+                  : "No collaboration opportunities are currently available for this idea."}
             </p>
           </div>
         </div>

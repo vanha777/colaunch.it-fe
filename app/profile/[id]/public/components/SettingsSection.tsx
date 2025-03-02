@@ -54,6 +54,14 @@ export default function SettingsSection({ user_id }: { user_id: string }) {
             </div>
           </div>
         </div>
+        
+        {/* Verified Badge Section */}
+        <div className="flex-none">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full px-6 py-3 shadow-lg flex items-center gap-3 text-white">
+            <FaCrown className="text-yellow-400 text-xl" />
+            <span className="font-medium">Verified User</span>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto w-full space-y-6">
