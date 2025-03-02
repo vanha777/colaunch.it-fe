@@ -12,7 +12,7 @@ interface InitialUserProps {
 }
 
 export default function DashboardClient({ rawUser }: InitialUserProps) {
-    const { auth, setAccessToken, setUser, setGame, setTokenData, logout,getUser } = useAppContext();
+    const { auth, setAccessToken, setUser, setGame, setTokenData, logout, getUser } = useAppContext();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +38,8 @@ export default function DashboardClient({ rawUser }: InitialUserProps) {
                 router.push("/dashboard/login");
             } finally {
                 setIsLoading(false);
+                alert("Thank you for registering with CoLaunch!, Dashboard will publicly accessible soon!");
+                router.push("/");
             }
         };
 

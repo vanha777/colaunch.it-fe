@@ -44,20 +44,29 @@ export default function Starters() {
 
   const tutorials = [
     {
-      title: "Verify Your Profile",
-      description: "Learn how to complete the verification process for your account. Includes identity verification, connecting social profiles, and security best practices.",
-      image: "/starter1.jpeg"
-    },
-    {
-      title: "Register Your Business or Idea",
-      description: "Step-by-step guide to registering your business or project idea on our platform. Includes documentation requirements, legal considerations, and visibility settings.",
-      image: "/starter2.jpg"
-    },
-    {
-      title: "Manage Votes and Shares",
-      description: "Comprehensive guide on how to create voting proposals, distribute shares, and manage stakeholder participation in your registered projects.",
-      image: "/starter3.png"
+      title: "Beta Demo",
+      description: "This is a 1st demo of the platform.",
+      image: "/rewards.jpeg",
+      link: "https://example.com/verify-profile"
     }
+    // {
+    //   title: "Verify Your Profile",
+    //   description: "Learn how to complete the verification process for your account. Includes identity verification, connecting social profiles, and security best practices.",
+    //   image: "/starter1.jpeg",
+    //   link: "https://example.com/verify-profile"
+    // },
+    // {
+    //   title: "Register Your Business or Idea",
+    //   description: "Step-by-step guide to registering your business or project idea on our platform. Includes documentation requirements, legal considerations, and visibility settings.",
+    //   image: "/starter2.jpg",
+    //   link: "https://example.com/register-business"
+    // },
+    // {
+    //   title: "Manage Votes and Shares",
+    //   description: "Comprehensive guide on how to create voting proposals, distribute shares, and manage stakeholder participation in your registered projects.",
+    //   image: "/starter3.png",
+    //   link: "https://example.com/manage-votes"
+    // }
   ];
 
   return (
@@ -76,10 +85,13 @@ export default function Starters() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {tutorials.map((tutorial, index) => (
-            <motion.div
+            <motion.a
               key={index}
+              href={tutorial.link}
+              target="_blank"
+              rel="noopener noreferrer"
               variants={itemVariants}
-              className="bg-gray-50 rounded-3xl p-6 border border-gray-200 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300"
+              className="bg-gray-50 rounded-3xl p-6 border border-gray-200 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300 block"
             >
               <div className="relative w-full aspect-video mb-4 rounded-xl overflow-hidden">
                 <Image
@@ -97,7 +109,7 @@ export default function Starters() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 {tutorial.description}
               </p>
-            </motion.div>
+            </motion.a>
           ))}
         </div>
 
