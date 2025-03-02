@@ -47,7 +47,7 @@ export default function Starters() {
       title: "Beta Demo",
       description: "This is a 1st demo of the platform.",
       image: "/rewards.jpeg",
-      link: "https://example.com/verify-profile"
+      link: "https://vimeo.com/1060119449?share=copy#t=0"
     }
     // {
     //   title: "Verify Your Profile",
