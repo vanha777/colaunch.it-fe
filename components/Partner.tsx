@@ -45,16 +45,18 @@ export default function Partner() {
         <div className="relative flex overflow-x-hidden overflow-y-hidden">
           <motion.div
             className="flex space-x-16 whitespace-nowrap"
-            animate={{
-              x: ["0%", "-50%"]
-            }}
+            initial={{ x: "0%" }}
+            animate={{ x: "-50%" }}
             transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 10,
-                ease: "linear",
-              },
+              duration: 10,
+              ease: "linear",
+              repeat: Infinity,
+              repeatType: "loop",
+            }}
+            style={{
+              willChange: "transform",
+              transform: "translate3d(0,0,0)",
+              WebkitTransform: "translate3d(0,0,0)",
             }}
           >
             {[...partners, ...partners].map((partner, index) => (
@@ -64,8 +66,12 @@ export default function Partner() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="flex flex-col items-center"
+                style={{
+                  WebkitTransform: "translate3d(0,0,0)",
+                  transform: "translate3d(0,0,0)",
+                }}
               >
-                <div className="relative w-32 h-32 flex items-center justify-center bg-transparent rounded-lg  hover:shadow-lg transition-all duration-300 p-4">
+                <div className="relative w-32 h-32 flex items-center justify-center bg-transparent rounded-lg hover:shadow-lg transition-all duration-300 p-4">
                   <div className="relative w-24 h-24">
                     <Image
                       src={partner.image}
