@@ -5,6 +5,7 @@ import Alert from "@/components/Alert";
 import { GameData, useAppContext, UserData } from "@/app/utils/AppContext";
 import { useEffect, useState } from "react";
 import { Db } from "@/app/utils/db";
+import { xSearch } from "@/app/utils/db";
 
 export default function SettingsSection() {
   const [isLoading, setIsLoading] = useState(false);
@@ -117,6 +118,35 @@ export default function SettingsSection() {
     setCurrentPlan(planId);
   };
 
+  const [validatingX, setValidatingX] = useState(false);
+  const [xValidation, setXValidation] = useState<{ isValid: boolean; message: string | null }>({
+    isValid: false,
+    message: null
+  });
+
+  const validateXAccount = async () => {
+    if (!formData.x) {
+      setXValidation({ isValid: false, message: 'Please enter an X username' });
+      return;
+    }
+
+    setValidatingX(true);
+    try {
+      const result = await xSearch(formData.x);
+      setXValidation({
+        isValid: Boolean(result),
+        message: result ? 'Account verified!' : 'Account not found'
+      });
+    } catch (error) {
+      setXValidation({
+        isValid: false,
+        message: 'Error validating account'
+      });
+    } finally {
+      setValidatingX(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 relative p-8">
       {/* Header Section with Bubble Style */}
@@ -188,13 +218,29 @@ export default function SettingsSection() {
                     </div>
                     <div className="flex-1">
                       <p className="text-gray-500 text-sm">{label}</p>
-                      <input
-                        type="text"
-                        placeholder={`Enter your ${label} URL`}
-                        className="w-full text-sm text-gray-900 bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
-                        value={formData[key as keyof UserData] || ''}
-                        onChange={(e) => handleInputChange(key as keyof UserData, e.target.value)}
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder={`Enter your ${label} URL`}
+                          className="w-full text-sm text-gray-900 bg-transparent border-b border-gray-200 focus:border-blue-500 focus:outline-none py-1"
+                          value={formData[key as keyof UserData] || ''}
+                          onChange={(e) => handleInputChange(key as keyof UserData, e.target.value)}
+                        />
+                        {key === 'x' && (
+                          <button
+                            onClick={validateXAccount}
+                            disabled={validatingX}
+                            className="px-3 py-1 text-xs rounded-full bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                          >
+                            {validatingX ? 'Checking...' : 'Verify'}
+                          </button>
+                        )}
+                      </div>
+                      {key === 'x' && xValidation.message && (
+                        <p className={`text-xs mt-1 ${xValidation.isValid ? 'text-green-500' : 'text-red-500'}`}>
+                          {xValidation.message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

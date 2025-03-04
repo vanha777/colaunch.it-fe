@@ -38,8 +38,8 @@ export default function DashboardClient({ rawUser }: InitialUserProps) {
                 router.push("/dashboard/login");
             } finally {
                 setIsLoading(false);
-                alert("Thank you for registering with CoLaunch!, Dashboard will publicly accessible soon!");
-                router.push("/");
+                // alert("Thank you for registering with CoLaunch!, Dashboard will publicly accessible soon!");
+                // router.push("/");
             }
         };
 

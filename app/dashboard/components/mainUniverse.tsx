@@ -26,6 +26,8 @@ import IdeaComponent, { Idea } from "./ideaComponent";
 import SimpleNav from "./simpleNav";
 import SimpleSideBar from "./simpleSideBar";
 import SimpleNavBar from "./simpleNavBar";
+import ChatInstruction from "./chatInstruction";
+
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
     const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -33,91 +35,6 @@ export default function MainUniverse() {
     const [activeView, setActiveView] = useState("view1");
     const [selectedGameData, setSelectedGameData] = useState<GameData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-
-    const selectGame = async (game: GameData) => {
-        console.log("debug here 0");
-        try {
-            setIsLoading(true);
-            // get access_token from server
-            const response = await fetch('https://metaloot-cloud-d4ec.shuttle.app/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    client_id: game.id,
-                    client_secret: "metalootfreetier"
-                })
-            });
-            console.log("debug here 1");
-            if (!response.ok) {
-                // throw new Error('Failed to fetch access token');
-                window.location.href = '/dashboard/login';
-                return;
-            }
-            console.log("debug here 2");
-            const data = await response.json();
-            setAccessToken(data.access_token);
-            console.log("get access_token successfully");
-
-            // get game_data from server
-            const response_game = await fetch(`https://metaloot-cloud-d4ec.shuttle.app/v1/api/game/${game.id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${data.access_token}`
-                }
-            });
-            if (!response.ok) {
-                // throw new Error('Failed to fetch access token');
-                window.location.href = '/dashboard/login';
-                return;
-            }
-            console.log("debug here 3");
-            const game_data = await response_game.json();
-            console.log("get game data successfully", game_data);
-            setSelectedGameData(game);
-
-            // Fetch and parse URI data for each game
-            const uri = game_data.account.data.token_uri;
-            const tokenDataWithDetails = await fetch(uri);
-            const uriData = await tokenDataWithDetails.json();
-            console.log("tokenDataWithDetails", uriData);
-            setTokenData({
-                name: uriData.name,
-                symbol: uriData.symbol,
-                uri: uri,
-                image: uriData.image,
-                description: uriData.description,
-                address: game_data.native_token,
-            });
-            console.log("debug here 4");
-
-            // get collection_data from server
-            const collection_uris: CollectionData[] = await Promise.all(game_data.account.data.nft_collection.map(async (collection: any) => {
-                const uri = collection.uri;
-                const collectionDataWithDetails = await fetch(uri);
-                const collectionUriData = await collectionDataWithDetails.json();
-                return {
-                    name: collectionUriData.name,
-                    symbol: collectionUriData.symbol,
-                    size: collectionUriData.size || 0,
-                    uri: uri,
-                    description: collectionUriData.description,
-                    address: collection.address,
-                    image: collectionUriData.image,
-                } as CollectionData;
-            }));
-            console.log("get collection data successfully");
-            setCollectionData(collection_uris);
-
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching tokens:', error);
-            setIsLoading(false);
-            // window.location.href = '/dashboard/login';
-        }
-    };
 
     useEffect(() => {
         console.log("this is auth", auth);
@@ -196,14 +113,8 @@ export default function MainUniverse() {
             ) : (
                 <>
                     <SimpleSideBar>
-                        {/* <SimpleNavBar /> */}
-                        {/* <Navbar menuItems={menuItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} activeView={activeView} setActiveView={setActiveView} /> */}
-                        {/* <div className="container mx-auto py-28 overflow-y-auto"> */}
-                            {/* <SimpleNav /> */}
-                            <IdeaComponent ideas={ideas} industries={industries} />
-                        {/* </div> */}
+                        <IdeaComponent ideas={ideas} industries={industries} />
                     </SimpleSideBar>
-
                 </>
             )}
         </>
