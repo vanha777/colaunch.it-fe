@@ -12,3 +12,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error processing request' }, { status: 400 })
   }
 }
+
+export async function GET() {
+  try {
+    // Handle your GET request here
+    console.log('Received GET request')
+    
+    return NextResponse.json({ message: 'GET request successful' }, { status: 200 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Error processing request' }, { status: 500 })
+  }
+}
