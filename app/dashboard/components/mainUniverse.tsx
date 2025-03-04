@@ -100,7 +100,7 @@ export default function MainUniverse() {
         },
         {
             id: "sustainability",
-            label: "Green Tech",
+            label: "Sustainability",
             icon: IoSettingsOutline,
             selectedIcon: IoSettingsSharp
         }
