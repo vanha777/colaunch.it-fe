@@ -57,7 +57,6 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [processing, setProcessing] = useState(false);
-    const [result, setResult] = useState<string | null>(null);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
 
     // Initialize speech recognition
@@ -110,7 +109,6 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                 processCommand();
             }
         } else {
-            setResult(null);
             setTranscript('');
             if (recognitionRef.current) {
                 recognitionRef.current.start();
@@ -173,16 +171,15 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                 text: transcript,
             });
             console.log("response", response.text);
-            // Parse and set the result
+            // Parse the result but don't set it to state since we don't need to display it
             const parsedResult = JSON.parse(response.text);
-            setResult(JSON.stringify(parsedResult, null, 2));
-
+            
             // Handle the command based on type
             handleCommand(parsedResult);
 
         } catch (error) {
             console.error('Error processing command:', error);
-            setResult('Error processing command. Please try again.');
+            // Don't set result error message
         } finally {
             setProcessing(false);
         }
@@ -254,15 +251,6 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                 {processing && (
                     <div className="mt-6 text-blue-600 animate-pulse">
                         Processing your command...
-                    </div>
-                )}
-
-                {result && (
-                    <div className="mt-8 w-full">
-                        <h3 className="text-lg font-medium text-gray-700 mb-2">Result:</h3>
-                        <pre className="p-4 bg-gray-800 text-green-400 rounded-lg overflow-auto">
-                            {result}
-                        </pre>
                     </div>
                 )}
             </div>

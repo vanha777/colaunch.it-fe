@@ -67,6 +67,8 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
     switch (searchParam.type.toLowerCase()) {
       case "name":
         setSearchQuery(searchParam.value);
+        setSearchQuery("");
+        setSelectedIndustries([]);
         break;
       
       case "location":
@@ -78,6 +80,8 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
         
         if (matchedLocation) {
           setSelectedLocation(matchedLocation);
+          setSearchQuery("");
+          setSelectedIndustries([]);
         }
         break;
       
@@ -90,9 +94,10 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
         );
         
         if (matchedIndustry) {
-          setSelectedIndustries(prev => 
-            prev.includes(matchedIndustry.id) ? prev : [...prev, matchedIndustry.id]
-          );
+          // Set new selection instead of adding to existing selection
+          setSelectedLocation("All Locations");
+          setSearchQuery("");
+          setSelectedIndustries([matchedIndustry.id]);
         }
         break;
         
