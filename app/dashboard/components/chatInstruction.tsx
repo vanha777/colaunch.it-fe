@@ -208,76 +208,78 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
     // call the onSearch function with the search term
 
     return (
-        <div className="flex flex-col h-[600px] bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl shadow-2xl overflow-hidden border border-blue-400/30 backdrop-blur-sm">
+        <div className="flex flex-row h-[200px] bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl shadow-2xl overflow-hidden border border-blue-400/30 backdrop-blur-sm">
             <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
-            <div className="flex-1 p-8 flex flex-col items-center justify-center relative z-10">
-                <div className="text-center mb-10">
-                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-200 mb-3">Tell me what you want</h2>
-                </div>
-
-                <div className="relative mb-8">
-                    <div className={`absolute inset-0 rounded-full ${isListening ? 'bg-red-500/20' : 'bg-blue-500/20'} blur-xl transform scale-150 animate-pulse`}></div>
-                    <button
-                        onClick={toggleListening}
-                        disabled={processing}
-                        className={`relative rounded-full p-8 ${
-                            isListening ? 'bg-gradient-to-br from-red-500 to-pink-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                        } text-white shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-blue-500/50 z-10 ${
-                            isListening ? 'animate-pulse' : ''
-                        }`}
-                    >
-                        <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+            <div className="flex-1 p-4 flex flex-row items-center justify-between relative z-10">
+                <div className="text-left">
+                    <h2 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-200 mb-2">Tell me what you want</h2>
+                    
+                    <div className="mt-2 font-medium text-blue-100 tracking-wide">
                         {isListening ? (
-                            <FaStop className="w-10 h-10 animate-pulse" />
+                            <div className="flex items-center gap-2">
+                                <span>Analyzing voice input</span>
+                                <span className="flex space-x-1">
+                                    <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.1s]"></span>
+                                    <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.2s]"></span>
+                                    <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.3s]"></span>
+                                </span>
+                            </div>
                         ) : (
-                            <FaMicrophone className="w-10 h-10" />
+                            <span className="text-blue-200">Activate voice searching</span>
                         )}
-                        <span className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-8 rounded-full transition-all duration-500 ${
-                            isListening ? 'bg-red-400 animate-[grow_1s_ease-in-out_infinite]' : 'bg-transparent'
-                        }`}></span>
-                    </button>
+                    </div>
                 </div>
 
-                <div className="mt-4 font-medium text-blue-100 tracking-wide">
-                    {isListening ? (
-                        <div className="flex items-center gap-2">
-                            <span>Analyzing voice input</span>
-                            <span className="flex space-x-1">
-                                <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.1s]"></span>
-                                <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.2s]"></span>
-                                <span className="w-2 h-2 bg-blue-400 rounded-full animate-[bounce_0.6s_infinite_0.3s]"></span>
-                            </span>
+                <div className="flex flex-row items-center gap-6">
+                    <div className="relative">
+                        <div className={`absolute inset-0 rounded-full ${isListening ? 'bg-red-500/20' : 'bg-blue-500/20'} blur-xl transform scale-150 animate-pulse`}></div>
+                        <button
+                            onClick={toggleListening}
+                            disabled={processing}
+                            className={`relative rounded-full p-6 ${
+                                isListening ? 'bg-gradient-to-br from-red-500 to-pink-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                            } text-white shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-blue-500/50 z-10 ${
+                                isListening ? 'animate-pulse' : ''
+                            }`}
+                        >
+                            <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+                            {isListening ? (
+                                <FaStop className="w-6 h-6 animate-pulse" />
+                            ) : (
+                                <FaMicrophone className="w-6 h-6" />
+                            )}
+                            <span className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-8 rounded-full transition-all duration-500 ${
+                                isListening ? 'bg-red-400 animate-[grow_1s_ease-in-out_infinite]' : 'bg-transparent'
+                            }`}></span>
+                        </button>
+                    </div>
+
+                    {transcript && (
+                        <div className="w-64">
+                            <h3 className="text-sm font-medium text-blue-300 mb-1 flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+                                </svg>
+                                Transcript:
+                            </h3>
+                            <div className="p-3 bg-slate-800/70 rounded-xl border border-blue-500/20 backdrop-blur text-blue-100 shadow-lg relative overflow-hidden text-sm">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-500"></div>
+                                "{transcript}"
+                                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+                            </div>
                         </div>
-                    ) : (
-                        <span className="text-blue-200">Activate voice searching</span>
+                    )}
+
+                    {processing && (
+                        <div className="text-blue-300 flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Searching...
+                        </div>
                     )}
                 </div>
-
-                {transcript && (
-                    <div className="mt-10 w-full max-w-lg">
-                        <h3 className="text-lg font-medium text-blue-300 mb-2 flex items-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
-                            </svg>
-                            Transcript:
-                        </h3>
-                        <div className="p-5 bg-slate-800/70 rounded-xl border border-blue-500/20 backdrop-blur text-blue-100 shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-500"></div>
-                            "{transcript}"
-                            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
-                        </div>
-                    </div>
-                )}
-
-                {processing && (
-                    <div className="mt-8 text-blue-300 flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Searching ...
-                    </div>
-                )}
             </div>
             
             <style jsx global>{`
