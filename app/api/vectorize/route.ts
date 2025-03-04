@@ -30,17 +30,39 @@ export async function POST(request: Request) {
     for (const idea of ideasData) {
       try {
         // Create content to vectorize (combine relevant fields)
-        const contentToVectorize = `${idea.title} ${idea.description || ''}`;
-        
+        // const contentToVectorize = `${idea.title} ${idea.description || ''}`;
+        const contentToVectorize = [
+          `Title: ${idea.title}`,
+          `Description: ${idea.description || ''}`,
+          `Industry: ${idea.industry || ''}`,
+          `Tags: ${idea.tags ? idea.tags.join(', ') : ''}`,
+          `Location: ${[
+            idea.address_id?.suburb,
+            idea.address_id?.state,
+            idea.address_id?.country,
+          ].filter(Boolean).join(', ')}`,
+          `User: ${idea.users?.name || ''}`,
+          `Email: ${idea.users?.email || ''}`,
+          `User Type: ${idea.users?.type || ''}`
+        ].filter(Boolean).join(' ').trim();
+
+        console.log('Optimized Content to Vectorize:', contentToVectorize);
+
+
         // Generate embedding for the idea
         const [embedding] = await embeddings.embedDocuments([contentToVectorize]);
-        
+        console.log('Embedding Generated:', {
+          id: idea.id,
+          length: embedding.length, // Should be 1536
+          sample: embedding.slice(0, 5), // Check first few values
+        });
+
         // Update the idea record with the embedding
         const { error: updateError } = await Db
           .from('ideas')
           .update({ embedding })
           .eq('id', idea.id);
-        
+
         if (updateError) {
           console.error(`Error updating embedding for idea ${idea.id}:`, updateError);
           errorCount++;
@@ -53,9 +75,9 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Processed ${successCount} ideas successfully, ${errorCount} failures` 
+    return NextResponse.json({
+      success: true,
+      message: `Processed ${successCount} ideas successfully, ${errorCount} failures`
     }, { status: 200 });
   } catch (error) {
     console.error('Error in vectorize API:', error);

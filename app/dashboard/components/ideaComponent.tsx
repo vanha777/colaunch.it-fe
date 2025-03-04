@@ -1,8 +1,10 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LocationProps } from '@/app/idea/[id]/components/ideaCard';
 import { IoSearch, IoLocationOutline, IoMic } from "react-icons/io5";
 import ChatInstruction from './chatInstruction';
+import { Db } from '@/app/utils/db';
 
 export interface Idea {
   id: string;
@@ -60,67 +62,83 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
   };
 
   // Updated search method to handle structured search parameters
-  const handleSearchFromChat = (searchParam: { type: string, value: string }) => {
-    console.log("Search parameter from chat:", searchParam);
-    
-    if (!searchParam || !searchParam.type || !searchParam.value) {
-      setShowSearchBar(true);
+  const handleSearchFromChat = async (searchParam: { type: string, value: string, embedding?: number[] }) => {
+    const embedding = searchParam.embedding;
+    if (!embedding) {
+      console.error("No embedding provided");
       return;
     }
-    
-    setShowSearchBar(false);
-    
-    switch (searchParam.type.toLowerCase()) {
-      case "name":
-        setSearchQuery(searchParam.value);
-        setSearchQuery("");
-        setSelectedIndustries([]);
-        break;
-      
-      case "location":
-        // Find closest location match
-        const locationValue = searchParam.value.toLowerCase();
-        const matchedLocation = uniqueLocations.find(loc => 
-          loc.toLowerCase() === locationValue || loc.toLowerCase().includes(locationValue)
-        );
-        
-        if (matchedLocation) {
-          setSelectedLocation(matchedLocation);
-          setSearchQuery("");
-          setSelectedIndustries([]);
-        }
-        break;
-      
-      case "category":
-        // Find closest industry/category match
-        const categoryValue = searchParam.value.toLowerCase();
-        const matchedIndustry = industries.find(ind => 
-          ind.label.toLowerCase() === categoryValue || 
-          ind.label.toLowerCase().includes(categoryValue)
-        );
-        
-        if (matchedIndustry) {
-          // Set new selection instead of adding to existing selection
-          setSelectedLocation("All Locations");
-          setSearchQuery("");
-          setSelectedIndustries([matchedIndustry.id]);
-        }
-        break;
-        
-      default:
-        // Default to searching by name if type is not recognized
-        setSearchQuery(searchParam.value);
+    console.log("Embedding:", embedding);
+    console.log('Embedding Length:', embedding.length); // Should be 1536
+    // Perform vector search if embedding exists
+    const { data, error } = await Db.rpc('vector_search_ideas', {
+      query_embedding: embedding,
+      similarity_threshold: 0.30,
+      match_count: 10
+    });
+    console.log("Vector Search Data:", data);
+    if (error) {
+      console.error("Vector Search Error:", error);
     }
+
+    // if (!searchParam || !searchParam.type || !searchParam.value) {
+    //   setShowSearchBar(true);
+    //   return;
+    // }
+
+    // setShowSearchBar(false);
+
+    // switch (searchParam.type.toLowerCase()) {
+    //   case "name":
+    //     setSearchQuery(searchParam.value);
+    //     setSearchQuery("");
+    //     setSelectedIndustries([]);
+    //     break;
+
+    //   case "location":
+    //     // Find closest location match
+    //     const locationValue = searchParam.value.toLowerCase();
+    //     const matchedLocation = uniqueLocations.find(loc => 
+    //       loc.toLowerCase() === locationValue || loc.toLowerCase().includes(locationValue)
+    //     );
+
+    //     if (matchedLocation) {
+    //       setSelectedLocation(matchedLocation);
+    //       setSearchQuery("");
+    //       setSelectedIndustries([]);
+    //     }
+    //     break;
+
+    //   case "category":
+    //     // Find closest industry/category match
+    //     const categoryValue = searchParam.value.toLowerCase();
+    //     const matchedIndustry = industries.find(ind => 
+    //       ind.label.toLowerCase() === categoryValue || 
+    //       ind.label.toLowerCase().includes(categoryValue)
+    //     );
+
+    //     if (matchedIndustry) {
+    //       // Set new selection instead of adding to existing selection
+    //       setSelectedLocation("All Locations");
+    //       setSearchQuery("");
+    //       setSelectedIndustries([matchedIndustry.id]);
+    //     }
+    //     break;
+
+    //   default:
+    //     // Default to searching by name if type is not recognized
+    //     setSearchQuery(searchParam.value);
+    // }
   };
 
   // Update the filteredIdeas logic to support partial location matching
   const filteredIdeas = ideas.filter(idea => {
     const ideaLocation = `${idea.address_detail.state}, ${idea.address_detail.country}`;
-    
+
     // Search by title
-    const matchesSearch = searchQuery === "" || 
+    const matchesSearch = searchQuery === "" ||
       idea.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Location matching - will match state or country independently
     const matchesLocation = selectedLocation === "All Locations" ||
       ideaLocation === selectedLocation ||
@@ -128,7 +146,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
         idea.address_detail?.state?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
         idea.address_detail?.country?.toLowerCase().includes(selectedLocation.toLowerCase())
       ));
-    
+
     // Industry matching
     const matchesIndustry = selectedIndustries.length === 0 ||
       selectedIndustries.includes(idea.industry);
@@ -159,69 +177,69 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
 
           {/* Search and Location Bar */}
           <div className="px-6 py-4 mt-4">
-          {showSearchBar && (
-            <div className="bg-base-200 rounded-3xl px-8 py-6 shadow-lg">
-                  <div className="flex gap-4 mb-4">
-                    {/* Search Bar */}
-                    <div className="flex-1 relative">
-                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <IoSearch className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Search ideas by name..."
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
+            {showSearchBar && (
+              <div className="bg-base-200 rounded-3xl px-8 py-6 shadow-lg">
+                <div className="flex gap-4 mb-4">
+                  {/* Search Bar */}
+                  <div className="flex-1 relative">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <IoSearch className="h-5 w-5 text-gray-400" />
                     </div>
-
-                    {/* Location Dropdown */}
-                    <div className="dropdown">
-                      <label tabIndex={0} className="btn bg-white hover:bg-gray-100 border-gray-200 text-gray-700 rounded-full flex items-center gap-2 min-w-[180px] py-3">
-                        <IoLocationOutline className="h-5 w-5" />
-                        {selectedLocation}
-                      </label>
-                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-white rounded-2xl w-72 mt-2 max-h-[300px] overflow-y-auto">
-                        {uniqueLocations.map((location) => (
-                          <li key={location}>
-                            <a
-                              className={`hover:bg-gray-50 rounded-xl ${selectedLocation === location ? 'bg-blue-50 text-blue-600' : ''}`}
-                              onClick={() => setSelectedLocation(location)}
-                            >
-                              {location}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search ideas by name..."
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
 
-                  {/* Industry Filters - Using passed in industries */}
-                  <div className="grid grid-cols-6 gap-3 mt-4">
-                    {industries.map((industry) => {
-                      const Icon = selectedIndustries.includes(industry.id) ? industry.selectedIcon : industry.icon;
-                      return (
-                        <button
-                          key={industry.id}
-                          onClick={() => toggleIndustry(industry.id)}
-                          className={`px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 text-center
+                  {/* Location Dropdown */}
+                  <div className="dropdown">
+                    <label tabIndex={0} className="btn bg-white hover:bg-gray-100 border-gray-200 text-gray-700 rounded-full flex items-center gap-2 min-w-[180px] py-3">
+                      <IoLocationOutline className="h-5 w-5" />
+                      {selectedLocation}
+                    </label>
+                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-white rounded-2xl w-72 mt-2 max-h-[300px] overflow-y-auto">
+                      {uniqueLocations.map((location) => (
+                        <li key={location}>
+                          <a
+                            className={`hover:bg-gray-50 rounded-xl ${selectedLocation === location ? 'bg-blue-50 text-blue-600' : ''}`}
+                            onClick={() => setSelectedLocation(location)}
+                          >
+                            {location}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Industry Filters - Using passed in industries */}
+                <div className="grid grid-cols-6 gap-3 mt-4">
+                  {industries.map((industry) => {
+                    const Icon = selectedIndustries.includes(industry.id) ? industry.selectedIcon : industry.icon;
+                    return (
+                      <button
+                        key={industry.id}
+                        onClick={() => toggleIndustry(industry.id)}
+                        className={`px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 text-center
                             ${selectedIndustries.includes(industry.id)
-                              ? 'bg-blue-100 text-blue-600 border-2 border-blue-200 shadow-md'
-                              : 'bg-white text-gray-600 border-2 border-gray-100 hover:bg-gray-50 hover:shadow-md'
-                            }`}
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            <Icon className="w-4 h-4" />
-                            <span>{industry.label}</span>
-                          </div>
-                        </button>
-                      )
-                    }
-                    )}
-                  </div>
-            </div>
-          )}
+                            ? 'bg-blue-100 text-blue-600 border-2 border-blue-200 shadow-md'
+                            : 'bg-white text-gray-600 border-2 border-gray-100 hover:bg-gray-50 hover:shadow-md'
+                          }`}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <Icon className="w-4 h-4" />
+                          <span>{industry.label}</span>
+                        </div>
+                      </button>
+                    )
+                  }
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Ideas Grid */}
@@ -245,9 +263,9 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
                       ))}
                     </div>
                   )}
-                  <img 
-                    src={idea.media[0]} 
-                    alt={idea.title} 
+                  <img
+                    src={idea.media[0]}
+                    alt={idea.title}
                     className="w-full h-72 object-cover rounded-t-xl"
                   />
                 </figure>

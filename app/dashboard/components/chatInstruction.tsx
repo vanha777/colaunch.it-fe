@@ -6,6 +6,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { LLMChain } from "langchain/chains";
 import { xSearch } from "@/app/utils/db";
+import OpenAI from "openai";
 
 // Add type definitions for Web Speech API
 interface SpeechRecognitionEvent {
@@ -50,7 +51,7 @@ declare global {
 }
 
 interface ChatInstructionProps {
-    onSearch: (searchTerm: { type: string, value: string }) => void;
+    onSearch: (searchTerm: { type: string, value: string, embedding?: number[] }) => void;
 }
 
 const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstructionProps) => {
@@ -131,6 +132,12 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                 openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
             });
 
+            // Initialize OpenAI API client for embeddings
+            const openai = new OpenAI({
+                apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+                dangerouslyAllowBrowser: true // Allow browser usage (be cautious with this)
+            });
+
             // Create a prompt template
             const promptTemplate = PromptTemplate.fromTemplate(
                 `Extract the search criteria from this voice input:
@@ -173,7 +180,21 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
             console.log("response", response.text);
             // Parse the result but don't set it to state since we don't need to display it
             const parsedResult = JSON.parse(response.text);
+
+            // Create embedding for the search query
+            const queryText = parsedResult.parameters.value;
+            const embeddingResponse = await openai.embeddings.create({
+                model: 'text-embedding-ada-002',
+                input: queryText,
+            });
             
+
+            // Add the embedding to the parsed result
+            parsedResult.parameters.embedding = embeddingResponse.data[0].embedding;
+            console.log('Query Embedding Generated:', {
+                length: parsedResult.parameters.embedding.length, // Should be 1536
+                sample: parsedResult.parameters.embedding.slice(0, 5), // Preview of the embedding
+            });
             // Handle the command based on type
             handleCommand(parsedResult);
 
@@ -185,7 +206,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
         }
     };
 
-    const handleCommand = (parsedCommand: { command: string, parameters: any }) => {
+    const handleCommand = (parsedCommand: { command: string, parameters: any, embedding: number[] }) => {
         console.log("handleCommand", parsedCommand);
         onSearch(parsedCommand.parameters);
         // switch (parsedCommand.command) {
@@ -213,7 +234,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
             <div className="flex-1 p-4 flex flex-row items-center justify-between relative z-10">
                 <div className="text-left">
                     <h2 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-200 mb-2">Tell me what you want</h2>
-                    
+
                     <div className="mt-2 font-medium text-blue-100 tracking-wide">
                         {isListening ? (
                             <div className="flex items-center gap-2">
@@ -236,11 +257,9 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                         <button
                             onClick={toggleListening}
                             disabled={processing}
-                            className={`relative rounded-full p-6 ${
-                                isListening ? 'bg-gradient-to-br from-red-500 to-pink-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                            } text-white shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-blue-500/50 z-10 ${
-                                isListening ? 'animate-pulse' : ''
-                            }`}
+                            className={`relative rounded-full p-6 ${isListening ? 'bg-gradient-to-br from-red-500 to-pink-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                                } text-white shadow-lg transition-all duration-500 hover:scale-110 hover:shadow-blue-500/50 z-10 ${isListening ? 'animate-pulse' : ''
+                                }`}
                         >
                             <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
                             {isListening ? (
@@ -248,9 +267,8 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                             ) : (
                                 <FaMicrophone className="w-6 h-6" />
                             )}
-                            <span className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-8 rounded-full transition-all duration-500 ${
-                                isListening ? 'bg-red-400 animate-[grow_1s_ease-in-out_infinite]' : 'bg-transparent'
-                            }`}></span>
+                            <span className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-8 rounded-full transition-all duration-500 ${isListening ? 'bg-red-400 animate-[grow_1s_ease-in-out_infinite]' : 'bg-transparent'
+                                }`}></span>
                         </button>
                     </div>
 
@@ -281,7 +299,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                     )}
                 </div>
             </div>
-            
+
             <style jsx global>{`
                 @keyframes grow {
                     0%, 100% { height: 8px; opacity: 0.5; }
