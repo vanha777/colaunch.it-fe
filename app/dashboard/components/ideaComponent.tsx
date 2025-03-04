@@ -40,6 +40,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
   const [voiceCommand, setVoiceCommand] = useState("");
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
   // Get unique locations from ideas
   const uniqueLocations = ["All Locations", ...new Set(ideas.map(idea =>
@@ -62,7 +63,12 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
   const handleSearchFromChat = (searchParam: { type: string, value: string }) => {
     console.log("Search parameter from chat:", searchParam);
     
-    if (!searchParam || !searchParam.type || !searchParam.value) return;
+    if (!searchParam || !searchParam.type || !searchParam.value) {
+      setShowSearchBar(true);
+      return;
+    }
+    
+    setShowSearchBar(false);
     
     switch (searchParam.type.toLowerCase()) {
       case "name":
@@ -153,67 +159,69 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
 
           {/* Search and Location Bar */}
           <div className="px-6 py-4 mt-4">
+          {showSearchBar && (
             <div className="bg-base-200 rounded-3xl px-8 py-6 shadow-lg">
-              <div className="flex gap-4 mb-4">
-                {/* Search Bar */}
-                <div className="flex-1 relative">
-                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <IoSearch className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search ideas by name..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                {/* Location Dropdown */}
-                <div className="dropdown">
-                  <label tabIndex={0} className="btn bg-white hover:bg-gray-100 border-gray-200 text-gray-700 rounded-full flex items-center gap-2 min-w-[180px] py-3">
-                    <IoLocationOutline className="h-5 w-5" />
-                    {selectedLocation}
-                  </label>
-                  <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-white rounded-2xl w-72 mt-2 max-h-[300px] overflow-y-auto">
-                    {uniqueLocations.map((location) => (
-                      <li key={location}>
-                        <a
-                          className={`hover:bg-gray-50 rounded-xl ${selectedLocation === location ? 'bg-blue-50 text-blue-600' : ''}`}
-                          onClick={() => setSelectedLocation(location)}
-                        >
-                          {location}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Industry Filters - Using passed in industries */}
-              <div className="grid grid-cols-6 gap-3 mt-4">
-                {industries.map((industry) => {
-                  const Icon = selectedIndustries.includes(industry.id) ? industry.selectedIcon : industry.icon;
-                  return (
-                    <button
-                      key={industry.id}
-                      onClick={() => toggleIndustry(industry.id)}
-                      className={`px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 text-center
-                        ${selectedIndustries.includes(industry.id)
-                          ? 'bg-blue-100 text-blue-600 border-2 border-blue-200 shadow-md'
-                          : 'bg-white text-gray-600 border-2 border-gray-100 hover:bg-gray-50 hover:shadow-md'
-                        }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Icon className="w-4 h-4" />
-                        <span>{industry.label}</span>
+                  <div className="flex gap-4 mb-4">
+                    {/* Search Bar */}
+                    <div className="flex-1 relative">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <IoSearch className="h-5 w-5 text-gray-400" />
                       </div>
-                    </button>
-                  )
-                }
-                )}
-              </div>
+                      <input
+                        type="text"
+                        placeholder="Search ideas by name..."
+                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Location Dropdown */}
+                    <div className="dropdown">
+                      <label tabIndex={0} className="btn bg-white hover:bg-gray-100 border-gray-200 text-gray-700 rounded-full flex items-center gap-2 min-w-[180px] py-3">
+                        <IoLocationOutline className="h-5 w-5" />
+                        {selectedLocation}
+                      </label>
+                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-white rounded-2xl w-72 mt-2 max-h-[300px] overflow-y-auto">
+                        {uniqueLocations.map((location) => (
+                          <li key={location}>
+                            <a
+                              className={`hover:bg-gray-50 rounded-xl ${selectedLocation === location ? 'bg-blue-50 text-blue-600' : ''}`}
+                              onClick={() => setSelectedLocation(location)}
+                            >
+                              {location}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Industry Filters - Using passed in industries */}
+                  <div className="grid grid-cols-6 gap-3 mt-4">
+                    {industries.map((industry) => {
+                      const Icon = selectedIndustries.includes(industry.id) ? industry.selectedIcon : industry.icon;
+                      return (
+                        <button
+                          key={industry.id}
+                          onClick={() => toggleIndustry(industry.id)}
+                          className={`px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 text-center
+                            ${selectedIndustries.includes(industry.id)
+                              ? 'bg-blue-100 text-blue-600 border-2 border-blue-200 shadow-md'
+                              : 'bg-white text-gray-600 border-2 border-gray-100 hover:bg-gray-50 hover:shadow-md'
+                            }`}
+                        >
+                          <div className="flex items-center justify-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span>{industry.label}</span>
+                          </div>
+                        </button>
+                      )
+                    }
+                    )}
+                  </div>
             </div>
+          )}
           </div>
 
           {/* Ideas Grid */}
