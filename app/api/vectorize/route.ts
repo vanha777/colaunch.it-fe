@@ -32,18 +32,21 @@ export async function POST(request: Request) {
         // Create content to vectorize (combine relevant fields)
         // const contentToVectorize = `${idea.title} ${idea.description || ''}`;
         const contentToVectorize = [
-          `Title: ${idea.title}`,
-          `Description: ${idea.description || ''}`,
           `Industry: ${idea.industry || ''}`,
-          `Tags: ${idea.tags ? idea.tags.join(', ') : ''}`,
-          `Location: ${[
-            idea.address_id?.suburb,
-            idea.address_id?.state,
-            idea.address_id?.country,
-          ].filter(Boolean).join(', ')}`,
-          `User: ${idea.users?.name || ''}`,
+          `Title: ${idea.title}`,
+          // `Description: ${idea.description || ''}`,
+          `${idea.tags}`,
+          `Country: ${idea.address_id?.country}`,
+          `Suburb: ${idea.address_id?.suburb}`,
+          `State: ${idea.address_id?.state}`,
+          // `${Array.isArray(idea.tags) ? idea.tags.join(', ') : ''}`,
+          // `Location: ${[
+          //   idea.address_id?.country,
+          //   idea.address_id?.suburb,
+          //   idea.address_id?.state,
+          // ].filter(Boolean).join(', ')}`,
+          `Founder: ${idea.users?.name || ''}`,
           `Email: ${idea.users?.email || ''}`,
-          `User Type: ${idea.users?.type || ''}`
         ].filter(Boolean).join(' ').trim();
 
         console.log('Optimized Content to Vectorize:', contentToVectorize);

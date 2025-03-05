@@ -24,7 +24,6 @@ export interface Idea {
 }
 
 interface IdeaComponentProps {
-  ideas: Idea[];
   industries: {
     id: string;
     label: string;
@@ -33,7 +32,9 @@ interface IdeaComponentProps {
   }[];
 }
 
-const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
+const IdeaComponent: React.FC<IdeaComponentProps> = ({ industries }) => {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +44,32 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [showSearchBar, setShowSearchBar] = useState(false);
+
+
+  useEffect(() => {
+    try {
+      setIsLoading(true);
+      const fetchIdeas = async () => {
+        const { data: ideasData, error: ideasError } = await Db
+          .from('ideas')
+          .select(`
+                  *,
+                  address_detail!inner (*)
+                `).order('upvotes', { ascending: false }); // Sorting by upvotes descending
+        console.log("ideasData", ideasData);
+        const ideas = ideasData as Idea[];
+        setIdeas(ideas);
+      }
+      fetchIdeas();
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Error fetching ideas:', error);
+    } finally {
+      setIsLoading(false);
+    }
+
+    // fetch token data for selected game
+  }, []);
 
   // Get unique locations from ideas
   const uniqueLocations = ["All Locations", ...new Set(ideas.map(idea =>
@@ -77,6 +104,13 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ ideas, industries }) => {
       match_count: 10
     });
     console.log("Vector Search Data:", data);
+    const ideas = data as Idea[];
+    if (ideas && ideas.length > 0) {
+      setIdeas(ideas);
+      setShowSearchBar(false);
+    } else {
+      setShowSearchBar(true);
+    }
     if (error) {
       console.error("Vector Search Error:", error);
     }

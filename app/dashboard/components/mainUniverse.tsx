@@ -41,19 +41,6 @@ export default function MainUniverse() {
         if (auth.userData == null) {
             window.location.href = '/dashboard/login';
         }
-        const fetchIdeas = async () => {
-            const { data: ideasData, error: ideasError } = await Db
-                .from('ideas')
-                .select(`
-                    *,
-                    address_detail!inner (*)
-                  `).order('upvotes', { ascending: false }); // Sorting by upvotes descending
-            console.log("ideasData", ideasData);
-            const ideas = ideasData as Idea[];
-            setIdeas(ideas);
-        }
-        fetchIdeas();
-        // fetch token data for selected game
     }, [auth.userData]);
 
     const containerVariants = {
@@ -113,7 +100,7 @@ export default function MainUniverse() {
             ) : (
                 <>
                     <SimpleSideBar>
-                        <IdeaComponent ideas={ideas} industries={industries} />
+                        <IdeaComponent industries={industries} />
                     </SimpleSideBar>
                 </>
             )}
