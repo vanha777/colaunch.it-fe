@@ -100,7 +100,7 @@ const IdeaComponent: React.FC<IdeaComponentProps> = ({ industries }) => {
     // Perform vector search if embedding exists
     const { data, error } = await Db.rpc('vector_search_ideas', {
       query_embedding: embedding,
-      similarity_threshold: 0.30,
+      similarity_threshold: 0.32,
       match_count: 10
     });
     console.log("Vector Search Data:", data);

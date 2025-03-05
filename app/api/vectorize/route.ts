@@ -1,6 +1,41 @@
 import { NextResponse } from 'next/server'
 import { Db, Server, PrivateKey } from "@/app/utils/db";
 import { OpenAIEmbeddings } from "@langchain/openai";
+import OpenAI from "openai";
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+});
+
+// Function to summarize text using OpenAI
+async function summarizeText(text: string, maxLength: number = 100): Promise<string> {
+  if (!text || text.trim().length === 0) return '';
+  
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: `Summarize the following text in a concise way, maximum ${maxLength} characters.`
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.5,
+    });
+    
+    return response.choices[0].message.content?.trim() || '';
+  } catch (error) {
+    console.error('Error summarizing text:', error);
+    // Return truncated original text as fallback
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -29,28 +64,26 @@ export async function POST(request: Request) {
 
     for (const idea of ideasData) {
       try {
+        // Summarize description and logo_description if they exist
+        const descriptionSummary = idea.description ? 
+          await summarizeText(idea.description) : '';
+        
+        const logoDescriptionSummary = idea.logo_description ? 
+          await summarizeText(idea.logo_description) : '';
+        
         // Create content to vectorize (combine relevant fields)
-        // const contentToVectorize = `${idea.title} ${idea.description || ''}`;
         const contentToVectorize = [
           `Industry: ${idea.industry || ''}`,
           `Title: ${idea.title}`,
-          // `Description: ${idea.description || ''}`,
-          `${idea.tags}`,
           `Country: ${idea.address_id?.country}`,
-          `Suburb: ${idea.address_id?.suburb}`,
-          `State: ${idea.address_id?.state}`,
-          // `${Array.isArray(idea.tags) ? idea.tags.join(', ') : ''}`,
-          // `Location: ${[
-          //   idea.address_id?.country,
-          //   idea.address_id?.suburb,
-          //   idea.address_id?.state,
-          // ].filter(Boolean).join(', ')}`,
           `Founder: ${idea.users?.name || ''}`,
           `Email: ${idea.users?.email || ''}`,
+          `Description: ${descriptionSummary}`,
+          `Logo Description: ${logoDescriptionSummary}`,
+          `${idea.tags}`,
         ].filter(Boolean).join(' ').trim();
 
         console.log('Optimized Content to Vectorize:', contentToVectorize);
-
 
         // Generate embedding for the idea
         const [embedding] = await embeddings.embedDocuments([contentToVectorize]);

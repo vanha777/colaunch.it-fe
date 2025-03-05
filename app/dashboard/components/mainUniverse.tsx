@@ -86,8 +86,8 @@ export default function MainUniverse() {
             selectedIcon: IoStatsChartSharp
         },
         {
-            id: "sustainability",
-            label: "Sustainability",
+            id: "blockchain",
+            label: "Blockchain",
             icon: IoSettingsOutline,
             selectedIcon: IoSettingsSharp
         }
