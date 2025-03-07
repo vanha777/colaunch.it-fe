@@ -4,21 +4,29 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 
 export default function Partner() {
-  const partners = [
+  const testimonials = [
     {
-      name: "Roman Lobanov",
+      name: "Sarah Chen",
+      role: "Founder, SupplyChainX",
+      quote: "ConvictionAI helped me validate my supply chain optimization idea before writing a single line of code. The evidence it helped me gather convinced my first investors.",
       image: "/founder2.jpeg"
     },
     {
-      name: "Patrick Ha",
+      name: "Michael Rodriguez",
+      role: "Founder, HealthTech Solutions",
+      quote: "I was about to build an app nobody wanted. ConvictionAI forced me to focus on real customer pain points and build evidence for my solution first.",
       image: "/patrick.jpeg"
     },
     {
-      name: "Pranav",
+      name: "Aisha Patel",
+      role: "Founder, EduLearn",
+      quote: "The focused direction ConvictionAI provided helped me channel my energy into validating my edtech idea with real teachers before spending resources on development.",
       image: "/founder3.jpeg"
     },
     {
-      name: "12K",
+      name: "David Kim",
+      role: "Founder, ClimateTech",
+      quote: "ConvictionAI helped me build unwavering belief in my sustainability platform by focusing on evidence and validation first. It changed my entire approach to building.",
       image: "/founder4.jpeg"
     }
   ]
@@ -32,60 +40,69 @@ export default function Partner() {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <motion.h2
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <span className="text-gray-800 text-sm md:text-base">Built for and Partnered with</span>{" "}
-          <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent font-medium text-sm md:text-base">Leading Entrepreneurs</span>
-        </motion.h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+              Founders Who Built With Conviction
+            </span>
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            See how founders used ConvictionAI to validate their ideas and build unwavering belief in their vision.
+          </p>
+        </motion.div>
 
-        <div className="relative flex overflow-x-hidden overflow-y-hidden">
-          <motion.div
-            className="flex space-x-16 whitespace-nowrap"
-            initial={{ x: "0%" }}
-            animate={{ x: "-50%" }}
-            transition={{
-              duration: 10,
-              ease: "linear",
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-            style={{
-              willChange: "transform",
-              transform: "translate3d(0,0,0)",
-              WebkitTransform: "translate3d(0,0,0)",
-            }}
-          >
-            {[...partners, ...partners].map((partner, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex flex-col items-center"
-                style={{
-                  WebkitTransform: "translate3d(0,0,0)",
-                  transform: "translate3d(0,0,0)",
-                }}
-              >
-                <div className="relative w-32 h-32 flex items-center justify-center bg-transparent rounded-lg hover:shadow-lg transition-all duration-300 p-4">
-                  <div className="relative w-24 h-24">
-                    <Image
-                      src={partner.image}
-                      alt={partner.name}
-                      fill
-                      className="object-contain transition-all duration-300 hover:opacity-90"
-                    />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50"
+            >
+              <div className="flex items-start gap-4">
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden">
+                  <Image
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-gray-700 italic mb-4">"{testimonial.quote}"</p>
+                  <div>
+                    <h3 className="font-medium text-gray-900">{testimonial.name}</h3>
+                    <p className="text-sm text-gray-500">{testimonial.role}</p>
                   </div>
                 </div>
-                <p className="mt-3 text-sm font-medium text-gray-800">{partner.name}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+              </div>
+            </motion.div>
+          ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-16 text-center"
+        >
+          <h3 className="font-bold text-xl text-gray-800 mb-6">
+            Join 1,000+ founders building with conviction
+          </h3>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Start Building Conviction
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   )

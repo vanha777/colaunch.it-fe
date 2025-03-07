@@ -1,4 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CoLaunch Landing Page
+
+This is a modern, responsive landing page for CoLaunch built with Next.js and Tailwind CSS.
+
+## Features
+
+- Modern, clean design with gradient accents
+- Fully responsive for all device sizes
+- Animated components using Framer Motion
+- SVG icons for better scaling and customization
+- Optimized for performance
+
+## Customization
+
+### Landing Page
+
+The main landing page component is located at `components/Landing.tsx`. You can customize:
+
+- Hero section text and buttons
+- Benefits cards (titles, descriptions, icons)
+- Partner logos
+- Background colors and effects
+
+### Icons
+
+SVG icons are stored in the `public/icons/` directory:
+- `validate.svg` - Checkmark icon for idea validation
+- `collaborate.svg` - People icon for collaboration
+- `secure.svg` - Lock icon for security
+
+You can replace these with your own SVG icons as needed.
+
+### Images
+
+Replace the placeholder dashboard image with your actual dashboard screenshot:
+1. Add your image to the `public/` directory
+2. Update the image component in `components/Landing.tsx`
+
+### Colors
+
+The theme uses a gradient color scheme with blues and purples. To change the color scheme:
+
+1. Update gradient classes in the components (search for `from-` and `to-` classes)
+2. Modify the glowing orb colors in the background sections
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Structure
+
+- `app/page.tsx` - Main page that includes all components
+- `components/Landing.tsx` - Main landing section
+- `components/Features.tsx` - Features section
+- `components/Partner.tsx` - Partners/integrations section
+- `components/Starters.tsx` - Getting started section
+- `components/NavBar.tsx` - Navigation bar
+- `components/Footer.tsx` - Footer section
+
+## Credits
+
+- Icons from [Feather Icons](https://feathericons.com/)
+- Animations powered by [Framer Motion](https://www.framer.com/motion/)
+- Built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/)
 
 ## Getting Started
 

@@ -11,6 +11,9 @@ import Partner from '@/components/Partner'
 import Starters from '@/components/Starters'
 import WhatNew from '@/components/whatNew'
 import Footer from '@/components/Footer'
+import Landing from '@/components/Landing'
+import Head from 'next/head'
+
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false)
 
@@ -27,15 +30,12 @@ export default function Home() {
   return (
     <Suspense fallback={<div className="bg-white text-gray-800">Loading...</div>}>
       <main className="bg-white min-h-screen relative text-gray-800">
+        <title>ConvictionAI - Build Founder Conviction Before Code</title>
         <NavBar />
-        <div className="flex flex-col bg-white">
-          <Hero2 />
-          <Features />
-          {/* <BigStatement /> */}
-          <Partner />
-          <Starters />
-          {/* <WhatNew /> */}
-        </div>
+        <Landing />
+        {/* <Features /> */}
+        <Partner />
+        {/* <Starters /> */}
         <Footer />
       </main>
     </Suspense>

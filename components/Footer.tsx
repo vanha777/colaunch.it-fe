@@ -20,13 +20,12 @@ export default function Footer() {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Image
-              src="/logo.png"
-              alt="CreativeMood Logo"
-              width={320}
-              height={40}
-              className="h-auto"
-            />
+            <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center">
+              <div className="mr-2 w-8 h-8 rounded-md bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs">
+                AI
+              </div>
+              Conviction<span className="text-3xl">AI</span>
+            </span>
           </motion.div>
 
           {/* Quote */}
@@ -46,11 +45,10 @@ export default function Footer() {
             transition={{ duration: 0.5 }}
           >
             <Link
-              href="https://calendly.com/sofiang2407/30min"
-              target="_blank"
-              className="inline-block bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md hover:shadow-lg"
+              href="/dashboard"
+              className="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md hover:shadow-lg"
             >
-              Dashboard
+              Try For Free
             </Link>
           </motion.div>
         </div>
@@ -62,7 +60,7 @@ export default function Footer() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="text-center text-gray-600 text-sm mt-6 border-t border-gray-200 pt-4"
         >
-          <p>© 2025 CoLaunch. All rights reserved.</p>
+          <p>© 2025 ConvictionAI. All rights reserved.</p>
         </motion.div>
       </div>
     </footer>

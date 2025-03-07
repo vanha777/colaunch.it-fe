@@ -49,28 +49,28 @@ export default function Features() {
 
   const cards = [
     {
-      title: "Idea Validation",
-      description: "Post your ideas and get honest feedback from fellow founders who understand your vision. Validate concepts before investing precious time and resources.",
+      title: "Market Validation",
+      description: "Our AI analyzes market trends, competitor landscapes, and customer pain points to help validate your idea with real-world evidence before you invest resources.",
       image: "/login.jpeg"
     },
     {
-      title: "Voting System",
-      description: "Get votes, shares and gain publicity for your project. Our community-driven platform helps promising ideas rise to the top, giving you valuable exposure and validation from potential users and investors.",
+      title: "Conviction Building",
+      description: "Transform uncertainty into unwavering belief. ConvictionAI helps founders develop the superhuman focus needed to persevere through challenges by building evidence-based confidence.",
       image: "/voting.jpeg"
     },
     {
-      title: "AI-Powered Verification",
-      description: "We use AI deep search to verify users and businesses based on social presence and credentials, ensuring CoLaunch is a safe and trusted environment for founders to connect and collaborate.",
+      title: "Strategic Direction",
+      description: "Channel your energy in one clear direction with actionable insights and roadmaps based on validated market needs and opportunities.",
       image: "/verified.jpeg"
     },
     {
-      title: "Idea Ownership",
-      description: "All ideas are registered on blockchain records to ensure origin and ownership protection.",
+      title: "Proof of Concept Development",
+      description: "Build compelling evidence and demonstrations that validate your solution before investing in a full MVP, ensuring you don't miss the 'V' in MVP.",
       image: "/chain_verified.jpeg",
     },
     {
-      title: "Collaboration Opportunities",
-      description: "Find the perfect partners for your next project. Connect with complementary skill sets and turn your solo venture into a powerful collaboration.",
+      title: "Demand Validation",
+      description: "Test customer acquisition channels, willingness to pay, and engagement metrics to prove demand exists before spending resources on development.",
       image: "/partner.jpeg",
     }
   ];
@@ -85,9 +85,9 @@ export default function Features() {
         animate="visible"
       >
         <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-left my-32">
-          <span className="text-gray-800">DESIGNED BY FOUNDERS</span>
+          <span className="text-gray-800">CONVICTION BEFORE</span>
           <br className="mb-12" />
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">FOR FOUNDERS</span>
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">CODE</span>
         </h1>
         <div className="flex flex-col gap-48 w-full max-w-7xl mx-auto">
           {cards.map((card, index) => (

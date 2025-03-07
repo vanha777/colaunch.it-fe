@@ -10,16 +10,16 @@ config.autoAddCss = false
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CoLaunch - Connect Business and Scale Up',
-  description: 'CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow.',
+  title: 'ConvictionAI - Build Founder Conviction Before Code',
+  description: 'ConvictionAI is an AI-driven platform designed to help founders and entrepreneurs build conviction around their ideas through validation.',
   openGraph: {
-    title: 'CoLaunch - Connect Business and Scale Up',
-    description: 'CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow.',
-    // url: 'https://www.metaloot.dev/',
+    title: 'ConvictionAI - Build Founder Conviction Before Code',
+    description: 'ConvictionAI is an AI-driven platform designed to help founders and entrepreneurs build conviction around their ideas through validation.',
+    // url: 'https://www.convictionai.com/',
     images: [
       {
         url: 'https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg',
-        alt: 'CoLaunch - Connect Business and Scale Up',
+        alt: 'ConvictionAI - Build Founder Conviction Before Code',
       },
     ],
   },
@@ -43,36 +43,36 @@ export default function RootLayout({
     <html lang="en" data-theme="light">
       <Head>
         {/* General Meta Tags */}
-        <meta name="title" content="CoLaunch - Connect Business and Scale Up" />
-        <meta name="description" content="CoLaunch is a platform that connects businesses and scale ups with the right people and resources to help them grow." />
+        <meta name="title" content="ConvictionAI - Build Founder Conviction Before Code" />
+        <meta name="description" content="ConvictionAI is an AI-driven platform designed to help founders and entrepreneurs build conviction around their ideas through validation." />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.metaloot.dev/" />
-        <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
-        <meta property="og:description" content="Ship faster, cheaper and better with our API." />
+        <meta property="og:url" content="https://www.convictionai.com/" />
+        <meta property="og:title" content="ConvictionAI - Build Founder Conviction Before Code" />
+        <meta property="og:description" content="AI-driven platform to help founders build conviction around their ideas through validation." />
         <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
-        <meta property="og:image:alt" content="A stunning preview of MetaLoot's multiverse gaming platform" />
+        <meta property="og:image:alt" content="ConvictionAI platform preview" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://www.metaloot.dev/" />
-        <meta name="twitter:title" content="MetaLoot - Gaming Digital Asset Register" />
-        <meta name="twitter:description" content="Ship faster, cheaper and better with our API." />
+        <meta name="twitter:url" content="https://www.convictionai.com/" />
+        <meta name="twitter:title" content="ConvictionAI - Build Founder Conviction Before Code" />
+        <meta name="twitter:description" content="AI-driven platform to help founders build conviction around their ideas through validation." />
         <meta name="twitter:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
-        <meta name="twitter:image:alt" content="A stunning preview of MetaLoot's multiverse gaming platform" />
-        <meta name="twitter:site" content="@playmetaloot" />
-        <meta name="twitter:creator" content="@playmetaloot" />
+        <meta name="twitter:image:alt" content="ConvictionAI platform preview" />
+        <meta name="twitter:site" content="@convictionai" />
+        <meta name="twitter:creator" content="@convictionai" />
 
         {/* Telegram */}
-        <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
-        <meta property="og:description" content="Ship faster, cheaper and better with our API." />
+        <meta property="og:title" content="ConvictionAI - Build Founder Conviction Before Code" />
+        <meta property="og:description" content="AI-driven platform to help founders build conviction around their ideas through validation." />
         <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
-        <meta property="og:url" content="https://www.metaloot.dev/" />
+        <meta property="og:url" content="https://www.convictionai.com/" />
 
         {/* Discord */}
-        <meta property="og:title" content="MetaLoot - Gaming Digital Asset Register" />
-        <meta property="og:description" content="Ship faster, cheaper and better with our API." />
+        <meta property="og:title" content="ConvictionAI - Build Founder Conviction Before Code" />
+        <meta property="og:description" content="AI-driven platform to help founders build conviction around their ideas through validation." />
         <meta property="og:image" content="https://vbfejmafjqgcfrzxewcd.supabase.co/storage/v1/object/public/general//colaunchit.jpeg" />
         <meta property="og:type" content="website" />
       </Head>
