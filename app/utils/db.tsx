@@ -14,7 +14,7 @@ export const Server = process.env.NEXT_METALOOT_SERVER || ""
 export const FrontEnd = process.env.NEXT_FRONT_END_URL || "http://localhost:3000"
 export const PrivateKey = process.env.NEXT_PRIVATE_KEY || "123123"
 // Helper function to check if a value exists in the database
-export const xSearch = async (username: string) => {
+export const VerfifyUser = async (username: string) => {
   try {
     // Clean up username (remove @ and get just the username)
     const cleanUsername = username.replace('@', '').split('/').pop() || '';

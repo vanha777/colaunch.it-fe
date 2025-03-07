@@ -5,7 +5,7 @@ import Alert from "@/components/Alert";
 import { GameData, useAppContext, UserData } from "@/app/utils/AppContext";
 import { useEffect, useState } from "react";
 import { Db } from "@/app/utils/db";
-import { xSearch } from "@/app/utils/db";
+import { VerfifyUser } from "@/app/utils/db";
 
 export default function SettingsSection() {
   const [isLoading, setIsLoading] = useState(false);
@@ -124,7 +124,7 @@ export default function SettingsSection() {
     message: null
   });
 
-  const validateXAccount = async () => {
+  const validateAccount = async () => {
     if (!formData.x) {
       setXValidation({ isValid: false, message: 'Please enter an X username' });
       return;
@@ -132,7 +132,7 @@ export default function SettingsSection() {
 
     setValidatingX(true);
     try {
-      const result = await xSearch(formData.x);
+      const result = await VerfifyUser(formData.x);
       setXValidation({
         isValid: Boolean(result),
         message: result ? 'Account verified!' : 'Account not found'
@@ -179,9 +179,28 @@ export default function SettingsSection() {
       <div className="max-w-6xl mx-auto w-full space-y-6">
         {/* User Information Card */}
         <div className="bg-base-200 p-8 rounded-3xl shadow-sm">
-          <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text mb-6">
-            User Information
-          </h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+              User Information
+            </h3>
+            <button
+              onClick={validateAccount}
+              disabled={validatingX}
+              className="px-5 py-2 text-sm rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+            >
+              <RiTwitterXFill className="text-lg" />
+              {validatingX ? 'Verifying Account...' : 'Verify Account'}
+            </button>
+          </div>
+          
+          {xValidation.message && (
+            <div className={`mb-4 p-3 rounded-xl ${xValidation.isValid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              <p className="flex items-center gap-2">
+                {xValidation.isValid ? '✓' : '✗'} {xValidation.message}
+              </p>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Info Fields */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -226,21 +245,7 @@ export default function SettingsSection() {
                           value={formData[key as keyof UserData] || ''}
                           onChange={(e) => handleInputChange(key as keyof UserData, e.target.value)}
                         />
-                        {key === 'x' && (
-                          <button
-                            onClick={validateXAccount}
-                            disabled={validatingX}
-                            className="px-3 py-1 text-xs rounded-full bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
-                          >
-                            {validatingX ? 'Checking...' : 'Verify'}
-                          </button>
-                        )}
                       </div>
-                      {key === 'x' && xValidation.message && (
-                        <p className={`text-xs mt-1 ${xValidation.isValid ? 'text-green-500' : 'text-red-500'}`}>
-                          {xValidation.message}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
