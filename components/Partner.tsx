@@ -32,11 +32,11 @@ export default function Partner() {
   ]
 
   return (
-    <section className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative overflow-hidden py-24">
+    <section className="bg-black via-gray-800 to-gray-900 relative overflow-hidden py-24">
       {/* Background blurs similar to footer */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-400 rounded-full filter blur-[120px] opacity-20" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-pink-400 rounded-full filter blur-[120px] opacity-20" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#E0FF00] rounded-full filter blur-[120px] opacity-10" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#E0FF00] rounded-full filter blur-[120px] opacity-10" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -47,11 +47,11 @@ export default function Partner() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            <span className="text-[#E0FF00]">
               Founders Who Built With Conviction
             </span>
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-300 max-w-2xl mx-auto">
             See how founders used ConvictionAI to validate their ideas and build unwavering belief in their vision.
           </p>
         </motion.div>
@@ -63,7 +63,7 @@ export default function Partner() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/50"
+              className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-gray-700"
             >
               <div className="flex items-start gap-4">
                 <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden">
@@ -75,10 +75,10 @@ export default function Partner() {
                   />
                 </div>
                 <div>
-                  <p className="text-gray-700 italic mb-4">"{testimonial.quote}"</p>
+                  <p className="text-gray-300 italic mb-4">"{testimonial.quote}"</p>
                   <div>
-                    <h3 className="font-medium text-gray-900">{testimonial.name}</h3>
-                    <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    <h3 className="font-medium text-[#E0FF00]">{testimonial.name}</h3>
+                    <p className="text-sm text-gray-400">{testimonial.role}</p>
                   </div>
                 </div>
               </div>
@@ -92,13 +92,13 @@ export default function Partner() {
           transition={{ duration: 0.5 }}
           className="mt-16 text-center"
         >
-          <h3 className="font-bold text-xl text-gray-800 mb-6">
+          <h3 className="font-bold text-xl text-gray-200 mb-6">
             Join 1,000+ founders building with conviction
           </h3>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            className="px-8 py-3 bg-[#E0FF00] text-gray-900 font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Start Building Conviction
           </motion.button>
