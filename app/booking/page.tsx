@@ -106,6 +106,69 @@ const StepIndicator = ({
   );
 };
 
+// Move HeroSection outside of BookingPage
+const HeroSection = ({ business }: { business: { name: string; image: string; logo: string; rating: number; reviewCount: number; description: string } }) => (
+  <div className="relative h-[400px] w-full">
+    {/* Background Image with Overlay */}
+    <div className="absolute inset-0 bg-black/40 z-10" />
+    <div 
+      className="absolute inset-0 bg-cover bg-center z-0" 
+      style={{ backgroundImage: `url(${business.image})` }}
+    />
+
+    {/* Business Info Container */}
+    <div className="relative z-20 h-full flex flex-col items-center justify-center text-white px-4">
+      {/* Logo Container */}
+      <div className="mb-6">
+        <img
+          src={business.logo}
+          alt={business.name}
+          className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
+        />
+      </div>
+
+      {/* Business Name and Rating */}
+      <motion.h1 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-5xl font-bold mb-4 text-center"
+      >
+        {business.name}
+      </motion.h1>
+
+      {/* Rating and Reviews */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex items-center gap-2 mb-4"
+      >
+        {/* Replace StarRating with a simple star representation */}
+        <div className="flex">
+          {[...Array(5)].map((_, i) => (
+            <span key={i} className="text-yellow-400 text-xl">
+              {i < Math.floor(business.rating) ? "★" : "☆"}
+            </span>
+          ))}
+        </div>
+        <span className="text-white">
+          {business.rating} ({business.reviewCount} reviews)
+        </span>
+      </motion.div>
+
+      {/* Description */}
+      <motion.p 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="text-xl text-center max-w-2xl"
+      >
+        {business.description}
+      </motion.p>
+    </div>
+  </div>
+);
+
 const BookingPage = () => {
     useEffect(() => {
         console.log("re-render");
@@ -768,65 +831,9 @@ const BookingPage = () => {
     }
   };
 
-  // Add this component for the hero section
-  const HeroSection = () => (
-    <div className="relative h-[400px] w-full">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 bg-black/40 z-10" />
-      <div 
-        className="absolute inset-0 bg-cover bg-center z-0" 
-        style={{ backgroundImage: `url(${business.image})` }}
-      />
-
-      {/* Business Info Container */}
-      <div className="relative z-20 h-full flex flex-col items-center justify-center text-white px-4">
-        {/* Logo Container */}
-        <div className="mb-6">
-          <img
-            src={business.logo}
-            alt={business.name}
-            className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
-          />
-        </div>
-
-        {/* Business Name and Rating */}
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-5xl font-bold mb-4 text-center"
-        >
-          {business.name}
-        </motion.h1>
-
-        {/* Rating and Reviews */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center gap-2 mb-4"
-        >
-          <StarRating rating={business.rating} />
-          <span className="text-white">
-            {business.rating} ({business.reviewCount} reviews)
-          </span>
-        </motion.div>
-
-        {/* Description */}
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-xl text-center max-w-2xl"
-        >
-          {business.description}
-        </motion.p>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-white">
-      <HeroSection />
+      <HeroSection business={business} />
       
       {/* Booking Form Section */}
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
