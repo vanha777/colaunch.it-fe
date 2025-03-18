@@ -33,6 +33,19 @@ interface Service {
 // Add this new type for steps
 type BookingStep = 'date' | 'professional' | 'time' | 'service' | 'contact';
 
+// Add this interface for the form state
+interface BookingFormState {
+  date: Date | null;
+  time: string | null;
+  worker: string;
+  subService: string;
+  contactInfo: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+}
+
 // Add these new components at the top of your file
 const StepIndicator = ({ 
   currentStep, 
@@ -94,18 +107,36 @@ const StepIndicator = ({
 };
 
 const BookingPage = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [service, setService] = useState("");
+    useEffect(() => {
+        console.log("re-render");
+    },[])
+  const business = {
+    id: "1",
+    name: "The Business",
+    image: "/business.jpeg",
+    logo: "/businessLogo.png",
+    rating: 4.9,
+    reviewCount: 250,
+    description: "Professional services tailored to your needs"
+  };
+
+  // Replace individual states with a single form state
+  const [formState, setFormState] = useState<BookingFormState>({
+    date: null,
+    time: null,
+    worker: "",
+    subService: "",
+    contactInfo: {
+      name: "",
+      email: "",
+      phone: "",
+    }
+  });
+
+  const [currentStep, setCurrentStep] = useState<BookingStep>('date');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedSubService, setSelectedSubService] = useState<string>("");
-  const [selectedWorker, setSelectedWorker] = useState<string>("");
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [currentStep, setCurrentStep] = useState<BookingStep>('date');
 
   // Updated generateDates function
   const generateDates = (baseDate: Date) => {
@@ -208,37 +239,49 @@ const BookingPage = () => {
 
   // Add this helper function
   const getSelectedService = () => {
-    return services.find(s => s.id === service);
+    return services.find(s => s.id === formState.subService);
   };
 
+  // Update form handlers
+  const updateForm = (field: string, value: any) => {
+    setFormState(prev => {
+      if (field in prev.contactInfo) {
+        return {
+          ...prev,
+          contactInfo: {
+            ...prev.contactInfo,
+            [field]: value
+          }
+        };
+      }
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+  };
+
+  // Update the handle submit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      const bookingData = {
-        date: selectedDate,
-        time: selectedTime,
-        name,
-        email,
-        phone,
-        service,
-        subService: selectedSubService,
-        worker: selectedWorker
-      };
-      
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsSuccess(true);
       
       setTimeout(() => {
-        setSelectedDate(null);
-        setSelectedTime(null);
-        setName("");
-        setEmail("");
-        setPhone("");
-        setService("");
-        setSelectedSubService("");
-        setSelectedWorker("");
+        setFormState({
+          date: null,
+          time: null,
+          worker: "",
+          subService: "",
+          contactInfo: {
+            name: "",
+            email: "",
+            phone: "",
+          }
+        });
         setIsSuccess(false);
       }, 3000);
     } catch (error) {
@@ -340,9 +383,9 @@ const BookingPage = () => {
             type="button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setSelectedDate(date)}
+            onClick={() => updateForm('date', date)}
             className={`p-4 rounded-lg text-center ${
-              selectedDate && date.toDateString() === selectedDate.toDateString()
+              formState.date && date.toDateString() === formState.date.toDateString()
                 ? "bg-indigo-600 text-white"
                 : "bg-gray-50 hover:bg-gray-100 text-gray-700"
             }`}
@@ -374,9 +417,9 @@ const BookingPage = () => {
                 key={worker.id}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedWorker(worker.id)}
+                onClick={() => updateForm('worker', worker.id)}
                 className={`flex-none w-72 cursor-pointer ${
-                  selectedWorker === worker.id
+                  formState.worker === worker.id
                     ? 'ring-4 ring-indigo-500'
                     : 'hover:shadow-lg'
                 } rounded-xl bg-white shadow-md transition-all duration-300`}
@@ -392,7 +435,7 @@ const BookingPage = () => {
                   </div>
                   
                   {/* Selection Indicator */}
-                  {selectedWorker === worker.id && (
+                  {formState.worker === worker.id && (
                     <div className="absolute top-4 right-4">
                       <div className="bg-indigo-500 text-white p-2 rounded-full">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -452,16 +495,16 @@ const BookingPage = () => {
   const goToNextStep = () => {
     switch (currentStep) {
       case 'date':
-        if (selectedDate) setCurrentStep('professional');
+        if (formState.date) setCurrentStep('professional');
         break;
       case 'professional':
-        if (selectedWorker) setCurrentStep('time');
+        if (formState.worker) setCurrentStep('time');
         break;
       case 'time':
-        if (selectedTime) setCurrentStep('service');
+        if (formState.time) setCurrentStep('service');
         break;
       case 'service':
-        if (selectedSubService) setCurrentStep('contact');
+        if (formState.subService) setCurrentStep('contact');
         break;
       default:
         break;
@@ -550,9 +593,9 @@ const BookingPage = () => {
                     type="button"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedTime(time)}
+                    onClick={() => updateForm('time', time)}
                     className={`p-3 rounded-lg text-center ${
-                      time === selectedTime
+                      time === formState.time
                         ? "bg-indigo-600 text-white"
                         : "bg-gray-50 hover:bg-gray-100 text-gray-700"
                     }`}
@@ -583,9 +626,9 @@ const BookingPage = () => {
                     type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedSubService(subService.id)}
+                    onClick={() => updateForm('subService', subService.id)}
                     className={`p-4 rounded-lg border ${
-                      selectedSubService === subService.id
+                      formState.subService === subService.id
                         ? "border-indigo-500 bg-indigo-50"
                         : "border-gray-200 hover:border-indigo-300"
                     }`}
@@ -626,8 +669,8 @@ const BookingPage = () => {
               <input
                 id="name"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formState.contactInfo.name}
+                onChange={(e) => updateForm('name', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="John Doe"
                 required
@@ -641,8 +684,8 @@ const BookingPage = () => {
               <input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formState.contactInfo.email}
+                onChange={(e) => updateForm('email', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="john@example.com"
                 required
@@ -656,8 +699,8 @@ const BookingPage = () => {
               <input
                 id="phone"
                 type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={formState.contactInfo.phone}
+                onChange={(e) => updateForm('phone', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="(123) 456-7890"
               />
@@ -667,9 +710,9 @@ const BookingPage = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              disabled={!selectedDate || !selectedTime || isSubmitting}
+              disabled={!formState.date || !formState.time || isSubmitting}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-300 ${
-                !selectedDate || !selectedTime || isSubmitting
+                !formState.date || !formState.time || isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
               }`}
@@ -704,15 +747,15 @@ const BookingPage = () => {
   const canNavigateToStep = (step: BookingStep): boolean => {
     switch (step) {
       case 'date':
-        return true; // Can always go back to date selection
+        return true;
       case 'professional':
-        return !!selectedDate;
+        return !!formState.date;
       case 'time':
-        return !!selectedDate && !!selectedWorker;
+        return !!formState.date && !!formState.worker;
       case 'service':
-        return !!selectedDate && !!selectedWorker && !!selectedTime;
+        return !!formState.date && !!formState.worker && !!formState.time;
       case 'contact':
-        return !!selectedDate && !!selectedWorker && !!selectedTime && !!selectedSubService;
+        return !!formState.date && !!formState.worker && !!formState.time && !!formState.subService;
       default:
         return false;
     }
@@ -725,36 +768,66 @@ const BookingPage = () => {
     }
   };
 
+  // Add this component for the hero section
+  const HeroSection = () => (
+    <div className="relative h-[400px] w-full">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 bg-black/40 z-10" />
+      <div 
+        className="absolute inset-0 bg-cover bg-center z-0" 
+        style={{ backgroundImage: `url(${business.image})` }}
+      />
+
+      {/* Business Info Container */}
+      <div className="relative z-20 h-full flex flex-col items-center justify-center text-white px-4">
+        {/* Logo Container */}
+        <div className="mb-6">
+          <img
+            src={business.logo}
+            alt={business.name}
+            className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
+          />
+        </div>
+
+        {/* Business Name and Rating */}
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-5xl font-bold mb-4 text-center"
+        >
+          {business.name}
+        </motion.h1>
+
+        {/* Rating and Reviews */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center gap-2 mb-4"
+        >
+          <StarRating rating={business.rating} />
+          <span className="text-white">
+            {business.rating} ({business.reviewCount} reviews)
+          </span>
+        </motion.div>
+
+        {/* Description */}
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-xl text-center max-w-2xl"
+        >
+          {business.description}
+        </motion.p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section with Business Image */}
-      <div className="relative h-[400px] w-full">
-        <div className="absolute inset-0 bg-black/40 z-10" />
-        <div 
-          className="absolute inset-0 bg-cover bg-center z-0" 
-          style={{ 
-            backgroundImage: "url('/images/business-header.jpg')" // Add your business image
-          }} 
-        />
-        <div className="relative z-20 h-full flex flex-col items-center justify-center text-white px-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-bold mb-4 text-center"
-          >
-            Book Your Service
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-center max-w-2xl"
-          >
-            Professional services tailored to your needs
-          </motion.p>
-        </div>
-      </div>
-
+      <HeroSection />
+      
       {/* Booking Form Section */}
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
