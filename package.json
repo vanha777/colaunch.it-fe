@@ -39,6 +39,7 @@
     "react-dom": "^18.2.0",
     "react-icons": "^5.4.0",
     "react-responsive": "^10.0.0",
+    "recharts": "^2.15.1",
     "three": "^0.170.0",
     "three-stdlib": "^2.34.0"
   },

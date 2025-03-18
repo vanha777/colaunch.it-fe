@@ -27,6 +27,7 @@ import SimpleNav from "./simpleNav";
 import SimpleSideBar from "./simpleSideBar";
 import SimpleNavBar from "./simpleNavBar";
 import ChatInstruction from "./chatInstruction";
+import BusinessComponent from "./businessComponent";
 
 export default function MainUniverse() {
     const { auth, setTokenData, setAccessToken, setCollectionData, setUser, setGame, logout } = useAppContext();
@@ -100,7 +101,7 @@ export default function MainUniverse() {
             ) : (
                 <>
                     <SimpleSideBar>
-                        <IdeaComponent industries={industries} />
+                        <BusinessComponent industries={industries} />
                     </SimpleSideBar>
                 </>
             )}

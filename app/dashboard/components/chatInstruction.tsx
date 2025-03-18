@@ -229,13 +229,13 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
     // call the onSearch function with the search term
 
     return (
-        <div className="flex flex-row h-[200px] bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl shadow-2xl overflow-hidden border border-blue-400/30 backdrop-blur-sm">
+        <div className="flex flex-row h-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-2xl overflow-hidden border border-blue-400/30 backdrop-blur-sm">
             <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
             <div className="flex-1 p-4 flex flex-row items-center justify-between relative z-10">
                 <div className="text-left">
-                    <h2 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-200 mb-2">Tell me what you want</h2>
+                    <h2 className="text-3xl font-bold text-gray-800">👋 Welcome back!</h2>
 
-                    <div className="mt-2 font-medium text-blue-100 tracking-wide">
+                    <div className="mt-2 font-medium text-black tracking-wide">
                         {isListening ? (
                             <div className="flex items-center gap-2">
                                 <span>Analyzing voice input</span>
@@ -246,7 +246,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
                                 </span>
                             </div>
                         ) : (
-                            <span className="text-blue-200">Activate voice searching</span>
+                            <span className="text-black">Here's how your business is doing today</span>
                         )}
                     </div>
                 </div>
@@ -274,7 +274,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
 
                     {transcript && (
                         <div className="w-64">
-                            <h3 className="text-sm font-medium text-blue-300 mb-1 flex items-center">
+                            <h3 className="text-sm font-medium text-black mb-1 flex items-center">
                                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
                                 </svg>
