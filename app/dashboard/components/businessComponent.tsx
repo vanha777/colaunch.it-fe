@@ -221,10 +221,10 @@ const BusinessComponent: React.FC<IdeaComponentProps> = ({ industries }) => {
       <ChatInstruction onSearch={handleSearchFromChat} />
       
       {/* Friendly Welcome Header */}
-      <div className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50">
+      {/* <div className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50">
         <h1 className="text-3xl font-bold text-gray-800">👋 Welcome back!</h1>
         <p className="text-gray-600 mt-2">Here's how your business is doing today</p>
-      </div>
+      </div> */}
 
       {/* Simplified Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6">

@@ -229,7 +229,7 @@ const ChatInstruction: React.FC<ChatInstructionProps> = ({ onSearch }: ChatInstr
     // call the onSearch function with the search term
 
     return (
-        <div className="flex flex-row h-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-2xl overflow-hidden border border-blue-400/30 backdrop-blur-sm">
+        <div className="flex flex-row h-[200px] bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl  overflow-hidden ">
             <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
             <div className="flex-1 p-4 flex flex-row items-center justify-between relative z-10">
                 <div className="text-left">
