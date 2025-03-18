@@ -312,7 +312,7 @@ const BookingPage = () => {
             {
               start: "12:00",
               end: "20:00",
-              days: [1, 2, 3, 4, 5] // Monday to Friday
+              days: [] // Monday to Friday
             }
           ]
         }
@@ -691,10 +691,11 @@ const BookingPage = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={!formState.date || !formState.time || isSubmitting}
-          className={`w-full py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${
+            !formState.date || !formState.time || isSubmitting
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
-            }`}
+          }`}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center">
