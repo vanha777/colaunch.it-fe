@@ -47,11 +47,11 @@ interface BookingFormState {
 }
 
 // Add these new components at the top of your file
-const StepIndicator = ({ 
-  currentStep, 
+const StepIndicator = ({
+  currentStep,
   onStepClick,
   canNavigateToStep
-}: { 
+}: {
   currentStep: BookingStep;
   onStepClick: (step: BookingStep) => void;
   canNavigateToStep: (step: BookingStep) => boolean;
@@ -70,7 +70,7 @@ const StepIndicator = ({
         {steps.map((step, index) => {
           const isClickable = canNavigateToStep(step.id);
           const isActive = steps.findIndex(s => s.id === currentStep) >= index;
-          
+
           return (
             <div key={step.id} className="flex items-center">
               <motion.button
@@ -78,25 +78,22 @@ const StepIndicator = ({
                 onClick={() => isClickable && onStepClick(step.id)}
                 whileHover={isClickable ? { scale: 1.05 } : {}}
                 whileTap={isClickable ? { scale: 0.95 } : {}}
-                className={`flex flex-col items-center ${
-                  isActive ? 'text-indigo-600' : 'text-gray-400'
-                } ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`flex flex-col items-center ${isActive ? 'text-indigo-600' : 'text-gray-400'
+                  } ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200 ${
-                  isActive
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200 ${isActive
                     ? 'bg-indigo-100'
                     : 'bg-gray-100'
-                } ${isClickable && !isActive ? 'hover:bg-gray-200' : ''}`}>
+                  } ${isClickable && !isActive ? 'hover:bg-gray-200' : ''}`}>
                   {step.icon}
                 </div>
                 <span className="text-sm font-medium">{step.label}</span>
               </motion.button>
               {index < steps.length - 1 && (
-                <div className={`w-full h-1 mx-4 ${
-                  steps.findIndex(s => s.id === currentStep) > index
+                <div className={`w-full h-1 mx-4 ${steps.findIndex(s => s.id === currentStep) > index
                     ? 'bg-indigo-600'
                     : 'bg-gray-200'
-                }`} />
+                  }`} />
               )}
             </div>
           );
@@ -111,8 +108,8 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
   <div className="relative h-[400px] w-full">
     {/* Background Image with Overlay */}
     <div className="absolute inset-0 bg-black/40 z-10" />
-    <div 
-      className="absolute inset-0 bg-cover bg-center z-0" 
+    <div
+      className="absolute inset-0 bg-cover bg-center z-0"
       style={{ backgroundImage: `url(${business.image})` }}
     />
 
@@ -128,7 +125,7 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
       </div>
 
       {/* Business Name and Rating */}
-      <motion.h1 
+      <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-5xl font-bold mb-4 text-center"
@@ -157,7 +154,7 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
       </motion.div>
 
       {/* Description */}
-      <motion.p 
+      <motion.p
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -170,9 +167,9 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
 );
 
 const BookingPage = () => {
-    useEffect(() => {
-        console.log("re-render");
-    },[])
+  useEffect(() => {
+    console.log("re-render");
+  }, [])
   const business = {
     id: "1",
     name: "The Business",
@@ -206,7 +203,7 @@ const BookingPage = () => {
     const dates = [];
     const firstDayOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
     const lastDayOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
-    
+
     // Get dates for the current month
     for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
       const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), i);
@@ -215,7 +212,7 @@ const BookingPage = () => {
         dates.push(date);
       }
     }
-    
+
     return dates;
   };
 
@@ -244,19 +241,19 @@ const BookingPage = () => {
     const slots = [];
     const startHour = 9; // 9 AM
     const endHour = 17; // 5 PM
-    
+
     for (let hour = startHour; hour <= endHour; hour++) {
       slots.push(`${hour}:00`);
       if (hour < endHour) {
         slots.push(`${hour}:30`);
       }
     }
-    
+
     return slots;
   };
 
   const timeSlots = generateTimeSlots();
-  
+
   // Replace the existing services array with this more detailed structure
   const services: Service[] = [
     {
@@ -328,11 +325,11 @@ const BookingPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsSuccess(true);
-      
+
       setTimeout(() => {
         setFormState({
           date: null,
@@ -355,10 +352,10 @@ const BookingPage = () => {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -369,11 +366,10 @@ const BookingPage = () => {
         {[1, 2, 3, 4, 5].map((star) => (
           <FaStar
             key={star}
-            className={`w-4 h-4 ${
-              star <= rating
+            className={`w-4 h-4 ${star <= rating
                 ? 'text-yellow-400'
                 : 'text-gray-300'
-            }`}
+              }`}
           />
         ))}
       </div>
@@ -386,7 +382,7 @@ const BookingPage = () => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <FaCalendarAlt className="mr-2 text-indigo-600" /> Select Your Preferred Date
       </h2>
-      
+
       {/* Month and Year Navigation */}
       <div className="flex items-center justify-between mb-4">
         <motion.button
@@ -394,11 +390,10 @@ const BookingPage = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handlePreviousMonth}
-          className={`p-2 rounded-lg ${
-            currentMonth.getMonth() === new Date().getMonth()
+          className={`p-2 rounded-lg ${currentMonth.getMonth() === new Date().getMonth()
               ? "text-gray-400 cursor-not-allowed"
               : "text-indigo-600 hover:bg-indigo-50"
-          }`}
+            }`}
           disabled={currentMonth.getMonth() === new Date().getMonth()}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -447,11 +442,10 @@ const BookingPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => updateForm('date', date)}
-            className={`p-4 rounded-lg text-center ${
-              formState.date && date.toDateString() === formState.date.toDateString()
+            className={`p-4 rounded-lg text-center ${formState.date && date.toDateString() === formState.date.toDateString()
                 ? "bg-indigo-600 text-white"
                 : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-            }`}
+              }`}
           >
             <div className="text-sm font-medium">{date.getDate()}</div>
           </motion.button>
@@ -470,7 +464,7 @@ const BookingPage = () => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <FaUser className="mr-2 text-indigo-600" /> Choose Your Professional
       </h2>
-      
+
       <div className="relative">
         {/* Carousel container */}
         <div className="overflow-x-auto hide-scrollbar">
@@ -481,11 +475,10 @@ const BookingPage = () => {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => updateForm('worker', worker.id)}
-                className={`flex-none w-72 cursor-pointer ${
-                  formState.worker === worker.id
+                className={`flex-none w-72 cursor-pointer ${formState.worker === worker.id
                     ? 'ring-4 ring-indigo-500'
                     : 'hover:shadow-lg'
-                } rounded-xl bg-white shadow-md transition-all duration-300`}
+                  } rounded-xl bg-white shadow-md transition-all duration-300`}
               >
                 <div className="relative">
                   {/* Professional Image */}
@@ -496,7 +489,7 @@ const BookingPage = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  
+
                   {/* Selection Indicator */}
                   {formState.worker === worker.id && (
                     <div className="absolute top-4 right-4">
@@ -514,7 +507,7 @@ const BookingPage = () => {
                   <h3 className="text-xl font-semibold text-gray-800 mb-2">
                     {worker.name}
                   </h3>
-                  
+
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
                     <StarRating rating={worker.rating} />
@@ -657,11 +650,10 @@ const BookingPage = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => updateForm('time', time)}
-                    className={`p-3 rounded-lg text-center ${
-                      time === formState.time
+                    className={`p-3 rounded-lg text-center ${time === formState.time
                         ? "bg-indigo-600 text-white"
                         : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                    }`}
+                      }`}
                   >
                     {time}
                   </motion.button>
@@ -690,11 +682,10 @@ const BookingPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => updateForm('subService', subService.id)}
-                    className={`p-4 rounded-lg border ${
-                      formState.subService === subService.id
+                    className={`p-4 rounded-lg border ${formState.subService === subService.id
                         ? "border-indigo-500 bg-indigo-50"
                         : "border-gray-200 hover:border-indigo-300"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -724,7 +715,7 @@ const BookingPage = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               <FaUser className="mr-2 text-indigo-600" /> Your Information
             </h2>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">
                 Full Name
@@ -739,7 +730,7 @@ const BookingPage = () => {
                 required
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">
                 Email Address
@@ -754,7 +745,7 @@ const BookingPage = () => {
                 required
               />
             </div>
-            
+
             <div className="mb-6">
               <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="phone">
                 Phone Number
@@ -768,17 +759,16 @@ const BookingPage = () => {
                 placeholder="(123) 456-7890"
               />
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={!formState.date || !formState.time || isSubmitting}
-              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-300 ${
-                !formState.date || !formState.time || isSubmitting
+              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
-              }`}
+                }`}
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center">
@@ -832,15 +822,15 @@ const BookingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-200">
       <HeroSection business={business} />
-      
+
       {/* Booking Form Section */}
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="rounded-2xl overflow-hidden">
           <form onSubmit={handleSubmit} className="p-6">
-            <StepIndicator 
-              currentStep={currentStep} 
+            <StepIndicator
+              currentStep={currentStep}
               onStepClick={handleStepClick}
               canNavigateToStep={canNavigateToStep}
             />
