@@ -6,6 +6,12 @@ import { FaCalendarAlt, FaClock, FaUser, FaMapMarkerAlt, FaStar } from "react-ic
 import OpenAI from "openai";
 
 // Add these new types above the BookingPage component
+interface WorkingHours {
+  start: string;  // Format: "HH:mm"
+  end: string;    // Format: "HH:mm"
+  days: number[]; // 0-6 representing Sunday-Saturday
+}
+
 interface Worker {
   id: string;
   name: string;
@@ -13,6 +19,7 @@ interface Worker {
   specialties: string[];
   rating: number;
   reviewCount: number;
+  workingHours: WorkingHours[];
 }
 
 interface SubService {
@@ -31,7 +38,7 @@ interface Service {
 }
 
 // Add this new type for steps
-type BookingStep = 'date' | 'professional' | 'time' | 'service' | 'contact';
+type BookingStep = 'date' | 'professional_time' | 'service' | 'contact';
 
 // Add this interface for the form state
 interface BookingFormState {
@@ -58,8 +65,7 @@ const StepIndicator = ({
 }) => {
   const steps: { id: BookingStep; label: string; icon: JSX.Element }[] = [
     { id: 'date', label: 'Date', icon: <FaCalendarAlt className="w-5 h-5" /> },
-    { id: 'professional', label: 'Professional', icon: <FaUser className="w-5 h-5" /> },
-    { id: 'time', label: 'Time', icon: <FaClock className="w-5 h-5" /> },
+    { id: 'professional_time', label: 'Professional', icon: <FaUser className="w-5 h-5" /> },
     { id: 'service', label: 'Service', icon: <span className="text-xl">🤝</span> },
     { id: 'contact', label: 'Contact', icon: <FaUser className="w-5 h-5" /> },
   ];
@@ -82,19 +88,19 @@ const StepIndicator = ({
                   } ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200 ${isActive
-                    ? 'bg-indigo-100'
-                    : 'bg-gray-100'
+                  ? 'bg-indigo-100'
+                  : 'bg-gray-100'
                   } ${isClickable && !isActive ? 'hover:bg-gray-200' : ''}`}>
                   {step.icon}
                 </div>
                 <span className="text-sm font-medium">{step.label}</span>
               </motion.button>
-              {index < steps.length - 1 && (
+              {/* {index < steps.length - 1 && (
                 <div className={`w-full h-1 mx-4 ${steps.findIndex(s => s.id === currentStep) > index
                     ? 'bg-indigo-600'
                     : 'bg-gray-200'
                   }`} />
-              )}
+              )} */}
             </div>
           );
         })}
@@ -105,7 +111,7 @@ const StepIndicator = ({
 
 // Move HeroSection outside of BookingPage
 const HeroSection = ({ business }: { business: { name: string; image: string; logo: string; rating: number; reviewCount: number; description: string } }) => (
-  <div className="relative h-[400px] w-full">
+  <div className="relative w-full aspect-[16/9] md:aspect-[21/9]">
     {/* Background Image with Overlay */}
     <div className="absolute inset-0 bg-black/40 z-10" />
     <div
@@ -114,21 +120,21 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
     />
 
     {/* Business Info Container */}
-    <div className="relative z-20 h-full flex flex-col items-center justify-center text-white px-4">
+    <div className="relative z-20 h-full flex flex-col items-center justify-center p-4 md:p-8">
       {/* Logo Container */}
-      <div className="mb-6">
+      <div className="mb-2 md:mb-4">
         <img
           src={business.logo}
           alt={business.name}
-          className="w-24 h-24 rounded-full border-4 border-white shadow-lg"
+          className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border-4 border-white shadow-lg"
         />
       </div>
 
-      {/* Business Name and Rating */}
+      {/* Business Name */}
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-5xl font-bold mb-4 text-center"
+        className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-center text-white"
       >
         {business.name}
       </motion.h1>
@@ -138,17 +144,16 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex items-center gap-2 mb-4"
+        className="flex items-center gap-2 mb-2 md:mb-4"
       >
-        {/* Replace StarRating with a simple star representation */}
         <div className="flex">
           {[...Array(5)].map((_, i) => (
-            <span key={i} className="text-yellow-400 text-xl">
+            <span key={i} className="text-yellow-400 text-base md:text-xl">
               {i < Math.floor(business.rating) ? "★" : "☆"}
             </span>
           ))}
         </div>
-        <span className="text-white">
+        <span className="text-white text-sm md:text-base">
           {business.rating} ({business.reviewCount} reviews)
         </span>
       </motion.div>
@@ -158,7 +163,7 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-xl text-center max-w-2xl"
+        className="text-sm md:text-base lg:text-lg text-center max-w-2xl text-white"
       >
         {business.description}
       </motion.p>
@@ -282,7 +287,19 @@ const BookingPage = () => {
           photoUrl: "/founder2.jpeg",
           specialties: ["Initial Consultation", "Strategy Planning"],
           rating: 4.8,
-          reviewCount: 127
+          reviewCount: 127,
+          workingHours: [
+            {
+              start: "09:00",
+              end: "17:00",
+              days: [1, 2, 3, 4, 5] // Monday to Friday
+            },
+            {
+              start: "10:00",
+              end: "14:00",
+              days: [6] // Saturday
+            }
+          ]
         },
         {
           id: "w2",
@@ -290,7 +307,14 @@ const BookingPage = () => {
           photoUrl: "/founder11.jpeg",
           specialties: ["Follow-up Consultation", "Implementation Review"],
           rating: 4.9,
-          reviewCount: 89
+          reviewCount: 89,
+          workingHours: [
+            {
+              start: "12:00",
+              end: "20:00",
+              days: [1, 2, 3, 4, 5] // Monday to Friday
+            }
+          ]
         }
       ]
     },
@@ -367,8 +391,8 @@ const BookingPage = () => {
           <FaStar
             key={star}
             className={`w-4 h-4 ${star <= rating
-                ? 'text-yellow-400'
-                : 'text-gray-300'
+              ? 'text-yellow-400'
+              : 'text-gray-300'
               }`}
           />
         ))}
@@ -391,8 +415,8 @@ const BookingPage = () => {
           whileTap={{ scale: 0.95 }}
           onClick={handlePreviousMonth}
           className={`p-2 rounded-lg ${currentMonth.getMonth() === new Date().getMonth()
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-indigo-600 hover:bg-indigo-50"
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-indigo-600 hover:bg-indigo-50"
             }`}
           disabled={currentMonth.getMonth() === new Date().getMonth()}
         >
@@ -443,8 +467,8 @@ const BookingPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => updateForm('date', date)}
             className={`p-4 rounded-lg text-center ${formState.date && date.toDateString() === formState.date.toDateString()
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+              ? "bg-indigo-600 text-white"
+              : "bg-gray-50 hover:bg-gray-100 text-gray-700"
               }`}
           >
             <div className="text-sm font-medium">{date.getDate()}</div>
@@ -454,196 +478,130 @@ const BookingPage = () => {
     </div>
   );
 
-  // Replace the professional selection section
-  const renderProfessionalSelection = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-8"
-    >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <FaUser className="mr-2 text-indigo-600" /> Choose Your Professional
-      </h2>
+  // Add a function to get available time slots based on professional's working hours
+  const getAvailableTimeSlots = (worker: Worker, date: Date) => {
+    const dayOfWeek = date.getDay();
+    const workingHoursForDay = worker.workingHours.find(hours =>
+      hours.days.includes(dayOfWeek)
+    );
 
-      <div className="relative">
-        {/* Carousel container */}
-        <div className="overflow-x-auto hide-scrollbar">
-          <div className="flex gap-6 p-4 min-w-full">
-            {services[0].workers.map((worker) => (
-              <motion.div
-                key={worker.id}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => updateForm('worker', worker.id)}
-                className={`flex-none w-72 cursor-pointer ${formState.worker === worker.id
-                    ? 'ring-4 ring-indigo-500'
-                    : 'hover:shadow-lg'
-                  } rounded-xl bg-white shadow-md transition-all duration-300`}
-              >
-                <div className="relative">
-                  {/* Professional Image */}
-                  <div className="h-48 rounded-t-xl overflow-hidden">
-                    <img
-                      src={worker.photoUrl}
-                      alt={worker.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+    if (!workingHoursForDay) {
+      return []; // Professional doesn't work on this day
+    }
 
-                  {/* Selection Indicator */}
-                  {formState.worker === worker.id && (
-                    <div className="absolute top-4 right-4">
-                      <div className="bg-indigo-500 text-white p-2 rounded-full">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+    const slots: string[] = [];
+    const [startHour] = workingHoursForDay.start.split(':').map(Number);
+    const [endHour] = workingHoursForDay.end.split(':').map(Number);
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      slots.push(`${hour}:00`);
+      if (hour < endHour - 1) {
+        slots.push(`${hour}:30`);
+      }
+    }
+
+    return slots;
+  };
+
+  // Update the renderProfessionalAndTime function
+  const renderProfessionalAndTime = () => {
+    const selectedWorker = formState.worker ?
+      services[0].workers.find(w => w.id === formState.worker) : null;
+
+    const availableTimeSlots = selectedWorker && formState.date ?
+      getAvailableTimeSlots(selectedWorker, formState.date) : [];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4"
+      >
+        {/* Professional Selection */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <FaUser className="mr-2 text-indigo-600" /> Choose Your Professional
+          </h2>
+
+          <div className="relative">
+            <div className="overflow-x-auto hide-scrollbar">
+              <div className="flex gap-3 p-2 min-w-full">
+                {services[0].workers.map((worker) => (
+                  <motion.div
+                    key={worker.id}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      updateForm('time', null);
+                      updateForm('worker', worker.id);
+                    }}
+                    className={`flex-none w-[200px] cursor-pointer ${formState.worker === worker.id
+                        ? 'ring-2 ring-indigo-500'
+                        : 'hover:shadow-lg'
+                      } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
+                  >
+                    {/* Profile Photo Container */}
+                    <div className="relative flex justify-center mb-3">
+                      <div className="relative w-24 h-24">
+                        <img
+                          src={worker.photoUrl}
+                          alt={worker.name}
+                          className="w-full h-full rounded-full object-cover border-4 border-gray-100 shadow-md"
+                        />
+                        {formState.worker === worker.id && (
+                          <div className="absolute -top-1 -right-1">
+                            <div className="bg-indigo-500 text-white p-1 rounded-full">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Professional Info */}
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                    {worker.name}
-                  </h3>
+                    {/* Content Container */}
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                        {worker.name}
+                      </h3>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <StarRating rating={worker.rating} />
-                    <span className="text-sm text-gray-600">
-                      {worker.rating} ({worker.reviewCount} reviews)
-                    </span>
-                  </div>
-
-                  {/* Specialties */}
-                  <div className="space-y-2">
-                    {worker.specialties.map((specialty, index) => (
-                      <div
-                        key={index}
-                        className="inline-block mr-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-sm"
-                      >
-                        {specialty}
+                      <div className="flex justify-center mb-2">
+                        <div className="flex items-center gap-1">
+                          <StarRating rating={worker.rating} />
+                          <span className="text-xs text-gray-600">
+                            ({worker.reviewCount})
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+
+                      <div className="flex flex-wrap justify-center gap-1">
+                        {worker.specialties.map((specialty, index) => (
+                          <div
+                            key={index}
+                            className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full"
+                          >
+                            {specialty}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Add these styles to your global CSS */}
-        <style jsx global>{`
-          .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-          .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
-      </div>
-    </motion.div>
-  );
-
-  // Add navigation functions
-  const goToNextStep = () => {
-    switch (currentStep) {
-      case 'date':
-        if (formState.date) setCurrentStep('professional');
-        break;
-      case 'professional':
-        if (formState.worker) setCurrentStep('time');
-        break;
-      case 'time':
-        if (formState.time) setCurrentStep('service');
-        break;
-      case 'service':
-        if (formState.subService) setCurrentStep('contact');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const goToPreviousStep = () => {
-    switch (currentStep) {
-      case 'professional':
-        setCurrentStep('date');
-        break;
-      case 'time':
-        setCurrentStep('professional');
-        break;
-      case 'service':
-        setCurrentStep('time');
-        break;
-      case 'contact':
-        setCurrentStep('service');
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Add navigation buttons component
-  const NavigationButtons = () => (
-    <div className="flex justify-between mt-6">
-      {currentStep !== 'date' && (
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={goToPreviousStep}
-          className="px-6 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
-        >
-          Previous
-        </motion.button>
-      )}
-      {currentStep !== 'contact' && (
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={goToNextStep}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-auto"
-        >
-          Next
-        </motion.button>
-      )}
-    </div>
-  );
-
-  // Modify the form render logic
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'date':
-        return (
-          <>
-            {renderDateSelection()}
-            <NavigationButtons />
-          </>
-        );
-      case 'professional':
-        return (
-          <>
-            {renderProfessionalSelection()}
-            <NavigationButtons />
-          </>
-        );
-      case 'time':
-        return (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-            >
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <FaClock className="mr-2 text-indigo-600" /> Choose Available Time
-              </h2>
+        {/* Time Selection */}
+        {selectedWorker && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <FaClock className="mr-2 text-indigo-600" /> Available Time Slots
+            </h2>
+            {availableTimeSlots.length > 0 ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                {timeSlots.map((time, index) => (
+                {availableTimeSlots.map((time, index) => (
                   <motion.button
                     key={index}
                     type="button"
@@ -659,58 +617,161 @@ const BookingPage = () => {
                   </motion.button>
                 ))}
               </div>
-            </motion.div>
-            <NavigationButtons />
-          </>
-        );
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No available time slots for this date. Please select another date.
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  // Update the navigation functions
+  const goToNextStep = () => {
+    switch (currentStep) {
+      case 'date':
+        if (formState.date) setCurrentStep('professional_time');
+        break;
+      case 'professional_time':
+        if (formState.worker && formState.time) setCurrentStep('service');
+        break;
+      case 'service':
+        if (formState.subService) setCurrentStep('contact');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const goToPreviousStep = () => {
+    switch (currentStep) {
+      case 'professional_time':
+        setCurrentStep('date');
+        break;
+      case 'service':
+        setCurrentStep('professional_time');
+        break;
+      case 'contact':
+        setCurrentStep('service');
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Add navigation buttons component
+  const NavigationButtons = () => (
+    <div className="flex justify-between">
+      {currentStep !== 'date' && (
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={goToPreviousStep}
+          className="px-6 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
+        >
+          Previous
+        </motion.button>
+      )}
+      {currentStep !== 'contact' ? (
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={goToNextStep}
+          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-auto"
+        >
+          Next
+        </motion.button>
+      ) : (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={!formState.date || !formState.time || isSubmitting}
+          className={`w-full py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
+            }`}
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </span>
+          ) : isSuccess ? (
+            <span className="flex items-center justify-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Booking Confirmed!
+            </span>
+          ) : (
+            "Confirm Booking"
+          )}
+        </motion.button>
+      )}
+    </div>
+  );
+
+  // Update the renderCurrentStep function
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 'date':
+        return renderDateSelection();
+      case 'professional_time':
+        return renderProfessionalAndTime();
       case 'service':
         return (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-            >
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                Select Service Type
-              </h2>
-              <div className="grid grid-cols-1 gap-3">
-                {services[0].subServices.map((subService) => (
-                  <motion.button
-                    key={subService.id}
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => updateForm('subService', subService.id)}
-                    className={`p-4 rounded-lg border ${formState.subService === subService.id
-                        ? "border-indigo-500 bg-indigo-50"
-                        : "border-gray-200 hover:border-indigo-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-3">{subService.icon}</span>
-                        <div>
-                          <span className="font-medium block">{subService.name}</span>
-                          <span className="text-sm text-gray-500">{subService.duration}</span>
-                        </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              Select Service Type
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              {services[0].subServices.map((subService) => (
+                <motion.button
+                  key={subService.id}
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => updateForm('subService', subService.id)}
+                  className={`p-4 rounded-lg border ${formState.subService === subService.id
+                    ? "border-indigo-500 bg-indigo-50"
+                    : "border-gray-200 hover:border-indigo-300"
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-3">{subService.icon}</span>
+                      <div>
+                        <span className="font-medium block">{subService.name}</span>
+                        <span className="text-sm text-gray-500">{subService.duration}</span>
                       </div>
-                      <span className="text-lg font-semibold text-indigo-600">
-                        ${subService.price}
-                      </span>
                     </div>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-            <NavigationButtons />
-          </>
+                    <span className="text-lg font-semibold text-indigo-600">
+                      ${subService.price}
+                    </span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
         );
       case 'contact':
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
           >
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               <FaUser className="mr-2 text-indigo-600" /> Your Information
@@ -759,36 +820,6 @@ const BookingPage = () => {
                 placeholder="(123) 456-7890"
               />
             </div>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={!formState.date || !formState.time || isSubmitting}
-              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
-                }`}
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </span>
-              ) : isSuccess ? (
-                <span className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  Booking Confirmed!
-                </span>
-              ) : (
-                "Confirm Booking"
-              )}
-            </motion.button>
           </motion.div>
         );
       default:
@@ -801,10 +832,8 @@ const BookingPage = () => {
     switch (step) {
       case 'date':
         return true;
-      case 'professional':
+      case 'professional_time':
         return !!formState.date;
-      case 'time':
-        return !!formState.date && !!formState.worker;
       case 'service':
         return !!formState.date && !!formState.worker && !!formState.time;
       case 'contact':
@@ -823,19 +852,35 @@ const BookingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-200">
-      <HeroSection business={business} />
+      {/* Main content container */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        {/* Booking Form Section */}
+        <div className="bg-white rounded-2xl shadow-lg mb-8">
+          <form onSubmit={handleSubmit} className="flex flex-col p-4 md:p-6">
+            {/* Step indicator */}
+            <div className="mb-4">
+              <StepIndicator
+                currentStep={currentStep}
+                onStepClick={handleStepClick}
+                canNavigateToStep={canNavigateToStep}
+              />
+            </div>
 
-      {/* Booking Form Section */}
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl overflow-hidden">
-          <form onSubmit={handleSubmit} className="p-6">
-            <StepIndicator
-              currentStep={currentStep}
-              onStepClick={handleStepClick}
-              canNavigateToStep={canNavigateToStep}
-            />
-            {renderCurrentStep()}
+            {/* Content area */}
+            <div className="flex-1 min-h-0">
+              {renderCurrentStep()}
+            </div>
+
+            {/* Navigation/Submit buttons */}
+            <div className="pt-4 mt-4 border-t border-gray-100">
+              <NavigationButtons />
+            </div>
           </form>
+        </div>
+
+        {/* Hero Section - now below the form */}
+        <div className="rounded-2xl overflow-hidden">
+          <HeroSection business={business} />
         </div>
       </div>
     </div>
