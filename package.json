@@ -26,6 +26,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.98.0",
+    "@stripe/stripe-js": "^6.1.0",
     "@supabase/supabase-js": "^2.46.2",
     "@vercel/analytics": "^1.4.1",
     "daisyui": "^4.12.14",
@@ -40,6 +41,7 @@
     "react-icons": "^5.4.0",
     "react-responsive": "^10.0.0",
     "recharts": "^2.15.1",
+    "stripe": "^17.7.0",
     "three": "^0.170.0",
     "three-stdlib": "^2.34.0"
   },
