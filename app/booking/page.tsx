@@ -55,7 +55,7 @@ interface BookingFormState {
   };
 }
 
-// Add these new components at the top of your file
+// Update the StepIndicator component to fix the z-index issue
 const StepIndicator = ({
   currentStep,
   onStepClick,
@@ -65,44 +65,63 @@ const StepIndicator = ({
   onStepClick: (step: BookingStep) => void;
   canNavigateToStep: (step: BookingStep) => boolean;
 }) => {
-  const steps: { id: BookingStep; label: string; icon: JSX.Element }[] = [
-    { id: 'date', label: 'Date', icon: <FaCalendarAlt className="w-5 h-5" /> },
-    { id: 'professional_time', label: 'Professional', icon: <FaUser className="w-5 h-5" /> },
-    { id: 'service', label: 'Service', icon: <RiServiceFill className="w-5 h-5" /> },
-    { id: 'contact', label: 'Contact', icon: <FaPhone className="w-5 h-5" /> },
+  const steps: { id: BookingStep }[] = [
+    { id: 'date' },
+    { id: 'professional_time' },
+    { id: 'service' },
+    { id: 'contact' },
   ];
+
+  const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
   return (
     <div className="mb-8">
-      <div className="flex justify-between items-center">
+      <div className="relative flex items-center justify-between">
+        {/* Connection lines between circles - set to lower z-index */}
+        <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 z-0">
+          <div className="h-1 w-full bg-gray-200">
+            <div 
+              className="h-full bg-indigo-600" 
+              style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
+            />
+          </div>
+        </div>
+        
+        {/* Step circles - higher z-index and with background to cover the line */}
         {steps.map((step, index) => {
           const isClickable = canNavigateToStep(step.id);
-          const isActive = steps.findIndex(s => s.id === currentStep) >= index;
-
+          const isComplete = index < currentStepIndex;
+          const isActive = index === currentStepIndex;
+          
           return (
-            <div key={step.id} className="flex items-center">
+            <div 
+              key={step.id} 
+              className="relative z-10" // Ensure this container has a higher z-index
+            >
               <motion.button
                 type="button"
                 onClick={() => isClickable && onStepClick(step.id)}
                 whileHover={isClickable ? { scale: 1.05 } : {}}
                 whileTap={isClickable ? { scale: 0.95 } : {}}
-                className={`flex flex-col items-center ${isActive ? 'text-indigo-600' : 'text-gray-400'
-                  } ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center 
+                  ${isComplete 
+                    ? 'bg-indigo-600 text-white' 
+                    : isActive 
+                      ? 'bg-indigo-100 text-indigo-600 border-2 border-indigo-600' 
+                      : 'bg-gray-200 text-gray-500'
+                  } transition-all duration-200
+                  ${isClickable && !isActive && !isComplete ? 'hover:bg-gray-300 cursor-pointer' : ''}
+                  ${!isClickable ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  shadow-sm`} // Added shadow to emphasize it's above the line
               >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-200 ${isActive
-                  ? 'bg-indigo-100'
-                  : 'bg-gray-100'
-                  } ${isClickable && !isActive ? 'hover:bg-gray-200' : ''}`}>
-                  {step.icon}
-                </div>
-                <span className="text-sm font-medium">{step.label}</span>
+                {isComplete ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <span className="font-bold text-base">{index + 1}</span>
+                )}
               </motion.button>
-              {/* {index < steps.length - 1 && (
-                <div className={`w-full h-1 mx-4 ${steps.findIndex(s => s.id === currentStep) > index
-                    ? 'bg-indigo-600'
-                    : 'bg-gray-200'
-                  }`} />
-              )} */}
             </div>
           );
         })}
@@ -442,7 +461,7 @@ const BookingPage = () => {
   // Replace the existing date selection section with this updated version
   const renderDateSelection = () => (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
         <FaCalendarAlt className="mr-2 text-indigo-600" /> Select Date
       </h2>
 
@@ -635,7 +654,7 @@ const BookingPage = () => {
         {selectedWorker && (
           <div className="mt-8">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <FaClock className="mr-2 text-indigo-600" /> Available Time Slots
+              <FaClock className="mr-2 text-indigo-600" /> Available Time
             </h2>
             {availableTimeSlots.length > 0 ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -853,10 +872,10 @@ const BookingPage = () => {
                           : "border-gray-200 hover:border-indigo-300"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <span className="font-medium block">{subService.name}</span>
-                          <span className="text-sm text-gray-500">{subService.duration}</span>
+                          <div className="font-medium text-left">{subService.name}</div>
+                          <div className="text-sm text-gray-500 text-left mt-1">{subService.duration}</div>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-lg font-semibold text-indigo-600">
@@ -906,7 +925,7 @@ const BookingPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-4"
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
               <FaUser className="mr-2 text-indigo-600" /> Your Information
             </h2>
 
@@ -987,8 +1006,13 @@ const BookingPage = () => {
     <div className="min-h-screen bg-gray-200">
       {/* Main content container */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-        {/* Booking Form Section */}
-        <div className="bg-white rounded-2xl shadow-lg mb-8">
+        {/* Hero Section - moved to the top */}
+        <div className="rounded-2xl overflow-hidden mb-8">
+          <HeroSection business={business} />
+        </div>
+
+        {/* Booking Form Section - moved to the bottom */}
+        <div className="bg-white rounded-2xl shadow-lg">
           <form onSubmit={handleSubmit} className="flex flex-col p-4 md:p-6">
             {/* Step indicator */}
             <div className="mb-4">
@@ -1009,11 +1033,6 @@ const BookingPage = () => {
               <NavigationButtons />
             </div>
           </form>
-        </div>
-
-        {/* Hero Section - now below the form */}
-        <div className="rounded-2xl overflow-hidden">
-          <HeroSection business={business} />
         </div>
       </div>
     </div>
