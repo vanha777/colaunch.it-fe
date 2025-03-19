@@ -7,11 +7,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(request: Request) {
+  console.log("check here xxxxxx");
   const { amount } = await request.json();
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amount * 100, // Convert to cents
-    currency: "usd",
+    currency: "aud",
     payment_method_types: ["card_present"], // For in-person tap payments
     capture_method: "automatic",
   });
