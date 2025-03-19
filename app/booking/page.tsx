@@ -757,6 +757,15 @@ const BookingPage = () => {
     </div>
   );
 
+  // Add this helper function to filter subservices based on worker specialties
+  const getWorkerSubServices = (worker: Worker, allSubServices: SubService[]) => {
+    return allSubServices.filter(subService => 
+      worker.specialties.some(specialty => 
+        subService.name.toLowerCase().includes(specialty.toLowerCase())
+      )
+    );
+  };
+
   // Update the renderCurrentStep function
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -813,11 +822,17 @@ const BookingPage = () => {
             </div>
 
             {/* Sub-services */}
-            {formState.serviceCategory && (
+            {formState.serviceCategory && formState.worker && (
               <div className="grid grid-cols-1 gap-3">
-                {services
-                  .find(s => s.id === formState.serviceCategory)
-                  ?.subServices.map((subService) => (
+                {(() => {
+                  const selectedService = services.find(s => s.id === formState.serviceCategory);
+                  const selectedWorker = services[0].workers.find(w => w.id === formState.worker);
+                  
+                  if (!selectedService || !selectedWorker) return null;
+                  
+                  const workerSubServices = getWorkerSubServices(selectedWorker, selectedService.subServices);
+
+                  return workerSubServices.map((subService) => (
                     <motion.button
                       key={subService.id}
                       type="button"
@@ -831,10 +846,11 @@ const BookingPage = () => {
                             : [...prev.subServices, subService.id]
                         }));
                       }}
-                      className={`p-4 rounded-lg border ${formState.subServices.includes(subService.id)
+                      className={`p-4 rounded-lg border ${
+                        formState.subServices.includes(subService.id)
                           ? "border-indigo-500 bg-indigo-50"
                           : "border-gray-200 hover:border-indigo-300"
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -855,7 +871,8 @@ const BookingPage = () => {
                         </div>
                       </div>
                     </motion.button>
-                  ))}
+                  ));
+                })()}
               </div>
             )}
 
