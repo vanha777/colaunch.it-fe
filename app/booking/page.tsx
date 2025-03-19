@@ -38,8 +38,8 @@ interface Service {
   workers: Worker[];
 }
 
-// Add this new type for steps
-type BookingStep = 'date' | 'professional_time' | 'service' | 'contact';
+// Update this new type for steps with the new order
+type BookingStep = 'service' | 'professional' | 'date_time' | 'contact';
 
 // Add this interface for the form state
 interface BookingFormState {
@@ -66,9 +66,9 @@ const StepIndicator = ({
   canNavigateToStep: (step: BookingStep) => boolean;
 }) => {
   const steps: { id: BookingStep }[] = [
-    { id: 'date' },
-    { id: 'professional_time' },
     { id: 'service' },
+    { id: 'professional' },
+    { id: 'date_time' },
     { id: 'contact' },
   ];
 
@@ -210,7 +210,7 @@ const BookingPage = () => {
   const [formState, setFormState] = useState<BookingFormState>({
     date: null,
     time: null,
-    worker: "",
+    worker: "no_preference",
     serviceCategory: "",
     subServices: [],
     contactInfo: {
@@ -220,7 +220,8 @@ const BookingPage = () => {
     }
   });
 
-  const [currentStep, setCurrentStep] = useState<BookingStep>('date');
+  // Change the initial step to 'service'
+  const [currentStep, setCurrentStep] = useState<BookingStep>('service');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -386,6 +387,15 @@ const BookingPage = () => {
   // Update form handlers
   const updateForm = (field: string, value: any) => {
     setFormState(prev => {
+      if (field === 'serviceCategory') {
+        return {
+          ...prev,
+          [field]: value,
+          subServices: [],
+          worker: "no_preference"
+        };
+      }
+      
       if (field in prev.contactInfo) {
         return {
           ...prev,
@@ -405,32 +415,19 @@ const BookingPage = () => {
   // Update the handle submit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Just log the form data instead of submitting
+    console.log("Booking form data:", formState);
+    
+    // You can keep the visual feedback if desired
     setIsSubmitting(true);
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    setTimeout(() => {
       setIsSuccess(true);
-
       setTimeout(() => {
-        setFormState({
-          date: null,
-          time: null,
-          worker: "",
-          serviceCategory: "",
-          subServices: [],
-          contactInfo: {
-            name: "",
-            email: "",
-            phone: "",
-          }
-        });
+        setIsSubmitting(false);
         setIsSuccess(false);
-      }, 3000);
-    } catch (error) {
-      console.error("Error submitting booking:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      }, 1500);
+    }, 1000);
   };
 
   const formatDate = (date: Date) => {
@@ -561,141 +558,17 @@ const BookingPage = () => {
     return slots;
   };
 
-  // Update the renderProfessionalAndTime function
-  const renderProfessionalAndTime = () => {
-    const selectedWorker = formState.worker ?
-      services[0].workers.find(w => w.id === formState.worker) : null;
-
-    const availableTimeSlots = selectedWorker && formState.date ?
-      getAvailableTimeSlots(selectedWorker, formState.date) : [];
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-4"
-      >
-        {/* Professional Selection */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <FaUser className="mr-2 text-indigo-600" /> Preferred staff
-          </h2>
-
-          <div className="relative">
-            <div className="carousel carousel-center max-w-full p-4 space-x-4 scrollbar-hide">
-              {services[0].workers.map((worker) => (
-                <div key={worker.id} className="carousel-item">
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      updateForm('time', null);
-                      updateForm('worker', worker.id);
-                    }}
-                    className={`w-[200px] cursor-pointer ${formState.worker === worker.id
-                        ? 'ring-2 ring-indigo-500'
-                        : 'hover:shadow-lg'
-                      } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
-                  >
-                    {/* Profile Photo Container */}
-                    <div className="relative flex justify-center mb-3">
-                      <div className="relative w-24 h-24">
-                        <img
-                          src={worker.photoUrl}
-                          alt={worker.name}
-                          className="w-full h-full rounded-full object-cover border-4 border-gray-100 shadow-md"
-                        />
-                        {formState.worker === worker.id && (
-                          <div className="absolute -top-1 -right-1">
-                            <div className="bg-indigo-500 text-white p-1 rounded-full">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content Container */}
-                    <div className="text-center">
-                      <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                        {worker.name}
-                      </h3>
-
-                      <div className="flex justify-center mb-2">
-                        <div className="flex items-center gap-1">
-                          <StarRating rating={worker.rating} />
-                          <span className="text-xs text-gray-600">
-                            ({worker.reviewCount})
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap justify-center gap-1">
-                        {worker.specialties.map((specialty, index) => (
-                          <div
-                            key={index}
-                            className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full"
-                          >
-                            {specialty}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Time Selection */}
-        {selectedWorker && (
-          <div className="mt-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <FaClock className="mr-2 text-indigo-600" /> Available Time
-            </h2>
-            {availableTimeSlots.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                {availableTimeSlots.map((time, index) => (
-                  <motion.button
-                    key={index}
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => updateForm('time', time)}
-                    className={`p-3 rounded-lg text-center ${time === formState.time
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                      }`}
-                  >
-                    {time}
-                  </motion.button>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No available time slots for this date. Please select another date.
-              </div>
-            )}
-          </div>
-        )}
-      </motion.div>
-    );
-  };
-
   // Update the navigation functions
   const goToNextStep = () => {
     switch (currentStep) {
-      case 'date':
-        if (formState.date) setCurrentStep('professional_time');
-        break;
-      case 'professional_time':
-        if (formState.worker && formState.time) setCurrentStep('service');
-        break;
       case 'service':
-        if (formState.subServices.length > 0) setCurrentStep('contact');
+        if (formState.serviceCategory && formState.subServices.length > 0) setCurrentStep('professional');
+        break;
+      case 'professional':
+        if (formState.worker) setCurrentStep('date_time');
+        break;
+      case 'date_time':
+        if (formState.date && formState.time) setCurrentStep('contact');
         break;
       default:
         break;
@@ -704,14 +577,14 @@ const BookingPage = () => {
 
   const goToPreviousStep = () => {
     switch (currentStep) {
-      case 'professional_time':
-        setCurrentStep('date');
+      case 'professional':
+        setCurrentStep('service');
         break;
-      case 'service':
-        setCurrentStep('professional_time');
+      case 'date_time':
+        setCurrentStep('professional');
         break;
       case 'contact':
-        setCurrentStep('service');
+        setCurrentStep('date_time');
         break;
       default:
         break;
@@ -721,7 +594,7 @@ const BookingPage = () => {
   // Add navigation buttons component
   const NavigationButtons = () => (
     <div className="flex justify-between">
-      {currentStep !== 'date' && (
+      {currentStep !== 'service' && (
         <motion.button
           type="button"
           whileHover={{ scale: 1.02 }}
@@ -777,22 +650,119 @@ const BookingPage = () => {
     </div>
   );
 
-  // Add this helper function to filter subservices based on worker specialties
-  const getWorkerSubServices = (worker: Worker, allSubServices: SubService[]) => {
-    return allSubServices.filter(subService => 
-      worker.specialties.some(specialty => 
-        subService.name.toLowerCase().includes(specialty.toLowerCase())
-      )
+  // Add this function to get workers available for selected services
+  const getAvailableWorkers = () => {
+    if (!formState.serviceCategory || formState.subServices.length === 0) return [];
+    
+    const selectedService = services.find(s => s.id === formState.serviceCategory);
+    if (!selectedService) return [];
+    
+    const selectedSubServiceIds = formState.subServices;
+    const selectedSubServices = selectedService.subServices.filter(
+      sub => selectedSubServiceIds.includes(sub.id)
+    );
+    
+    // Filter workers who can handle all selected services
+    return selectedService.workers.filter(worker => {
+      return selectedSubServices.every(subService => 
+        worker.specialties.some(specialty => 
+          subService.name.toLowerCase().includes(specialty.toLowerCase())
+        )
+      );
+    });
+  };
+
+  // Add a combined function for date and time selection
+  const renderDateAndTimeSelection = () => {
+    const selectedWorker = formState.worker === "no_preference" ? 
+      { id: "no_preference", name: "No Preference", workingHours: [] } as unknown as Worker :
+      formState.worker ?
+        services[0].workers.find(w => w.id === formState.worker) : null;
+    
+    if (!selectedWorker) {
+      return (
+        <div className="text-center text-gray-500 py-4">
+          Please go back and select a staff member first.
+        </div>
+      );
+    }
+
+    // For "No Preference", combine all workers' available slots
+    const availableTimeSlots = selectedWorker && formState.date ?
+      selectedWorker.id === "no_preference" ?
+        // Get time slots from all available workers for this service/date
+        Array.from(new Set(
+          getAvailableWorkers().flatMap(worker => 
+            getAvailableTimeSlots(worker, formState.date!)
+          )
+        )).sort() :
+        getAvailableTimeSlots(selectedWorker, formState.date) : 
+      [];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4"
+      >
+        {/* Date Selection */}
+        {renderDateSelection()}
+
+        {/* Time Selection */}
+        {formState.date && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <FaClock className="mr-2 text-indigo-600" /> Available Time
+            </h2>
+            {availableTimeSlots.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                {availableTimeSlots.map((time, index) => (
+                  <motion.button
+                    key={index}
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => updateForm('time', time)}
+                    className={`p-3 rounded-lg text-center ${time === formState.time
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                      }`}
+                  >
+                    {time}
+                  </motion.button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No available time slots for this date. Please select another date.
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
     );
   };
 
-  // Update the renderCurrentStep function
+  // Update the canNavigateToStep function for the new flow
+  const canNavigateToStep = (step: BookingStep): boolean => {
+    switch (step) {
+      case 'service':
+        return true;
+      case 'professional':
+        return formState.serviceCategory !== "" && formState.subServices.length > 0;
+      case 'date_time':
+        return formState.serviceCategory !== "" && formState.subServices.length > 0 && !!formState.worker;
+      case 'contact':
+        return formState.serviceCategory !== "" && formState.subServices.length > 0 && 
+               !!formState.worker && !!formState.date && !!formState.time;
+      default:
+        return false;
+    }
+  };
+
+  // Update the renderCurrentStep function with the new order
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 'date':
-        return renderDateSelection();
-      case 'professional_time':
-        return renderProfessionalAndTime();
       case 'service':
         return (
           <motion.div
@@ -801,7 +771,7 @@ const BookingPage = () => {
             className="mb-4"
           >
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <FaUser className="mr-2 text-indigo-600" /> Select Services
+              <RiServiceFill className="mr-2 text-indigo-600" /> Select Services
             </h2>
 
             {/* Service Dropdown using Daisy UI */}
@@ -830,6 +800,7 @@ const BookingPage = () => {
                         onClick={() => {
                           updateForm('serviceCategory', service.id);
                           updateForm('subServices', []); // Clear selected sub-services when changing category
+                          updateForm('worker', ""); // Clear selected worker when changing service
                         }}
                         className={formState.serviceCategory === service.id ? 'bg-indigo-50' : ''}
                       >
@@ -842,17 +813,14 @@ const BookingPage = () => {
             </div>
 
             {/* Sub-services */}
-            {formState.serviceCategory && formState.worker && (
+            {formState.serviceCategory && (
               <div className="grid grid-cols-1 gap-3">
                 {(() => {
                   const selectedService = services.find(s => s.id === formState.serviceCategory);
-                  const selectedWorker = services[0].workers.find(w => w.id === formState.worker);
                   
-                  if (!selectedService || !selectedWorker) return null;
+                  if (!selectedService) return null;
                   
-                  const workerSubServices = getWorkerSubServices(selectedWorker, selectedService.subServices);
-
-                  return workerSubServices.map((subService) => (
+                  return selectedService.subServices.map((subService) => (
                     <motion.button
                       key={subService.id}
                       type="button"
@@ -918,6 +886,142 @@ const BookingPage = () => {
             )}
           </motion.div>
         );
+      case 'professional':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <FaUser className="mr-2 text-indigo-600" /> Select Staff
+            </h2>
+
+            {formState.subServices.length > 0 ? (
+              <div className="relative">
+                <div className="carousel carousel-center max-w-full p-4 space-x-4 scrollbar-hide">
+                  {/* No Preference Card - styled like other staff cards */}
+                  <div className="carousel-item">
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => updateForm('worker', "no_preference")}
+                      className={`w-[200px] cursor-pointer ${formState.worker === "no_preference"
+                          ? 'ring-2 ring-indigo-500'
+                          : 'hover:shadow-lg'
+                        } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
+                    >
+                      {/* No Preference Icon Container */}
+                      <div className="relative flex justify-center mb-3">
+                        <div className="relative w-24 h-24 rounded-full bg-indigo-50 flex items-center justify-center">
+                          <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                          {formState.worker === "no_preference" && (
+                            <div className="absolute -top-1 -right-1">
+                              <div className="bg-indigo-500 text-white p-1 rounded-full">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Content Container */}
+                      <div className="text-center">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                          No Preference
+                        </h3>
+
+                        <div className="flex justify-center mb-2">
+                          <span className="text-xs text-gray-600">
+                            Next Available
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-1">
+                          <div className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full">
+                            Any Staff
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Regular Staff Cards */}
+                  {getAvailableWorkers().map((worker) => (
+                    <div key={worker.id} className="carousel-item">
+                      <motion.div
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => updateForm('worker', worker.id)}
+                        className={`w-[200px] cursor-pointer ${formState.worker === worker.id
+                            ? 'ring-2 ring-indigo-500'
+                            : 'hover:shadow-lg'
+                          } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
+                      >
+                        {/* Profile Photo Container */}
+                        <div className="relative flex justify-center mb-3">
+                          <div className="relative w-24 h-24">
+                            <img
+                              src={worker.photoUrl}
+                              alt={worker.name}
+                              className="w-full h-full rounded-full object-cover border-4 border-gray-100 shadow-md"
+                            />
+                            {formState.worker === worker.id && (
+                              <div className="absolute -top-1 -right-1">
+                                <div className="bg-indigo-500 text-white p-1 rounded-full">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Content Container */}
+                        <div className="text-center">
+                          <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                            {worker.name}
+                          </h3>
+
+                          <div className="flex justify-center mb-2">
+                            <div className="flex items-center gap-1">
+                              <StarRating rating={worker.rating} />
+                              <span className="text-xs text-gray-600">
+                                ({worker.reviewCount})
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap justify-center gap-1">
+                            {worker.specialties.map((specialty, index) => (
+                              <div
+                                key={index}
+                                className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full"
+                              >
+                                {specialty}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                Please go back and select services first.
+              </div>
+            )}
+          </motion.div>
+        );
+      case 'date_time':
+        return renderDateAndTimeSelection();
       case 'contact':
         return (
           <motion.div
@@ -979,29 +1083,6 @@ const BookingPage = () => {
     }
   };
 
-  // Add this function to check if we can navigate to a step
-  const canNavigateToStep = (step: BookingStep): boolean => {
-    switch (step) {
-      case 'date':
-        return true;
-      case 'professional_time':
-        return !!formState.date;
-      case 'service':
-        return !!formState.date && !!formState.worker && !!formState.time;
-      case 'contact':
-        return !!formState.date && !!formState.worker && !!formState.time && formState.subServices.length > 0;
-      default:
-        return false;
-    }
-  };
-
-  // Add this function to handle step navigation
-  const handleStepClick = (step: BookingStep) => {
-    if (canNavigateToStep(step)) {
-      setCurrentStep(step);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-200">
       {/* Main content container */}
@@ -1018,7 +1099,7 @@ const BookingPage = () => {
             <div className="mb-4">
               <StepIndicator
                 currentStep={currentStep}
-                onStepClick={handleStepClick}
+                onStepClick={setCurrentStep}
                 canNavigateToStep={canNavigateToStep}
               />
             </div>
