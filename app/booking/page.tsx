@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaCalendarAlt, FaClock, FaUser, FaMapMarkerAlt, FaStar } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaUser, FaStar, FaPhone } from "react-icons/fa";
 import OpenAI from "openai";
+import { RiServiceFill } from "react-icons/ri";
 
 // Add these new types above the BookingPage component
 interface WorkingHours {
@@ -45,7 +46,8 @@ interface BookingFormState {
   date: Date | null;
   time: string | null;
   worker: string;
-  subService: string;
+  serviceCategory: string;
+  subServices: string[];
   contactInfo: {
     name: string;
     email: string;
@@ -66,8 +68,8 @@ const StepIndicator = ({
   const steps: { id: BookingStep; label: string; icon: JSX.Element }[] = [
     { id: 'date', label: 'Date', icon: <FaCalendarAlt className="w-5 h-5" /> },
     { id: 'professional_time', label: 'Professional', icon: <FaUser className="w-5 h-5" /> },
-    { id: 'service', label: 'Service', icon: <span className="text-xl">🤝</span> },
-    { id: 'contact', label: 'Contact', icon: <FaUser className="w-5 h-5" /> },
+    { id: 'service', label: 'Service', icon: <RiServiceFill className="w-5 h-5" /> },
+    { id: 'contact', label: 'Contact', icon: <FaPhone className="w-5 h-5" /> },
   ];
 
   return (
@@ -190,7 +192,8 @@ const BookingPage = () => {
     date: null,
     time: null,
     worker: "",
-    subService: "",
+    serviceCategory: "",
+    subServices: [],
     contactInfo: {
       name: "",
       email: "",
@@ -262,32 +265,53 @@ const BookingPage = () => {
   // Replace the existing services array with this more detailed structure
   const services: Service[] = [
     {
-      id: "consultation",
-      name: "Consultation",
+      id: "nailcare",
+      name: "Nail Care",
       subServices: [
         {
-          id: "initial",
-          name: "Initial Consultation",
-          price: 100,
-          duration: "1 hour",
-          icon: "🤝"
+          id: "manicure",
+          name: "Classic Manicure",
+          price: 35,
+          duration: "45 min",
+          icon: "💅"
         },
         {
-          id: "followup",
-          name: "Follow-up Consultation",
+          id: "pedicure",
+          name: "Deluxe Pedicure",
+          price: 45,
+          duration: "60 min",
+          icon: "👣"
+        },
+        {
+          id: "gel",
+          name: "Gel Manicure",
+          price: 55,
+          duration: "60 min",
+          icon: "✨"
+        },
+        {
+          id: "acrylics",
+          name: "Full Set Acrylics",
           price: 75,
-          duration: "45 min",
-          icon: "📋"
+          duration: "90 min",
+          icon: "💎"
+        },
+        {
+          id: "designs",
+          name: "Nail Art & Designs",
+          price: 25,
+          duration: "30 min",
+          icon: "🎨"
         }
       ],
       workers: [
         {
           id: "w1",
-          name: "John Smith",
+          name: "Lisa Chen",
           photoUrl: "/founder2.jpeg",
-          specialties: ["Initial Consultation", "Strategy Planning"],
-          rating: 4.8,
-          reviewCount: 127,
+          specialties: ["Nail Art", "Gel Manicure", "Acrylics"],
+          rating: 4.9,
+          reviewCount: 342,
           workingHours: [
             {
               start: "09:00",
@@ -296,34 +320,48 @@ const BookingPage = () => {
             },
             {
               start: "10:00",
-              end: "14:00",
+              end: "16:00",
               days: [6] // Saturday
             }
           ]
         },
         {
           id: "w2",
-          name: "Sarah Johnson",
+          name: "Maria Rodriguez",
           photoUrl: "/founder11.jpeg",
-          specialties: ["Follow-up Consultation", "Implementation Review"],
-          rating: 4.9,
-          reviewCount: 89,
+          specialties: ["Classic Manicure", "Deluxe Pedicure", "Nail Art"],
+          rating: 4.8,
+          reviewCount: 289,
           workingHours: [
             {
               start: "12:00",
               end: "20:00",
-              days: [] // Monday to Friday
+              days: [2, 3, 4, 5, 6] // Tuesday to Saturday
+            }
+          ]
+        },
+        {
+          id: "w3",
+          name: "Jenny Kim",
+          photoUrl: "/founder3.jpeg",
+          specialties: ["Acrylics", "Gel Manicure", "3D Nail Art"],
+          rating: 4.9,
+          reviewCount: 156,
+          workingHours: [
+            {
+              start: "09:00",
+              end: "17:00",
+              days: [1, 2, 3, 4, 6] // Monday to Thursday + Saturday
             }
           ]
         }
       ]
-    },
-    // Add more services as needed
+    }
   ];
 
   // Add this helper function
   const getSelectedService = () => {
-    return services.find(s => s.id === formState.subService);
+    return services.find(s => s.id === formState.subServices[0]);
   };
 
   // Update form handlers
@@ -359,7 +397,8 @@ const BookingPage = () => {
           date: null,
           time: null,
           worker: "",
-          subService: "",
+          serviceCategory: "",
+          subServices: [],
           contactInfo: {
             name: "",
             email: "",
@@ -404,7 +443,7 @@ const BookingPage = () => {
   const renderDateSelection = () => (
     <div className="mb-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <FaCalendarAlt className="mr-2 text-indigo-600" /> Select Your Preferred Date
+        <FaCalendarAlt className="mr-2 text-indigo-600" /> Select Date
       </h2>
 
       {/* Month and Year Navigation */}
@@ -520,22 +559,21 @@ const BookingPage = () => {
         {/* Professional Selection */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <FaUser className="mr-2 text-indigo-600" /> Choose Your Professional
+            <FaUser className="mr-2 text-indigo-600" /> Preferred staff
           </h2>
 
           <div className="relative">
-            <div className="overflow-x-auto hide-scrollbar">
-              <div className="flex gap-3 p-2 min-w-full">
-                {services[0].workers.map((worker) => (
+            <div className="carousel carousel-center max-w-full p-4 space-x-4 scrollbar-hide">
+              {services[0].workers.map((worker) => (
+                <div key={worker.id} className="carousel-item">
                   <motion.div
-                    key={worker.id}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       updateForm('time', null);
                       updateForm('worker', worker.id);
                     }}
-                    className={`flex-none w-[200px] cursor-pointer ${formState.worker === worker.id
+                    className={`w-[200px] cursor-pointer ${formState.worker === worker.id
                         ? 'ring-2 ring-indigo-500'
                         : 'hover:shadow-lg'
                       } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
@@ -587,8 +625,8 @@ const BookingPage = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -609,8 +647,8 @@ const BookingPage = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => updateForm('time', time)}
                     className={`p-3 rounded-lg text-center ${time === formState.time
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
                       }`}
                   >
                     {time}
@@ -638,7 +676,7 @@ const BookingPage = () => {
         if (formState.worker && formState.time) setCurrentStep('service');
         break;
       case 'service':
-        if (formState.subService) setCurrentStep('contact');
+        if (formState.subServices.length > 0) setCurrentStep('contact');
         break;
       default:
         break;
@@ -691,11 +729,10 @@ const BookingPage = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={!formState.date || !formState.time || isSubmitting}
-          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${
-            !formState.date || !formState.time || isSubmitting
+          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
-          }`}
+            }`}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center">
@@ -734,37 +771,114 @@ const BookingPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-4"
           >
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              Select Service Type
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <FaUser className="mr-2 text-indigo-600" /> Select Services
             </h2>
-            <div className="grid grid-cols-1 gap-3">
-              {services[0].subServices.map((subService) => (
-                <motion.button
-                  key={subService.id}
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => updateForm('subService', subService.id)}
-                  className={`p-4 rounded-lg border ${formState.subService === subService.id
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-gray-200 hover:border-indigo-300"
-                    }`}
+
+            {/* Service Dropdown using Daisy UI */}
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Category
+              </label>
+              <div className="dropdown w-full">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">{subService.icon}</span>
-                      <div>
-                        <span className="font-medium block">{subService.name}</span>
-                        <span className="text-sm text-gray-500">{subService.duration}</span>
-                      </div>
-                    </div>
-                    <span className="text-lg font-semibold text-indigo-600">
-                      ${subService.price}
-                    </span>
-                  </div>
-                </motion.button>
-              ))}
+                  {formState.serviceCategory ?
+                    services.find(s => s.id === formState.serviceCategory)?.name :
+                    'Select a service'
+                  }
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full">
+                  {services.map((service) => (
+                    <li key={service.id}>
+                      <a
+                        onClick={() => {
+                          updateForm('serviceCategory', service.id);
+                          updateForm('subServices', []); // Clear selected sub-services when changing category
+                        }}
+                        className={formState.serviceCategory === service.id ? 'bg-indigo-50' : ''}
+                      >
+                        {service.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+
+            {/* Sub-services */}
+            {formState.serviceCategory && (
+              <div className="grid grid-cols-1 gap-3">
+                {services
+                  .find(s => s.id === formState.serviceCategory)
+                  ?.subServices.map((subService) => (
+                    <motion.button
+                      key={subService.id}
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setFormState(prev => ({
+                          ...prev,
+                          subServices: prev.subServices.includes(subService.id)
+                            ? prev.subServices.filter(id => id !== subService.id)
+                            : [...prev.subServices, subService.id]
+                        }));
+                      }}
+                      className={`p-4 rounded-lg border ${formState.subServices.includes(subService.id)
+                          ? "border-indigo-500 bg-indigo-50"
+                          : "border-gray-200 hover:border-indigo-300"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-medium block">{subService.name}</span>
+                          <span className="text-sm text-gray-500">{subService.duration}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-semibold text-indigo-600">
+                            ${subService.price}
+                          </span>
+                          {formState.subServices.includes(subService.id) && (
+                            <div className="bg-indigo-500 text-white p-1 rounded-full">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+              </div>
+            )}
+
+            {/* Total Price Display */}
+            {formState.subServices.length > 0 && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">Total Services: {formState.subServices.length}</h3>
+                    <p className="text-sm text-gray-600">
+                      {formState.subServices.map(id =>
+                        services[0].subServices.find(s => s.id === id)?.name
+                      ).join(', ')}
+                    </p>
+                  </div>
+                  <div className="text-xl font-bold text-indigo-600">
+                    ${services[0].subServices
+                      .filter(s => formState.subServices.includes(s.id))
+                      .reduce((total, service) => total + service.price, 0)}
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         );
       case 'contact':
@@ -838,7 +952,7 @@ const BookingPage = () => {
       case 'service':
         return !!formState.date && !!formState.worker && !!formState.time;
       case 'contact':
-        return !!formState.date && !!formState.worker && !!formState.time && !!formState.subService;
+        return !!formState.date && !!formState.worker && !!formState.time && formState.subServices.length > 0;
       default:
         return false;
     }
