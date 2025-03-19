@@ -719,7 +719,7 @@ const BookingPage = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={goToNextStep}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ml-auto"
+          className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90 ml-auto"
         >
           Next
         </motion.button>
@@ -729,10 +729,11 @@ const BookingPage = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={!formState.date || !formState.time || isSubmitting}
-          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${
+            !formState.date || !formState.time || isSubmitting
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-lg"
-            }`}
+              : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
+          }`}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center">
