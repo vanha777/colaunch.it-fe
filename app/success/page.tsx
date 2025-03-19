@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function SuccessPage() {
+// Create a component that uses the search params
+function SuccessContent() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
@@ -19,44 +20,65 @@ export default function SuccessPage() {
   }, [sessionId]);
 
   return (
-    <div className="container mx-auto max-w-md py-12">
-      <div className="bg-white p-8 rounded-lg shadow-md text-center">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-            <p className="text-gray-600">Confirming your payment...</p>
-          </div>
-        ) : (
-          <>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-green-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
-            <p className="text-gray-600 mb-6">
-              Thank you for your purchase. Your payment has been processed successfully.
-            </p>
-            <Link
-              href="/"
-              className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md transition duration-200"
+    <div className="bg-white p-8 rounded-lg shadow-md text-center">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+          <p className="text-gray-600">Confirming your payment...</p>
+        </div>
+      ) : (
+        <>
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Return to Home
-            </Link>
-          </>
-        )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
+          <p className="text-gray-600 mb-6">
+            Thank you for your purchase. Your payment has been processed successfully.
+          </p>
+          <Link
+            href="/"
+            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md transition duration-200"
+          >
+            Return to Home
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Loading fallback component
+function SuccessLoading() {
+  return (
+    <div className="bg-white p-8 rounded-lg shadow-md text-center">
+      <div className="flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+        <p className="text-gray-600">Loading payment information...</p>
       </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SuccessPage() {
+  return (
+    <div className="container mx-auto max-w-md py-12">
+      <Suspense fallback={<SuccessLoading />}>
+        <SuccessContent />
+      </Suspense>
     </div>
   );
 }
