@@ -6,7 +6,7 @@ import { loadStripeTerminal } from "@stripe/terminal-js";
 
 // Define types for collectPaymentMethod result
 interface PaymentMethodSuccess {
-  paymentIntent: any; // Replace 'any' with a more specific type if available
+  paymentIntent: any;
 }
 
 interface PaymentMethodError {
@@ -20,133 +20,117 @@ type PaymentMethodResult = PaymentMethodSuccess | PaymentMethodError;
 export default function TapToPay() {
   const [amount, setAmount] = useState(10);
   const [status, setStatus] = useState("Ready");
-  const [readerList, setReaderList] = useState([]);
-  const [selectedReader, setSelectedReader] = useState(null);
 
   const handleTapToPay = async () => {
     setStatus("Initializing...");
-    console.log("debug 0");
 
     try {
-      // Check for NFC support
-      if (!("NDEFReader" in window)) {
-        throw new Error("This device doesn't support NFC. Use a mobile device with NFC enabled.");
-      }
-
       // Load Stripe Terminal
-      console.log("debug 1: Before loadStripeTerminal");
       const StripeTerminal = await loadStripeTerminal();
-      console.log("debug 2: After loadStripeTerminal", StripeTerminal);
-
+      
       if (!StripeTerminal) {
         setStatus("Stripe Terminal failed to load");
-        console.log("debug 3: StripeTerminal is null");
         return;
       }
 
-      console.log("debug 4: Before StripeTerminal.create");
+      // Initialize the terminal with simulated=true for mobile browser
       const terminal = StripeTerminal.create({
         onFetchConnectionToken: async () => {
-          console.log("debug 5: Inside onFetchConnectionToken");
           const response = await fetch("/api/connection-token", {
             method: "POST",
           });
-          console.log("debug 6: After fetch", response);
           if (!response.ok) {
-            throw new Error(`Fetch failed: ${response.status}`);
+            throw new Error(`Failed to fetch connection token: ${response.status}`);
           }
           const { secret } = await response.json();
-          console.log("debug 7: Connection token", secret);
           return secret;
         },
         onConnectionStatusChange: (e) => {
-          console.log("debug 8: Status change", e.status);
-          setStatus(`Status: ${e.status}`);
+          setStatus(`Connection status: ${e.status}`);
         },
         onUnexpectedReaderDisconnect: () => {
-          console.log("debug 8.1: Unexpected reader disconnect");
           setStatus("Error: Reader unexpectedly disconnected");
-        },
+          console.error("Reader disconnected unexpectedly");
+        }
       });
-      console.log("debug 9: After StripeTerminal.create", terminal);
 
-      // Discover readers
-      setStatus("Discovering readers...");
-      const discoverResult = await terminal.discoverReaders({
-        simulated: false, // Set to true for testing
+      // For phone-based Tap to Pay, we use the simulated reader
+      setStatus("Setting up mobile Tap to Pay...");
+      
+      // Initialize the payment flow
+      await terminal.setSimulatorConfiguration({
+        testCardNumber: '4242424242424242',
       });
       
-      console.log("Discovered readers:", discoverResult);
+      // Try to connect to a reader
+      setStatus("Connecting to reader...");
+      
+      // First discover readers (in test mode, this will create a simulated reader)
+      const discoverResult = await terminal.discoverReaders({ simulated: true });
       
       if ('error' in discoverResult) {
         throw new Error(`Reader discovery failed: ${discoverResult.error.message}`);
       }
       
-      if ('discoveredReaders' in discoverResult && discoverResult.discoveredReaders.length === 0) {
-        throw new Error("No readers found. Please make sure your device is ready.");
+      // Connect to the first reader (simulated in test mode)
+      if (discoverResult.discoveredReaders.length === 0) {
+        throw new Error("No readers found. Please ensure simulator is enabled.");
       }
       
-      // Use the first reader by default
-      const reader = discoverResult.discoveredReaders[0];
-      setStatus(`Connecting to reader: ${reader.label || 'Unknown device'}...`);
-      
-      // Connect to the reader
-      const connectResult = await terminal.connectReader(reader);
+      const connectResult = await terminal.connectReader(discoverResult.discoveredReaders[0]);
       
       if ('error' in connectResult) {
         throw new Error(`Failed to connect to reader: ${connectResult.error.message}`);
       }
       
-      setStatus(`Connected to ${reader.label || 'reader'}. Creating payment...`);
-
+      setStatus("Reader connected. Creating payment...");
+      
       // Create Payment Intent
-      console.log("debug 10: Before fetch /api/tap-to-pay");
+      setStatus("Creating payment intent...");
       const response = await fetch("/api/tap-to-pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount }),
       });
+      
       if (!response.ok) {
-        throw new Error(`Payment intent fetch failed: ${response.status}`);
-      }
-      const { clientSecret } = await response.json();
-      console.log("debug 11: Client secret", clientSecret);
-
-      // Collect payment
-      setStatus("Tap your phone now...");
-      console.log("debug 12: Before collectPaymentMethod");
-      const result = (await Promise.race([
-        terminal.collectPaymentMethod(clientSecret),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Tap timed out")), 30000)
-        ),
-      ])) as PaymentMethodResult; // Type assertion
-      console.log("debug 13: After collectPaymentMethod", result);
-
-      if ("error" in result) {
-        setStatus(`Error: ${result.error.message}`);
-      } else {
-        console.log("debug 14: Before processPayment");
-        const confirmed = await terminal.processPayment(result.paymentIntent);
-        console.log("debug 15: After processPayment", confirmed);
-        if ("paymentIntent" in confirmed && confirmed.paymentIntent.status === "succeeded") {
-          setStatus("Payment successful!");
-        } else {
-          setStatus("Payment failed");
-        }
+        throw new Error(`Failed to create payment intent: ${response.status}`);
       }
       
-      // Cleanup - disconnect from reader
+      const { clientSecret } = await response.json();
+
+      // Collect payment using collectPaymentMethod (not collectInputMethod)
+      setStatus("Ready to tap. Hold card near phone...");
+      
+      // Start payment collection
+      const result = await terminal.collectPaymentMethod(clientSecret);
+
+      if ('error' in result) {
+        setStatus(`Error: ${result.error.message}`);
+        return;
+      }
+
+      setStatus("Processing payment...");
+      const processResult = await terminal.processPayment(result.paymentIntent);
+      
+      if ('error' in processResult) {
+        setStatus(`Processing error: ${processResult.error.message}`);
+      } else if (processResult.paymentIntent && processResult.paymentIntent.status === "succeeded") {
+        setStatus("Payment successful!");
+      } else if ('paymentIntent' in processResult) {
+        setStatus(`Payment status: ${processResult.paymentIntent.status}`);
+      }
+      
+      // Disconnect the reader
       await terminal.disconnectReader();
-      setStatus("Payment completed. Ready for next transaction.");
       
     } catch (error) {
+      console.error("Payment error:", error);
       setStatus(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
-      console.log("debug 16: Caught error", error);
     }
   };
 
-  const isProcessing = status !== "Ready" && !status.includes("completed") && !status.includes("successful");
+  const isProcessing = status !== "Ready" && !status.includes("successful");
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
@@ -159,7 +143,7 @@ export default function TapToPay() {
             </svg>
             Tap to Pay
           </h1>
-          <p className="text-blue-100 mt-1">Secure payment processing</p>
+          <p className="text-blue-100 mt-1">Accept payments using your device</p>
         </div>
         
         {/* Content */}
@@ -201,7 +185,7 @@ export default function TapToPay() {
             <div className={`mb-6 p-3 rounded-lg ${
               status.includes("Error")
                 ? "bg-red-50 text-red-800"
-                : status.includes("successful") || status.includes("completed")
+                : status.includes("successful")
                 ? "bg-green-50 text-green-800"
                 : "bg-blue-50 text-blue-800"
             }`}>
@@ -210,7 +194,7 @@ export default function TapToPay() {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                ) : status.includes("successful") || status.includes("completed") ? (
+                ) : status.includes("successful") ? (
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -243,7 +227,7 @@ export default function TapToPay() {
                 Processing...
               </div>
             ) : (
-              "Process Payment"
+              "Accept Payment"
             )}
           </button>
 
