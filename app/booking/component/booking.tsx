@@ -6,11 +6,32 @@ import { FaCalendarAlt, FaClock, FaUser, FaStar, FaPhone } from "react-icons/fa"
 import OpenAI from "openai";
 import { RiServiceFill } from "react-icons/ri";
 import { Auth } from "@/app/auth";
+
+// Add these timezone conversion helpers at the top of the file
+const convertUTCToMelbourne = (utcDate: Date | string): Date => {
+    return new Date(new Date(utcDate).toLocaleString('en-US', { timeZone: 'Australia/Melbourne' }));
+};
+
+const convertMelbourneToUTC = (melbourneDate: Date): Date => {
+    const utcDate = new Date(melbourneDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const offset = melbourneDate.getTime() - utcDate.getTime();
+    return new Date(melbourneDate.getTime() - offset);
+};
+
 // Add these new types above the BookingPage component
+interface CompanyTimetable {
+    id: string;
+    company_id: string;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+}
+
+// Update the Worker interface to include workingHours
 interface WorkingHours {
-    start: string;  // Format: "HH:mm"
-    end: string;    // Format: "HH:mm"
-    days: number[]; // 0-6 representing Sunday-Saturday
+    start: string;
+    end: string;
+    days: number[];
 }
 
 interface Worker {
@@ -23,19 +44,71 @@ interface Worker {
     workingHours: WorkingHours[];
 }
 
-interface SubService {
-    id: string;
-    name: string;
-    price: number;
-    duration: string;
-    icon: string;
-}
-
 interface Service {
     id: string;
     name: string;
-    subServices: SubService[];
-    workers: Worker[];
+    description: string;
+    duration: string;
+    price: number;
+}
+
+interface Catalogue {
+    id: string;
+    name: string;
+    services: Service[];
+}
+
+interface Specialty {
+    id: string;
+    text: string;
+    created_at: string;
+}
+
+interface Staff {
+    id: string;
+    personal_information: {
+        first_name: string;
+        last_name: string;
+    };
+    profile_image: {
+        id: string;
+        type: string;
+        path: string;
+    };
+    specialties: Specialty[];
+}
+
+interface CompanyData {
+    company: {
+        id: string;
+        name: string;
+        description: string;
+        identifier: string;
+        logo: {
+            id: string;
+            type: string;
+            path: string;
+        };
+        currency: {
+            id: string;
+            code: string;
+            symbol: string;
+        };
+        timetable: CompanyTimetable[];
+        services_by_catalogue: {
+            catalogue: {
+                id: string;
+                name: string;
+            };
+            services: Service[];
+        }[];
+    };
+    staff: Staff[];
+}
+
+interface BookedSlot {
+    booked_start: string;
+    booked_end: string;
 }
 
 // Update this new type for steps with the new order
@@ -131,13 +204,13 @@ const StepIndicator = ({
 };
 
 // Move HeroSection outside of BookingPage
-const HeroSection = ({ business }: { business: { name: string; image: string; logo: string; rating: number; reviewCount: number; description: string } }) => (
+const HeroSection = ({ business }: { business: { name: string; image: string; logo: string; rating: number; reviewCount: number; description: string } | null }) => (
     <div className="relative w-full aspect-[16/9] md:aspect-[21/9]">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 bg-black/40 z-10" />
         <div
             className="absolute inset-0 bg-cover bg-center z-0"
-            style={{ backgroundImage: `url(${business.image})` }}
+            style={{ backgroundImage: `url(${business?.image})` }}
         />
 
         {/* Business Info Container */}
@@ -145,8 +218,8 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
             {/* Logo Container */}
             <div className="mb-2 md:mb-4">
                 <img
-                    src={business.logo}
-                    alt={business.name}
+                    src={business?.logo}
+                    alt={business?.name}
                     className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border-4 border-white shadow-lg"
                 />
             </div>
@@ -157,7 +230,7 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
                 animate={{ opacity: 1, y: 0 }}
                 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-center text-white"
             >
-                {business.name}
+                {business?.name}
             </motion.h1>
 
             {/* Rating and Reviews */}
@@ -170,12 +243,12 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
                 <div className="flex">
                     {[...Array(5)].map((_, i) => (
                         <span key={i} className="text-yellow-400 text-base md:text-xl">
-                            {i < Math.floor(business.rating) ? "★" : "☆"}
+                            {i < Math.floor(business?.rating || 0) ? "★" : "☆"}
                         </span>
                     ))}
                 </div>
                 <span className="text-white text-sm md:text-base">
-                    {business.rating} ({business.reviewCount} reviews)
+                    {business?.rating} ({business?.reviewCount} reviews)
                 </span>
             </motion.div>
 
@@ -186,14 +259,16 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
                 transition={{ delay: 0.2 }}
                 className="text-sm md:text-base lg:text-lg text-center max-w-2xl text-white"
             >
-                {business.description}
+                {business?.description}
             </motion.p>
         </div>
     </div>
 );
 
 const BookingPage = ({ businessId }: { businessId: string }) => {
-    
+    const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+    const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
+
     useEffect(() => {
         const fetchTimeSlots = async (businessUuid: string) => {
             const { data, error } = await Auth.rpc('get_booked_slots', {
@@ -204,7 +279,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             if (error) {
                 console.error('Error fetching booked slots:', error);
             } else {
-                console.log('Booked slots:', data);
+                setBookedSlots(data);
             }
         };
 
@@ -215,24 +290,49 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             if (error) {
                 console.error('Error fetching business details:', error);
             } else {
+                setCompanyData(data);
                 fetchTimeSlots(data.company.id);
-                console.log('Business details:', data);
             }
         };
         fetchBusiness();
+    }, [businessId]);
 
-        console.log("re-render");
-    }, [])
+    // Update business object to use real data
+    const business = companyData ? {
+        id: companyData.company.id,
+        name: companyData.company.name,
+        image: "/business.jpeg", // You might want to add this to your company data
+        logo: companyData.company.logo.path,
+        rating: 4.9, // You might want to add this to your company data
+        reviewCount: 250, // You might want to add this to your company data
+        description: companyData.company.description
+    } : null;
 
-    const business = {
-        id: "1",
-        name: "The Business",
-        image: "/business.jpeg",
-        logo: "/businessLogo.png",
-        rating: 4.9,
-        reviewCount: 250,
-        description: "Professional services tailored to your needs"
-    };
+    // Update services to use real data
+    const services = companyData ? companyData.company.services_by_catalogue.map(cat => ({
+        id: cat.catalogue.id,
+        name: cat.catalogue.name,
+        subServices: cat.services.map(service => ({
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            duration: service.duration,
+            icon: "✨" // You might want to add icons to your service data
+        })),
+        workers: companyData.staff.map(staff => ({
+            id: staff.id,
+            name: `${staff.personal_information.first_name} ${staff.personal_information.last_name}`,
+            photoUrl: staff.profile_image.path,
+            specialties: staff.specialties.map(s => s.text),
+            rating: 4.9, // You might want to add this to your staff data
+            reviewCount: 156, // You might want to add this to your staff data
+            workingHours: companyData.company.timetable.map(tt => ({
+                start: tt.start_time,
+                end: tt.end_time,
+                days: [tt.day_of_week]
+            }))
+        }))
+    })) : [];
 
     // Replace individual states with a single form state
     const [formState, setFormState] = useState<BookingFormState>({
@@ -310,103 +410,6 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
     const timeSlots = generateTimeSlots();
 
-    // Replace the existing services array with this more detailed structure
-    const services: Service[] = [
-        {
-            id: "nailcare",
-            name: "Nail Care",
-            subServices: [
-                {
-                    id: "manicure",
-                    name: "Classic Manicure",
-                    price: 35,
-                    duration: "45 min",
-                    icon: "💅"
-                },
-                {
-                    id: "pedicure",
-                    name: "Deluxe Pedicure",
-                    price: 45,
-                    duration: "60 min",
-                    icon: "👣"
-                },
-                {
-                    id: "gel",
-                    name: "Gel Manicure",
-                    price: 55,
-                    duration: "60 min",
-                    icon: "✨"
-                },
-                {
-                    id: "acrylics",
-                    name: "Full Set Acrylics",
-                    price: 75,
-                    duration: "90 min",
-                    icon: "💎"
-                },
-                {
-                    id: "designs",
-                    name: "Nail Art & Designs",
-                    price: 25,
-                    duration: "30 min",
-                    icon: "🎨"
-                }
-            ],
-            workers: [
-                {
-                    id: "w1",
-                    name: "Lisa Chen",
-                    photoUrl: "/founder2.jpeg",
-                    specialties: ["Nail Art", "Gel Manicure", "Acrylics"],
-                    rating: 4.9,
-                    reviewCount: 342,
-                    workingHours: [
-                        {
-                            start: "09:00",
-                            end: "17:00",
-                            days: [1, 2, 3, 4, 5] // Monday to Friday
-                        },
-                        {
-                            start: "10:00",
-                            end: "16:00",
-                            days: [6] // Saturday
-                        }
-                    ]
-                },
-                {
-                    id: "w2",
-                    name: "Maria Rodriguez",
-                    photoUrl: "/founder11.jpeg",
-                    specialties: ["Classic Manicure", "Deluxe Pedicure", "Nail Art"],
-                    rating: 4.8,
-                    reviewCount: 289,
-                    workingHours: [
-                        {
-                            start: "12:00",
-                            end: "20:00",
-                            days: [2, 3, 4, 5, 6] // Tuesday to Saturday
-                        }
-                    ]
-                },
-                {
-                    id: "w3",
-                    name: "Jenny Kim",
-                    photoUrl: "/founder3.jpeg",
-                    specialties: ["Acrylics", "Gel Manicure", "3D Nail Art"],
-                    rating: 4.9,
-                    reviewCount: 156,
-                    workingHours: [
-                        {
-                            start: "09:00",
-                            end: "17:00",
-                            days: [1, 2, 3, 4, 6] // Monday to Thursday + Saturday
-                        }
-                    ]
-                }
-            ]
-        }
-    ];
-
     // Add this helper function
     const getSelectedService = () => {
         return services.find(s => s.id === formState.subServices[0]);
@@ -444,10 +447,21 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Just log the form data instead of submitting
-        console.log("Booking form data:", formState);
+        // Convert selected date and time to UTC before submitting
+        if (formState.date && formState.time) {
+            const [hours, minutes] = formState.time.split(':').map(Number);
+            const melbourneDateTime = new Date(formState.date);
+            melbourneDateTime.setHours(hours, minutes, 0, 0);
+            
+            const utcDateTime = convertMelbourneToUTC(melbourneDateTime);
+            
+            // Now you can use utcDateTime when submitting to your backend
+            console.log("Booking form data:", {
+                ...formState,
+                dateTimeUTC: utcDateTime.toISOString()
+            });
+        }
 
-        // You can keep the visual feedback if desired
         setIsSubmitting(true);
         setTimeout(() => {
             setIsSuccess(true);
@@ -459,10 +473,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     };
 
     const formatDate = (date: Date) => {
-        return date.toLocaleDateString('en-US', {
+        const melbourneDate = convertUTCToMelbourne(date);
+        return melbourneDate.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
+            timeZone: 'Australia/Melbourne'
         });
     };
 
@@ -561,9 +577,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         </div>
     );
 
-    // Add a function to get available time slots based on professional's working hours
+    // Update getAvailableTimeSlots to consider booked slots
     const getAvailableTimeSlots = (worker: Worker, date: Date) => {
-        const dayOfWeek = date.getDay();
+        const melbourneDate = convertUTCToMelbourne(date);
+        const dayOfWeek = melbourneDate.getDay();
         const workingHoursForDay = worker.workingHours.find(hours =>
             hours.days.includes(dayOfWeek)
         );
@@ -576,116 +593,32 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         const [startHour] = workingHoursForDay.start.split(':').map(Number);
         const [endHour] = workingHoursForDay.end.split(':').map(Number);
 
+        // Convert booked slots to Melbourne time for comparison
+        const dateBookedSlots = bookedSlots.filter(slot => {
+            const slotDate = convertUTCToMelbourne(slot.booked_start);
+            return slotDate.toDateString() === melbourneDate.toDateString();
+        });
+
         for (let hour = startHour; hour < endHour; hour++) {
-            slots.push(`${hour}:00`);
-            if (hour < endHour - 1) {
-                slots.push(`${hour}:30`);
+            for (let minute of [0, 30]) {
+                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                
+                // Check if this time slot overlaps with any booked slots
+                const isBooked = dateBookedSlots.some(slot => {
+                    const slotStart = convertUTCToMelbourne(slot.booked_start);
+                    const slotEnd = convertUTCToMelbourne(slot.booked_end);
+                    const currentSlot = new Date(melbourneDate);
+                    currentSlot.setHours(hour, minute);
+                    return currentSlot >= slotStart && currentSlot < slotEnd;
+                });
+
+                if (!isBooked) {
+                    slots.push(timeString);
+                }
             }
         }
 
         return slots;
-    };
-
-    // Update the navigation functions
-    const goToNextStep = () => {
-        switch (currentStep) {
-            case 'service':
-                if (formState.serviceCategory && formState.subServices.length > 0) setCurrentStep('professional');
-                break;
-            case 'professional':
-                if (formState.worker) setCurrentStep('date_time');
-                break;
-            case 'date_time':
-                if (formState.date && formState.time) setCurrentStep('contact');
-                break;
-            default:
-                break;
-        }
-    };
-
-    const goToPreviousStep = () => {
-        switch (currentStep) {
-            case 'professional':
-                setCurrentStep('service');
-                break;
-            case 'date_time':
-                setCurrentStep('professional');
-                break;
-            case 'contact':
-                setCurrentStep('date_time');
-                break;
-            default:
-                break;
-        }
-    };
-
-    // Add navigation buttons component
-    const NavigationButtons = () => (
-        <div className="flex justify-between">
-            {currentStep !== 'service' && (
-                <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={goToPreviousStep}
-                    className="px-6 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
-                >
-                    Previous
-                </motion.button>
-            )}
-            {currentStep !== 'contact' ? (
-                <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={goToNextStep}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90 ml-auto"
-                >
-                    Next
-                </motion.button>
-            ) : (
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={!formState.date || !formState.time || isSubmitting}
-                    className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
-                        }`}
-                >
-                    {isSubmitting ? (
-                        <span className="flex items-center justify-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </span>
-                    ) : isSuccess ? (
-                        <span className="flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Booking Confirmed!
-                        </span>
-                    ) : (
-                        "Confirm Booking"
-                    )}
-                </motion.button>
-            )}
-        </div>
-    );
-
-    // Update this function to remove specialty filtering
-    const getAvailableWorkers = () => {
-        if (!formState.serviceCategory) return [];
-
-        const selectedService = services.find(s => s.id === formState.serviceCategory);
-        if (!selectedService) return [];
-
-        // Return all workers for the selected service category
-        return selectedService.workers;
     };
 
     // Add a combined function for date and time selection
@@ -759,6 +692,109 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         );
     };
 
+    // Update the navigation functions
+    const goToNextStep = () => {
+        switch (currentStep) {
+            case 'service':
+                if (formState.serviceCategory && formState.subServices.length > 0) setCurrentStep('professional');
+                break;
+            case 'professional':
+                if (formState.worker) setCurrentStep('date_time');
+                break;
+            case 'date_time':
+                if (formState.date && formState.time) setCurrentStep('contact');
+                break;
+            default:
+                break;
+        }
+    };
+
+    const goToPreviousStep = () => {
+        switch (currentStep) {
+            case 'professional':
+                setCurrentStep('service');
+                break;
+            case 'date_time':
+                setCurrentStep('professional');
+                break;
+            case 'contact':
+                setCurrentStep('date_time');
+                break;
+            default:
+                break;
+        }
+    };
+
+    // Add navigation buttons component
+    const NavigationButtons = () => (
+        <div className="flex justify-between gap-4">
+            {currentStep !== 'service' && (
+                <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={goToPreviousStep}
+                    className="px-8 py-3 text-indigo-600 border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 font-medium"
+                >
+                    Previous
+                </motion.button>
+            )}
+            {currentStep !== 'contact' ? (
+                <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={goToNextStep}
+                    className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:opacity-90 font-medium ml-auto"
+                >
+                    Next
+                </motion.button>
+            ) : (
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={!formState.date || !formState.time || isSubmitting}
+                    className={`px-8 py-3 rounded-xl text-white font-medium transition-all duration-300 ${
+                        !formState.date || !formState.time || isSubmitting
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90"
+                    }`}
+                >
+                    {isSubmitting ? (
+                        <span className="flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </span>
+                    ) : isSuccess ? (
+                        <span className="flex items-center justify-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Booking Confirmed!
+                        </span>
+                    ) : (
+                        "Confirm Booking"
+                    )}
+                </motion.button>
+            )}
+        </div>
+    );
+
+    // Update this function to remove specialty filtering
+    const getAvailableWorkers = () => {
+        if (!formState.serviceCategory) return [];
+
+        const selectedService = services.find(s => s.id === formState.serviceCategory);
+        if (!selectedService) return [];
+
+        // Return all workers for the selected service category
+        return selectedService.workers;
+    };
+
     // Update the canNavigateToStep function for the new flow
     const canNavigateToStep = (step: BookingStep): boolean => {
         switch (step) {
@@ -784,10 +820,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-4"
+                        className="space-y-8"
                     >
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <RiServiceFill className="mr-2 text-indigo-600" /> Select Services
+                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
+                            <RiServiceFill className="mr-3 text-indigo-600" /> Select Services
                         </h2>
 
                         {/* Service Dropdown using Daisy UI */}
@@ -906,10 +942,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-4"
+                        className="space-y-8"
                     >
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <FaUser className="mr-2 text-indigo-600" /> Select Staff
+                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
+                            <FaUser className="mr-3 text-indigo-600" /> Select Staff
                         </h2>
 
                         {formState.subServices.length > 0 ? (
@@ -1042,54 +1078,56 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-4"
+                        className="space-y-6"
                     >
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                            <FaUser className="mr-2 text-indigo-600" /> Your Information
+                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
+                            <FaUser className="mr-3 text-indigo-600" /> Your Information
                         </h2>
 
-                        <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">
-                                Full Name
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                value={formState.contactInfo.name}
-                                onChange={(e) => updateForm('name', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="John Doe"
-                                required
-                            />
-                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="name">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    value={formState.contactInfo.name}
+                                    onChange={(e) => updateForm('name', e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="John Doe"
+                                    required
+                                />
+                            </div>
 
-                        <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">
-                                Email Address
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={formState.contactInfo.email}
-                                onChange={(e) => updateForm('email', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="john@example.com"
-                                required
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="email">
+                                    Email Address
+                                </label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={formState.contactInfo.email}
+                                    onChange={(e) => updateForm('email', e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="john@example.com"
+                                    required
+                                />
+                            </div>
 
-                        <div className="mb-6">
-                            <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="phone">
-                                Phone Number
-                            </label>
-                            <input
-                                id="phone"
-                                type="tel"
-                                value={formState.contactInfo.phone}
-                                onChange={(e) => updateForm('phone', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="(123) 456-7890"
-                            />
+                            <div>
+                                <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="phone">
+                                    Phone Number
+                                </label>
+                                <input
+                                    id="phone"
+                                    type="tel"
+                                    value={formState.contactInfo.phone}
+                                    onChange={(e) => updateForm('phone', e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="(123) 456-7890"
+                                />
+                            </div>
                         </div>
                     </motion.div>
                 );
@@ -1099,19 +1137,19 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-200">
+        <div className="min-h-screen bg-gray-50">
             {/* Main content container */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-                {/* Hero Section - moved to the top */}
-                <div className="rounded-2xl overflow-hidden mb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Hero Section */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
                     <HeroSection business={business} />
                 </div>
 
-                {/* Booking Form Section - moved to the bottom */}
+                {/* Booking Form Section */}
                 <div className="bg-white rounded-2xl shadow-lg">
-                    <form onSubmit={handleSubmit} className="flex flex-col p-4 md:p-6">
+                    <form onSubmit={handleSubmit} className="flex flex-col p-6 md:p-8">
                         {/* Step indicator */}
-                        <div className="mb-4">
+                        <div className="mb-8">
                             <StepIndicator
                                 currentStep={currentStep}
                                 onStepClick={setCurrentStep}
@@ -1120,12 +1158,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         </div>
 
                         {/* Content area */}
-                        <div className="flex-1 min-h-0">
+                        <div className="flex-1 min-h-0 space-y-8">
                             {renderCurrentStep()}
                         </div>
 
                         {/* Navigation/Submit buttons */}
-                        <div className="pt-4 mt-4 border-t border-gray-100">
+                        <div className="pt-8 mt-8 border-t border-gray-100">
                             <NavigationButtons />
                         </div>
                     </form>
