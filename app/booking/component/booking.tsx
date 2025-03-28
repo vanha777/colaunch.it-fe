@@ -120,7 +120,7 @@ interface BookingFormState {
     time: string | null;
     worker: string;
     serviceCategory: string;
-    subServices: string[];
+    subServices: Service[];
     contactInfo: {
         name: string;
         email: string;
@@ -317,7 +317,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             name: service.name,
             price: service.price,
             duration: service.duration,
-            icon: "✨" // You might want to add icons to your service data
+            // icon: "✨" // You might want to add icons to your service data
         })),
         workers: companyData.staff.map(staff => ({
             id: staff.id,
@@ -411,9 +411,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const timeSlots = generateTimeSlots();
 
     // Add this helper function
-    const getSelectedService = () => {
-        return services.find(s => s.id === formState.subServices[0]);
-    };
+    // const getSelectedService = () => {
+    //     return services.find(s => s.id === formState.subServices[0]);
+    // };
 
     // Update form handlers
     const updateForm = (field: string, value: any) => {
@@ -446,22 +446,77 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     // Update the handle submit function
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // create a customer
+        const { data: customerId, error: customerError } = await Auth.rpc('create_or_update_customer', {
+            p_phone_number: formState.contactInfo.phone,
+            p_company_id: companyData?.company.id,
+            p_first_name: formState.contactInfo.name.split(' ')[0],
+            p_last_name: formState.contactInfo.name.split(' ').slice(1).join(' ') || formState.contactInfo.name,
+            p_email: formState.contactInfo.email
+        });
+        if (customerError) {
+            console.error('Error creating customer:', customerError);
+            alert('Error creating customer. Please try again.');
+            return;
+        } else {
+            // Convert selected date and time to UTC before submitting
+            if (formState.date && formState.time) {
+                const [hours, minutes] = formState.time.split(':').map(Number);
+                const melbourneDateTime = new Date(formState.date);
+                melbourneDateTime.setHours(hours, minutes, 0, 0);
 
-        // Convert selected date and time to UTC before submitting
-        if (formState.date && formState.time) {
-            const [hours, minutes] = formState.time.split(':').map(Number);
-            const melbourneDateTime = new Date(formState.date);
-            melbourneDateTime.setHours(hours, minutes, 0, 0);
-            
-            const utcDateTime = convertMelbourneToUTC(melbourneDateTime);
-            
-            // Now you can use utcDateTime when submitting to your backend
-            console.log("Booking form data:", {
-                ...formState,
-                dateTimeUTC: utcDateTime.toISOString()
-            });
+                const utcDateTime = convertMelbourneToUTC(melbourneDateTime);
+
+                // Now you can use utcDateTime when submitting to your backend
+                console.log("Booking form data:", {
+                    ...formState,
+                    dateTimeUTC: utcDateTime.toISOString()
+                });
+
+                // Create bookings for all selected services
+                let currentStartTime = utcDateTime;
+                const bookingIds = [];
+
+                // Loop through all selected services
+                for (const service of formState.subServices) {
+                    // Calculate service duration in milliseconds
+                    const durationParts = service.duration.split(':').map(Number);
+                    const durationMs = (durationParts[0] * 60 * 60 * 1000) + (durationParts[1] * 60 * 1000);
+                    
+                    // Calculate end time by adding duration to start time
+                    const endTime = new Date(currentStartTime.getTime() + durationMs);
+                    
+                    // Create booking for this service
+                    const { data: bookingId, error: bookingError } = await Auth
+                        .from('booking')
+                        .insert({
+                            customer_id: customerId,
+                            staff_id: formState.worker === "no_preference" ? null : formState.worker,
+                            service_id: service.id,
+                            company_id: companyData?.company.id,
+                            start_time: currentStartTime.toISOString(),
+                            end_time: endTime.toISOString(),
+                            status_id: 'dfbd8eb3-4eb4-49b5-b230-a9c7d3a14bca' // Pending
+                        })
+                        .select('id')
+                        .single();
+                        
+                    if (bookingError) {
+                        console.error('Error creating booking:', bookingError);
+                        alert('Error creating booking. Please try again.');
+                        return;
+                    } else {
+                        console.log("Booking created:", bookingId);
+                        bookingIds.push(bookingId);
+                    }
+                    
+                    // Update start time for next service
+                    currentStartTime = endTime;
+                }
+                
+                console.log("All bookings created:", bookingIds);
+            }
         }
-
         setIsSubmitting(true);
         setTimeout(() => {
             setIsSuccess(true);
@@ -497,6 +552,69 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 ))}
             </div>
         );
+    };
+
+    // Add this function near the top with other helper functions
+    const getDayAvailability = (date: Date) => {
+        const melbourneDate = convertUTCToMelbourne(date);
+        const dayOfWeek = melbourneDate.getDay();
+
+        // Get all workers
+        const allWorkers = services.flatMap(service => service.workers);
+
+        let totalSlots = 0;
+        let availableSlots = 0;
+
+        // Get unique workers by ID to avoid duplicates
+        const uniqueWorkers = Array.from(new Set(allWorkers.map(w => w.id)))
+            .map(id => allWorkers.find(w => w.id === id));
+
+        uniqueWorkers.forEach(worker => {
+            if (!worker) return;
+
+            const workingHoursForDay = worker.workingHours.find(hours =>
+                hours.days.includes(dayOfWeek)
+            );
+
+            if (workingHoursForDay) {
+                const [startHour] = workingHoursForDay.start.split(':').map(Number);
+                const [endHour] = workingHoursForDay.end.split(':').map(Number);
+                const slotsPerWorker = (endHour - startHour) * 2; // 2 slots per hour (30 min intervals)
+                totalSlots += slotsPerWorker;
+
+                // Filter booked slots for this date
+                const dateBookedSlots = bookedSlots.filter(slot => {
+                    const slotDate = convertUTCToMelbourne(slot.booked_start);
+                    return slotDate.toDateString() === melbourneDate.toDateString();
+                });
+
+                // Count available slots
+                for (let hour = startHour; hour < endHour; hour++) {
+                    for (let minute of [0, 30]) {
+                        const currentSlot = new Date(melbourneDate);
+                        currentSlot.setHours(hour, minute);
+
+                        const isBooked = dateBookedSlots.some(slot => {
+                            const slotStart = convertUTCToMelbourne(slot.booked_start);
+                            const slotEnd = convertUTCToMelbourne(slot.booked_end);
+                            return currentSlot >= slotStart && currentSlot < slotEnd;
+                        });
+
+                        if (!isBooked) {
+                            availableSlots++;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (totalSlots === 0) return 'none'; // No working hours for this day
+
+        const availabilityPercentage = (availableSlots / totalSlots) * 100;
+
+        if (availabilityPercentage === 0) return 'full';
+        if (availabilityPercentage <= 50) return 'busy';
+        return 'available';
     };
 
     // Replace the existing date selection section with this updated version
@@ -558,21 +676,34 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 ))}
 
                 {/* Date buttons */}
-                {availableDates.map((date, index) => (
-                    <motion.button
-                        key={index}
-                        type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => updateForm('date', date)}
-                        className={`p-4 rounded-lg text-center ${formState.date && date.toDateString() === formState.date.toDateString()
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                            }`}
-                    >
-                        <div className="text-sm font-medium">{date.getDate()}</div>
-                    </motion.button>
-                ))}
+                {availableDates.map((date, index) => {
+                    const availability = getDayAvailability(date);
+                    const isSelected = formState.date && date.toDateString() === formState.date.toDateString();
+
+                    return (
+                        <motion.button
+                            key={index}
+                            type="button"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => updateForm('date', date)}
+                            className={`p-4 rounded-lg text-center flex flex-col items-center ${isSelected
+                                ? "bg-indigo-600 text-white"
+                                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                }`}
+                        >
+                            <div className="text-sm font-medium mb-1">{date.getDate()}</div>
+                            {availability !== 'none' && (
+                                <div className={`w-2 h-2 rounded-full
+                                    ${isSelected ? 'bg-white' : ''} 
+                                    ${!isSelected && availability === 'available' ? 'bg-green' : ''}
+                                    ${!isSelected && availability === 'busy' ? 'bg-orange-500' : ''}
+                                    ${!isSelected && availability === 'full' ? 'bg-red-500' : ''}`}
+                                />
+                            )}
+                        </motion.button>
+                    );
+                })}
             </div>
         </div>
     );
@@ -602,7 +733,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         for (let hour = startHour; hour < endHour; hour++) {
             for (let minute of [0, 30]) {
                 const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                
+
                 // Check if this time slot overlaps with any booked slots
                 const isBooked = dateBookedSlots.some(slot => {
                     const slotStart = convertUTCToMelbourne(slot.booked_start);
@@ -755,11 +886,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={!formState.date || !formState.time || isSubmitting}
-                    className={`px-8 py-3 rounded-xl text-white font-medium transition-all duration-300 ${
-                        !formState.date || !formState.time || isSubmitting
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90"
-                    }`}
+                    className={`px-8 py-3 rounded-xl text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90"
+                        }`}
                 >
                     {isSubmitting ? (
                         <span className="flex items-center justify-center">
@@ -881,12 +1011,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                             onClick={() => {
                                                 setFormState(prev => ({
                                                     ...prev,
-                                                    subServices: prev.subServices.includes(subService.id)
-                                                        ? prev.subServices.filter(id => id !== subService.id)
-                                                        : [...prev.subServices, subService.id]
+                                                    subServices: prev.subServices.some(service => service.id === subService.id)
+                                                        ? prev.subServices.filter(service => service.id !== subService.id)
+                                                        : [...prev.subServices, subService as Service]
                                                 }));
                                             }}
-                                            className={`p-4 rounded-lg border ${formState.subServices.includes(subService.id)
+                                            className={`p-4 rounded-lg border ${formState.subServices.some(service => service.id === subService.id)
                                                 ? "border-indigo-500 bg-indigo-50"
                                                 : "border-gray-200 hover:border-indigo-300"
                                                 }`}
@@ -900,7 +1030,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                     <span className="text-lg font-semibold text-indigo-600">
                                                         ${subService.price}
                                                     </span>
-                                                    {formState.subServices.includes(subService.id) && (
+                                                    {formState.subServices.some(service => service.id === subService.id) && (
                                                         <div className="bg-indigo-500 text-white p-1 rounded-full">
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -922,15 +1052,11 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     <div>
                                         <h3 className="font-semibold text-gray-800">Total Services: {formState.subServices.length}</h3>
                                         <p className="text-sm text-gray-600">
-                                            {formState.subServices.map(id =>
-                                                services[0].subServices.find(s => s.id === id)?.name
-                                            ).join(', ')}
+                                            {formState.subServices.map(service => service.name).join(', ')}
                                         </p>
                                     </div>
                                     <div className="text-xl font-bold text-indigo-600">
-                                        ${services[0].subServices
-                                            .filter(s => formState.subServices.includes(s.id))
-                                            .reduce((total, service) => total + service.price, 0)}
+                                        ${formState.subServices.reduce((total, service) => total + service.price, 0)}
                                     </div>
                                 </div>
                             </div>
