@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { FaCalendarAlt, FaClock, FaUser, FaStar, FaPhone } from "react-icons/fa";
 import OpenAI from "openai";
 import { RiServiceFill } from "react-icons/ri";
-
+import { Auth } from "@/app/auth";
 // Add these new types above the BookingPage component
 interface WorkingHours {
   start: string;  // Format: "HH:mm"
@@ -80,22 +80,22 @@ const StepIndicator = ({
         {/* Connection lines between circles - set to lower z-index */}
         <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 z-0">
           <div className="h-1 w-full bg-gray-200">
-            <div 
-              className="h-full bg-indigo-600" 
+            <div
+              className="h-full bg-indigo-600"
               style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
             />
           </div>
         </div>
-        
+
         {/* Step circles - higher z-index and with background to cover the line */}
         {steps.map((step, index) => {
           const isClickable = canNavigateToStep(step.id);
           const isComplete = index < currentStepIndex;
           const isActive = index === currentStepIndex;
-          
+
           return (
-            <div 
-              key={step.id} 
+            <div
+              key={step.id}
               className="relative z-10" // Ensure this container has a higher z-index
             >
               <motion.button
@@ -104,10 +104,10 @@ const StepIndicator = ({
                 whileHover={isClickable ? { scale: 1.05 } : {}}
                 whileTap={isClickable ? { scale: 0.95 } : {}}
                 className={`w-10 h-10 rounded-full flex items-center justify-center 
-                  ${isComplete 
-                    ? 'bg-indigo-600 text-white' 
-                    : isActive 
-                      ? 'bg-indigo-100 text-indigo-600 border-2 border-indigo-600' 
+                  ${isComplete
+                    ? 'bg-indigo-600 text-white'
+                    : isActive
+                      ? 'bg-indigo-100 text-indigo-600 border-2 border-indigo-600'
                       : 'bg-gray-200 text-gray-500'
                   } transition-all duration-200
                   ${isClickable && !isActive && !isComplete ? 'hover:bg-gray-300 cursor-pointer' : ''}
@@ -193,9 +193,24 @@ const HeroSection = ({ business }: { business: { name: string; image: string; lo
 );
 
 const BookingPage = () => {
+
   useEffect(() => {
+    const fetchTimeSlots = async () => {
+      const { data, error } = await Auth.rpc('get_booked_slots', {
+        p_company_id: 'c0fb5c65-4c0d-4c84-b2f0-6200645cab1f',
+        p_staff_id: null,
+        p_start_time: new Date().toISOString()
+      });
+      if (error) {
+        console.error('Error fetching booked slots:', error);
+      } else {
+        console.log('Booked slots:', data);
+      }
+    };
+    fetchTimeSlots();
     console.log("re-render");
   }, [])
+
   const business = {
     id: "1",
     name: "The Business",
@@ -395,7 +410,7 @@ const BookingPage = () => {
           worker: "no_preference"
         };
       }
-      
+
       if (field in prev.contactInfo) {
         return {
           ...prev,
@@ -415,10 +430,10 @@ const BookingPage = () => {
   // Update the handle submit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Just log the form data instead of submitting
     console.log("Booking form data:", formState);
-    
+
     // You can keep the visual feedback if desired
     setIsSubmitting(true);
     setTimeout(() => {
@@ -621,11 +636,10 @@ const BookingPage = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={!formState.date || !formState.time || isSubmitting}
-          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${
-            !formState.date || !formState.time || isSubmitting
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
-          }`}
+          className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
+            }`}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center">
@@ -650,35 +664,24 @@ const BookingPage = () => {
     </div>
   );
 
-  // Add this function to get workers available for selected services
+  // Update this function to remove specialty filtering
   const getAvailableWorkers = () => {
-    if (!formState.serviceCategory || formState.subServices.length === 0) return [];
-    
+    if (!formState.serviceCategory) return [];
+
     const selectedService = services.find(s => s.id === formState.serviceCategory);
     if (!selectedService) return [];
-    
-    const selectedSubServiceIds = formState.subServices;
-    const selectedSubServices = selectedService.subServices.filter(
-      sub => selectedSubServiceIds.includes(sub.id)
-    );
-    
-    // Filter workers who can handle all selected services
-    return selectedService.workers.filter(worker => {
-      return selectedSubServices.every(subService => 
-        worker.specialties.some(specialty => 
-          subService.name.toLowerCase().includes(specialty.toLowerCase())
-        )
-      );
-    });
+
+    // Return all workers for the selected service category
+    return selectedService.workers;
   };
 
   // Add a combined function for date and time selection
   const renderDateAndTimeSelection = () => {
-    const selectedWorker = formState.worker === "no_preference" ? 
+    const selectedWorker = formState.worker === "no_preference" ?
       { id: "no_preference", name: "No Preference", workingHours: [] } as unknown as Worker :
       formState.worker ?
         services[0].workers.find(w => w.id === formState.worker) : null;
-    
+
     if (!selectedWorker) {
       return (
         <div className="text-center text-gray-500 py-4">
@@ -692,11 +695,11 @@ const BookingPage = () => {
       selectedWorker.id === "no_preference" ?
         // Get time slots from all available workers for this service/date
         Array.from(new Set(
-          getAvailableWorkers().flatMap(worker => 
+          getAvailableWorkers().flatMap(worker =>
             getAvailableTimeSlots(worker, formState.date!)
           )
         )).sort() :
-        getAvailableTimeSlots(selectedWorker, formState.date) : 
+        getAvailableTimeSlots(selectedWorker, formState.date) :
       [];
 
     return (
@@ -753,8 +756,8 @@ const BookingPage = () => {
       case 'date_time':
         return formState.serviceCategory !== "" && formState.subServices.length > 0 && !!formState.worker;
       case 'contact':
-        return formState.serviceCategory !== "" && formState.subServices.length > 0 && 
-               !!formState.worker && !!formState.date && !!formState.time;
+        return formState.serviceCategory !== "" && formState.subServices.length > 0 &&
+          !!formState.worker && !!formState.date && !!formState.time;
       default:
         return false;
     }
@@ -817,9 +820,9 @@ const BookingPage = () => {
               <div className="grid grid-cols-1 gap-3">
                 {(() => {
                   const selectedService = services.find(s => s.id === formState.serviceCategory);
-                  
+
                   if (!selectedService) return null;
-                  
+
                   return selectedService.subServices.map((subService) => (
                     <motion.button
                       key={subService.id}
@@ -834,11 +837,10 @@ const BookingPage = () => {
                             : [...prev.subServices, subService.id]
                         }));
                       }}
-                      className={`p-4 rounded-lg border ${
-                        formState.subServices.includes(subService.id)
-                          ? "border-indigo-500 bg-indigo-50"
-                          : "border-gray-200 hover:border-indigo-300"
-                      }`}
+                      className={`p-4 rounded-lg border ${formState.subServices.includes(subService.id)
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-gray-200 hover:border-indigo-300"
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -907,8 +909,8 @@ const BookingPage = () => {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => updateForm('worker', "no_preference")}
                       className={`w-[200px] cursor-pointer ${formState.worker === "no_preference"
-                          ? 'ring-2 ring-indigo-500'
-                          : 'hover:shadow-lg'
+                        ? 'ring-2 ring-indigo-500'
+                        : 'hover:shadow-lg'
                         } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
                     >
                       {/* No Preference Icon Container */}
@@ -958,8 +960,8 @@ const BookingPage = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => updateForm('worker', worker.id)}
                         className={`w-[200px] cursor-pointer ${formState.worker === worker.id
-                            ? 'ring-2 ring-indigo-500'
-                            : 'hover:shadow-lg'
+                          ? 'ring-2 ring-indigo-500'
+                          : 'hover:shadow-lg'
                           } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
                       >
                         {/* Profile Photo Container */}
