@@ -8,34 +8,22 @@ import { RiServiceFill } from "react-icons/ri";
 import { Auth } from "@/app/auth";
 import HeroSection from './heroSection';
 import StepIndicator, { BookingStep } from './StepIndicator';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
-// Replace the existing timezone conversion functions with these more reliable ones
-const convertUTCToMelbourne = (utcDate: Date | string): Date => {
-  // Create a date object from the UTC date string or object
-  const date = new Date(utcDate);
-  // Return the date as it would appear in Melbourne timezone
-  return new Date(date.toLocaleString('en-US', { timeZone: 'Australia/Melbourne' }));
+// Replace the hardcoded Melbourne timezone functions with dynamic ones
+const getUserTimezone = (): string => {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-// Better timezone conversion function
-const convertMelbourneToUTC = (melbourneDate: Date): Date => {
-  // Melbourne is UTC+10 (or UTC+11 during DST)
-  // To convert Melbourne time to UTC, we need to subtract 10 hours (or 11 during DST)
-  
-  // Create a new date, which will be in the local timezone of the browser
-  const localDate = new Date(melbourneDate);
-  
-  // Format the date components to create a new date with explicit timezone
-  const year = localDate.getFullYear();
-  const month = localDate.getMonth(); // 0-based
-  const day = localDate.getDate();
-  const hours = localDate.getHours();
-  const minutes = localDate.getMinutes();
-  const seconds = localDate.getSeconds();
-  
-  // Create a UTC date by explicitly subtracting the Melbourne offset
-  // Standard time UTC+10, so subtract 10 hours to get UTC
-  return new Date(Date.UTC(year, month, day, hours - 10, minutes, seconds));
+const convertUTCToLocalTimezone = (utcDate: Date | string): Date => {
+  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
+  const timezone = getUserTimezone();
+  return toZonedTime(date, timezone);
+};
+
+const convertLocalTimezoneToUTC = (localDate: Date): Date => {
+  const timezone = getUserTimezone();
+  return fromZonedTime(localDate, timezone);
 };
 
 // Add these new types above the BookingPage component
@@ -454,12 +442,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     };
 
     const formatDate = (date: Date) => {
-        const melbourneDate = convertUTCToMelbourne(date);
+        const melbourneDate = convertUTCToLocalTimezone(date);
         return melbourneDate.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
-            timeZone: 'Australia/Melbourne'
+            timeZone: getUserTimezone()
         });
     };
 
@@ -511,7 +499,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 // Filter booked slots for this date from worker's bookings
                 const dateBookedSlots = worker.bookings.filter(booking => {
                     // Always convert UTC dates to Melbourne time for comparison
-            const bookingDate = convertUTCToMelbourne(booking.start_time);
+            const bookingDate = convertUTCToLocalTimezone(booking.start_time);
                     
                     return bookingDate.getDate() === melbourneDate.getDate() && 
                            bookingDate.getMonth() === melbourneDate.getMonth() && 
@@ -525,8 +513,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         currentSlot.setHours(hour, minute);
 
                         const isBooked = dateBookedSlots.some(booking => {
-                            const slotStart = convertUTCToMelbourne(booking.start_time);
-                            const slotEnd = convertUTCToMelbourne(booking.end_time);
+                            const slotStart = convertUTCToLocalTimezone(booking.start_time);
+                            const slotEnd = convertUTCToLocalTimezone(booking.end_time);
                             return currentSlot >= slotStart && currentSlot < slotEnd;
                         });
 
@@ -572,7 +560,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         // Get all booked slots for this worker and date from worker.bookings
         const bookedSlotsForDay = worker.bookings.filter(booking => {
             // Always convert UTC dates to Melbourne time before comparing
-            const bookingDate = convertUTCToMelbourne(booking.start_time);
+            const bookingDate = convertUTCToLocalTimezone(booking.start_time);
             const selectedDate = new Date(date);
             
             return bookingDate.getDate() === selectedDate.getDate() && 
@@ -584,8 +572,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
         console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
         bookedSlotsForDay.forEach(booking => {
-            const melbourneStart = convertUTCToMelbourne(booking.start_time);
-            const melbourneEnd = convertUTCToMelbourne(booking.end_time);
+            const melbourneStart = convertUTCToLocalTimezone(booking.start_time);
+            const melbourneEnd = convertUTCToLocalTimezone(booking.end_time);
             console.log(`${melbourneStart.toLocaleTimeString()} - ${melbourneEnd.toLocaleTimeString()}`);
         });
         
@@ -594,8 +582,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             // Check if this slot overlaps with any booked slots
             const isDisabled = bookedSlotsForDay.some(booking => {
                 // Always convert UTC dates to Melbourne time
-                const bookedStart = convertUTCToMelbourne(booking.start_time);
-                const bookedEnd = convertUTCToMelbourne(booking.end_time);
+                const bookedStart = convertUTCToLocalTimezone(booking.start_time);
+                const bookedEnd = convertUTCToLocalTimezone(booking.end_time);
                 
                 // Add relief time to booking end time
                 const bookedEndWithRelief = new Date(bookedEnd);
@@ -748,8 +736,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     {!isPast && availability !== 'none' && (
                                         <div className={`h-2 w-2 rounded-full mt-1 
                                             ${availability === 'available' ? 'bg-green' : 
-                                              availability === 'limited' ? 'bg-orange' : 
-                                              availability === 'fully-booked' ? 'bg-red' : 'bg-transparent'}`}>
+                                              availability === 'limited' ? 'bg-[#FFA500]' : 
+                                              availability === 'fully-booked' ? 'bg-[#FF0000]' : 'bg-transparent'}`}>
                                         </div>
                                     )}
                                 </motion.button>
