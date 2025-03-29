@@ -158,6 +158,9 @@ interface BookingFormState {
     };
 }
 
+// Add a constant for the relief time (in minutes)
+const RELIEF_TIME_MINUTES = 30;
+
 const BookingPage = ({ businessId }: { businessId: string }) => {
     const [companyData, setCompanyData] = useState<CompanyData | null>(null);
 
@@ -350,8 +353,6 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 console.log("Original Melbourne date/time:", melbourneDateTime.toLocaleString('en-AU'));
                 
                 // Determine if DST is in effect for this date in Melbourne
-                // This is a heuristic approach - March 31, 2025 is likely to be in DST in Melbourne
-                // In Australia, DST typically ends on the first Sunday in April
                 const isDST = true; // For March 31, 2025, this would be true
                 const offsetHours = isDST ? 11 : 10; // Use 11 hours during DST
                 
@@ -381,21 +382,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
                     if (service.duration.includes(':')) {
                         // Format is HH:MM:SS 
-                        // In this case, "00:01:00" means 1 hour, not 1 minute
                         const parts = service.duration.split(':').map(Number);
                         
                         if (parts.length === 3) {
-                            // The format is HH:MM:SS where:
-                            // parts[0] = hours
-                            // parts[1] = minutes
-                            // parts[2] = seconds
-                            
-                            // So for "00:01:00":
-                            // parts[0] = 0 (hours) 
-                            // parts[1] = 1 (represents 1 hour, not 1 minute)
-                            // parts[2] = 0 (seconds)
-                            
-                            // The correct interpretation is:
                             const hours = parts[1]; // Middle value represents hours
                             const minutes = parts[2]; // Last value represents minutes
                             durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
@@ -446,8 +435,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         bookingIds.push(bookingId);
                     }
                     
-                    // Update start time for next service
-                    currentStartTime = endTime;
+                    // Update start time for next service, now including relief time
+                    const reliefTimeMs = RELIEF_TIME_MINUTES * 60 * 1000;
+                    currentStartTime = new Date(endTime.getTime() + reliefTimeMs);
                 }
                 
                 console.log("All bookings created:", bookingIds);
@@ -557,7 +547,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         return 'available'; // Good availability (>50%)
     };
 
-    // Update getAvailableTimeSlots to use worker.bookings instead of bookedSlots
+    // Update getAvailableTimeSlots to include relief time
     const getAvailableTimeSlots = (worker: Worker, date: Date) => {
         if (!worker || !date) return [];
 
@@ -591,7 +581,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         });
         
         // Log all booked time slots in Melbourne time
-        console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":",bookedSlotsForDay);
+        console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
         console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
         bookedSlotsForDay.forEach(booking => {
             const melbourneStart = convertUTCToMelbourne(booking.start_time);
@@ -607,6 +597,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 const bookedStart = convertUTCToMelbourne(booking.start_time);
                 const bookedEnd = convertUTCToMelbourne(booking.end_time);
                 
+                // Add relief time to booking end time
+                const bookedEndWithRelief = new Date(bookedEnd);
+                bookedEndWithRelief.setMinutes(bookedEnd.getMinutes() + RELIEF_TIME_MINUTES);
+                
                 // Calculate slot start and end times in Melbourne time
                 const [slotHours, slotMinutes] = slot.split(':').map(Number);
                 const slotStartTime = new Date(date);
@@ -620,11 +614,18 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 const slotEndTime = new Date(slotStartTime);
                 slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
                 
-                // Check for overlap
+                // Add relief time to slot end time
+                const slotEndWithRelief = new Date(slotEndTime);
+                slotEndWithRelief.setMinutes(slotEndTime.getMinutes() + RELIEF_TIME_MINUTES);
+                
+                // Check for overlap including relief time
                 return (
-                    (slotStartTime >= bookedStart && slotStartTime < bookedEnd) ||
-                    (slotEndTime > bookedStart && slotEndTime <= bookedEnd) ||
-                    (slotStartTime <= bookedStart && slotEndTime >= bookedEnd)
+                    // Slot starts during a booking (including relief time)
+                    (slotStartTime >= bookedStart && slotStartTime < bookedEndWithRelief) ||
+                    // Slot ends during a booking (including preparation time)
+                    (slotEndTime > bookedStart && slotEndTime <= bookedEndWithRelief) ||
+                    // Slot completely contains a booking
+                    (slotStartTime <= bookedStart && slotEndTime >= bookedEndWithRelief)
                 );
             });
             
