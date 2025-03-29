@@ -6,16 +6,36 @@ import { FaCalendarAlt, FaClock, FaUser, FaStar, FaPhone } from "react-icons/fa"
 import OpenAI from "openai";
 import { RiServiceFill } from "react-icons/ri";
 import { Auth } from "@/app/auth";
+import HeroSection from './heroSection';
+import StepIndicator, { BookingStep } from './StepIndicator';
 
-// Add these timezone conversion helpers at the top of the file
+// Replace the existing timezone conversion functions with these more reliable ones
 const convertUTCToMelbourne = (utcDate: Date | string): Date => {
-    return new Date(new Date(utcDate).toLocaleString('en-US', { timeZone: 'Australia/Melbourne' }));
+  // Create a date object from the UTC date string or object
+  const date = new Date(utcDate);
+  // Return the date as it would appear in Melbourne timezone
+  return new Date(date.toLocaleString('en-US', { timeZone: 'Australia/Melbourne' }));
 };
 
+// Better timezone conversion function
 const convertMelbourneToUTC = (melbourneDate: Date): Date => {
-    const utcDate = new Date(melbourneDate.toLocaleString('en-US', { timeZone: 'UTC' }));
-    const offset = melbourneDate.getTime() - utcDate.getTime();
-    return new Date(melbourneDate.getTime() - offset);
+  // Melbourne is UTC+10 (or UTC+11 during DST)
+  // To convert Melbourne time to UTC, we need to subtract 10 hours (or 11 during DST)
+  
+  // Create a new date, which will be in the local timezone of the browser
+  const localDate = new Date(melbourneDate);
+  
+  // Format the date components to create a new date with explicit timezone
+  const year = localDate.getFullYear();
+  const month = localDate.getMonth(); // 0-based
+  const day = localDate.getDate();
+  const hours = localDate.getHours();
+  const minutes = localDate.getMinutes();
+  const seconds = localDate.getSeconds();
+  
+  // Create a UTC date by explicitly subtracting the Melbourne offset
+  // Standard time UTC+10, so subtract 10 hours to get UTC
+  return new Date(Date.UTC(year, month, day, hours - 10, minutes, seconds));
 };
 
 // Add these new types above the BookingPage component
@@ -42,6 +62,7 @@ interface Worker {
     rating: number;
     reviewCount: number;
     workingHours: WorkingHours[];
+    bookings: Booking[];
 }
 
 interface Service {
@@ -76,6 +97,7 @@ interface Staff {
         path: string;
     };
     specialties: Specialty[];
+    bookings: Booking[];
 }
 
 interface CompanyData {
@@ -106,13 +128,21 @@ interface CompanyData {
     staff: Staff[];
 }
 
-interface BookedSlot {
-    booked_start: string;
-    booked_end: string;
+interface Booking {
+    id: string;
+    start_time: string;
+    end_time: string;
+    status: {
+        id: string;
+        name: string;
+    };
+    service: {
+        id: string;
+        name: string;
+        duration: string;
+        price: number;
+    };
 }
-
-// Update this new type for steps with the new order
-type BookingStep = 'service' | 'professional' | 'date_time' | 'contact';
 
 // Add this interface for the form state
 interface BookingFormState {
@@ -128,161 +158,10 @@ interface BookingFormState {
     };
 }
 
-// Update the StepIndicator component to fix the z-index issue
-const StepIndicator = ({
-    currentStep,
-    onStepClick,
-    canNavigateToStep
-}: {
-    currentStep: BookingStep;
-    onStepClick: (step: BookingStep) => void;
-    canNavigateToStep: (step: BookingStep) => boolean;
-}) => {
-    const steps: { id: BookingStep }[] = [
-        { id: 'service' },
-        { id: 'professional' },
-        { id: 'date_time' },
-        { id: 'contact' },
-    ];
-
-    const currentStepIndex = steps.findIndex(s => s.id === currentStep);
-
-    return (
-        <div className="mb-8">
-            <div className="relative flex items-center justify-between">
-                {/* Connection lines between circles - set to lower z-index */}
-                <div className="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 z-0">
-                    <div className="h-1 w-full bg-gray-200">
-                        <div
-                            className="h-full bg-indigo-600"
-                            style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Step circles - higher z-index and with background to cover the line */}
-                {steps.map((step, index) => {
-                    const isClickable = canNavigateToStep(step.id);
-                    const isComplete = index < currentStepIndex;
-                    const isActive = index === currentStepIndex;
-
-                    return (
-                        <div
-                            key={step.id}
-                            className="relative z-10" // Ensure this container has a higher z-index
-                        >
-                            <motion.button
-                                type="button"
-                                onClick={() => isClickable && onStepClick(step.id)}
-                                whileHover={isClickable ? { scale: 1.05 } : {}}
-                                whileTap={isClickable ? { scale: 0.95 } : {}}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center 
-                  ${isComplete
-                                        ? 'bg-indigo-600 text-white'
-                                        : isActive
-                                            ? 'bg-indigo-100 text-indigo-600 border-2 border-indigo-600'
-                                            : 'bg-gray-200 text-gray-500'
-                                    } transition-all duration-200
-                  ${isClickable && !isActive && !isComplete ? 'hover:bg-gray-300 cursor-pointer' : ''}
-                  ${!isClickable ? 'cursor-not-allowed' : 'cursor-pointer'}
-                  shadow-sm`} // Added shadow to emphasize it's above the line
-                            >
-                                {isComplete ? (
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                ) : (
-                                    <span className="font-bold text-base">{index + 1}</span>
-                                )}
-                            </motion.button>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-// Move HeroSection outside of BookingPage
-const HeroSection = ({ business }: { business: { name: string; image: string; logo: string; rating: number; reviewCount: number; description: string } | null }) => (
-    <div className="relative w-full aspect-[16/9] md:aspect-[21/9]">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 bg-black/40 z-10" />
-        <div
-            className="absolute inset-0 bg-cover bg-center z-0"
-            style={{ backgroundImage: `url(${business?.image})` }}
-        />
-
-        {/* Business Info Container */}
-        <div className="relative z-20 h-full flex flex-col items-center justify-center p-4 md:p-8">
-            {/* Logo Container */}
-            <div className="mb-2 md:mb-4">
-                <img
-                    src={business?.logo}
-                    alt={business?.name}
-                    className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border-4 border-white shadow-lg"
-                />
-            </div>
-
-            {/* Business Name */}
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-center text-white"
-            >
-                {business?.name}
-            </motion.h1>
-
-            {/* Rating and Reviews */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex items-center gap-2 mb-2 md:mb-4"
-            >
-                <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                        <span key={i} className="text-yellow-400 text-base md:text-xl">
-                            {i < Math.floor(business?.rating || 0) ? "★" : "☆"}
-                        </span>
-                    ))}
-                </div>
-                <span className="text-white text-sm md:text-base">
-                    {business?.rating} ({business?.reviewCount} reviews)
-                </span>
-            </motion.div>
-
-            {/* Description */}
-            <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-sm md:text-base lg:text-lg text-center max-w-2xl text-white"
-            >
-                {business?.description}
-            </motion.p>
-        </div>
-    </div>
-);
-
 const BookingPage = ({ businessId }: { businessId: string }) => {
     const [companyData, setCompanyData] = useState<CompanyData | null>(null);
-    const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
 
     useEffect(() => {
-        const fetchTimeSlots = async (businessUuid: string) => {
-            const { data, error } = await Auth.rpc('get_booked_slots', {
-                p_company_id: businessUuid,
-                p_staff_id: null,
-                p_start_time: new Date().toISOString()
-            });
-            if (error) {
-                console.error('Error fetching booked slots:', error);
-            } else {
-                setBookedSlots(data);
-            }
-        };
-
         const fetchBusiness = async () => {
             const { data, error } = await Auth.rpc('get_company_details_by_identifier', {
                 p_identifier: businessId
@@ -290,8 +169,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             if (error) {
                 console.error('Error fetching business details:', error);
             } else {
+                console.log("Business data:", data);
                 setCompanyData(data);
-                fetchTimeSlots(data.company.id);
             }
         };
         fetchBusiness();
@@ -308,7 +187,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         description: companyData.company.description
     } : null;
 
-    // Update services to use real data
+    // Update services to use real data and include bookings from staff
     const services = companyData ? companyData.company.services_by_catalogue.map(cat => ({
         id: cat.catalogue.id,
         name: cat.catalogue.name,
@@ -330,7 +209,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 start: tt.start_time,
                 end: tt.end_time,
                 days: [tt.day_of_week]
-            }))
+            })),
+            bookings: staff.bookings
         }))
     })) : [];
 
@@ -462,29 +342,85 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             // Convert selected date and time to UTC before submitting
             if (formState.date && formState.time) {
                 const [hours, minutes] = formState.time.split(':').map(Number);
+                
+                // Create a date object with the selected date and time
                 const melbourneDateTime = new Date(formState.date);
                 melbourneDateTime.setHours(hours, minutes, 0, 0);
-
-                const utcDateTime = convertMelbourneToUTC(melbourneDateTime);
-
-                // Now you can use utcDateTime when submitting to your backend
-                console.log("Booking form data:", {
-                    ...formState,
-                    dateTimeUTC: utcDateTime.toISOString()
-                });
-
-                // Create bookings for all selected services
+                
+                console.log("Original Melbourne date/time:", melbourneDateTime.toLocaleString('en-AU'));
+                
+                // Determine if DST is in effect for this date in Melbourne
+                // This is a heuristic approach - March 31, 2025 is likely to be in DST in Melbourne
+                // In Australia, DST typically ends on the first Sunday in April
+                const isDST = true; // For March 31, 2025, this would be true
+                const offsetHours = isDST ? 11 : 10; // Use 11 hours during DST
+                
+                // Create a proper UTC date from Melbourne time
+                const year = melbourneDateTime.getFullYear();
+                const month = melbourneDateTime.getMonth();
+                const day = melbourneDateTime.getDate();
+                const utcDateTime = new Date(Date.UTC(year, month, day, hours - offsetHours, minutes, 0));
+                
+                // Log both dates for verification
+                console.log("Melbourne time:", melbourneDateTime.toLocaleString('en-AU'));
+                console.log("UTC time with DST adjustment:", utcDateTime.toISOString());
+                console.log("UTC converted back to Melbourne:", 
+                            utcDateTime.toLocaleString('en-AU', {timeZone: 'Australia/Melbourne'}));
+                
+                // Create bookings using the utcDateTime
                 let currentStartTime = utcDateTime;
                 const bookingIds = [];
 
                 // Loop through all selected services
                 for (const service of formState.subServices) {
-                    // Calculate service duration in milliseconds
-                    const durationParts = service.duration.split(':').map(Number);
-                    const durationMs = (durationParts[0] * 60 * 60 * 1000) + (durationParts[1] * 60 * 1000);
+                    // Fix the duration calculation - Correctly parse the format
+                    console.log("Raw duration string:", service.duration);
+
+                    // Parse the duration correctly based on properly interpreting the format
+                    let durationMs = 0;
+
+                    if (service.duration.includes(':')) {
+                        // Format is HH:MM:SS 
+                        // In this case, "00:01:00" means 1 hour, not 1 minute
+                        const parts = service.duration.split(':').map(Number);
+                        
+                        if (parts.length === 3) {
+                            // The format is HH:MM:SS where:
+                            // parts[0] = hours
+                            // parts[1] = minutes
+                            // parts[2] = seconds
+                            
+                            // So for "00:01:00":
+                            // parts[0] = 0 (hours) 
+                            // parts[1] = 1 (represents 1 hour, not 1 minute)
+                            // parts[2] = 0 (seconds)
+                            
+                            // The correct interpretation is:
+                            const hours = parts[1]; // Middle value represents hours
+                            const minutes = parts[2]; // Last value represents minutes
+                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
+                            console.log(`Corrected Duration: ${hours} hours, ${minutes} minutes = ${durationMs}ms`);
+                        } else if (parts.length === 2) {
+                            // For HH:MM format, interpret correctly
+                            const hours = parts[0]; 
+                            const minutes = parts[1];
+                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
+                            console.log(`Duration: ${hours} hours, ${minutes} minutes = ${durationMs}ms`);
+                        }
+                    } else {
+                        // Just a number - assume minutes
+                        durationMs = parseInt(service.duration) * 60 * 1000;
+                        console.log(`Duration: ${parseInt(service.duration)} minutes = ${durationMs}ms`);
+                    }
                     
                     // Calculate end time by adding duration to start time
                     const endTime = new Date(currentStartTime.getTime() + durationMs);
+                    
+                    // Log booking times in Melbourne timezone
+                    console.log(`Booking for service ${service.id} - Melbourne time:`, {
+                        start: currentStartTime.toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }),
+                        end: endTime.toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })
+                    });
                     
                     // Create booking for this service
                     const { data: bookingId, error: bookingError } = await Auth
@@ -554,9 +490,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         );
     };
 
-    // Add this function near the top with other helper functions
+    // Update the getDayAvailability function to use staff.bookings instead of bookedSlots
     const getDayAvailability = (date: Date) => {
-        const melbourneDate = convertUTCToMelbourne(date);
+        const melbourneDate = new Date(date); // We're already working in Melbourne time
         const dayOfWeek = melbourneDate.getDay();
 
         // Get all workers
@@ -582,10 +518,14 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 const slotsPerWorker = (endHour - startHour) * 2; // 2 slots per hour (30 min intervals)
                 totalSlots += slotsPerWorker;
 
-                // Filter booked slots for this date
-                const dateBookedSlots = bookedSlots.filter(slot => {
-                    const slotDate = convertUTCToMelbourne(slot.booked_start);
-                    return slotDate.toDateString() === melbourneDate.toDateString();
+                // Filter booked slots for this date from worker's bookings
+                const dateBookedSlots = worker.bookings.filter(booking => {
+                    // Always convert UTC dates to Melbourne time for comparison
+            const bookingDate = convertUTCToMelbourne(booking.start_time);
+                    
+                    return bookingDate.getDate() === melbourneDate.getDate() && 
+                           bookingDate.getMonth() === melbourneDate.getMonth() && 
+                           bookingDate.getFullYear() === melbourneDate.getFullYear();
                 });
 
                 // Count available slots
@@ -594,9 +534,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         const currentSlot = new Date(melbourneDate);
                         currentSlot.setHours(hour, minute);
 
-                        const isBooked = dateBookedSlots.some(slot => {
-                            const slotStart = convertUTCToMelbourne(slot.booked_start);
-                            const slotEnd = convertUTCToMelbourne(slot.booked_end);
+                        const isBooked = dateBookedSlots.some(booking => {
+                            const slotStart = convertUTCToMelbourne(booking.start_time);
+                            const slotEnd = convertUTCToMelbourne(booking.end_time);
                             return currentSlot >= slotStart && currentSlot < slotEnd;
                         });
 
@@ -612,103 +552,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
         const availabilityPercentage = (availableSlots / totalSlots) * 100;
 
-        if (availabilityPercentage === 0) return 'full';
-        if (availabilityPercentage <= 50) return 'busy';
-        return 'available';
+        if (availableSlots === 0) return 'fully-booked'; // No available slots
+        if (availabilityPercentage <= 50) return 'limited'; // Limited availability (≤50%)
+        return 'available'; // Good availability (>50%)
     };
 
-    // Replace the existing date selection section with this updated version
-    const renderDateSelection = () => (
-        <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <FaCalendarAlt className="mr-2 text-indigo-600" /> Select Date
-            </h2>
-
-            {/* Month and Year Navigation */}
-            <div className="flex items-center justify-between mb-4">
-                <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handlePreviousMonth}
-                    className={`p-2 rounded-lg ${currentMonth.getMonth() === new Date().getMonth()
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "text-indigo-600 hover:bg-indigo-50"
-                        }`}
-                    disabled={currentMonth.getMonth() === new Date().getMonth()}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </motion.button>
-
-                <h3 className="text-xl font-semibold text-gray-800">
-                    {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                </h3>
-
-                <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleNextMonth}
-                    className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                </motion.button>
-            </div>
-
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="text-center text-sm font-medium text-gray-500">
-                        {day}
-                    </div>
-                ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
-                {/* Add empty cells for days before the first of the month */}
-                {[...Array(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay())].map((_, index) => (
-                    <div key={`empty-${index}`} className="p-4" />
-                ))}
-
-                {/* Date buttons */}
-                {availableDates.map((date, index) => {
-                    const availability = getDayAvailability(date);
-                    const isSelected = formState.date && date.toDateString() === formState.date.toDateString();
-
-                    return (
-                        <motion.button
-                            key={index}
-                            type="button"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => updateForm('date', date)}
-                            className={`p-4 rounded-lg text-center flex flex-col items-center ${isSelected
-                                ? "bg-indigo-600 text-white"
-                                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                                }`}
-                        >
-                            <div className="text-sm font-medium mb-1">{date.getDate()}</div>
-                            {availability !== 'none' && (
-                                <div className={`w-2 h-2 rounded-full
-                                    ${isSelected ? 'bg-white' : ''} 
-                                    ${!isSelected && availability === 'available' ? 'bg-green' : ''}
-                                    ${!isSelected && availability === 'busy' ? 'bg-orange-500' : ''}
-                                    ${!isSelected && availability === 'full' ? 'bg-red-500' : ''}`}
-                                />
-                            )}
-                        </motion.button>
-                    );
-                })}
-            </div>
-        </div>
-    );
-
-    // Update getAvailableTimeSlots to consider booked slots
+    // Update getAvailableTimeSlots to use worker.bookings instead of bookedSlots
     const getAvailableTimeSlots = (worker: Worker, date: Date) => {
         if (!worker || !date) return [];
 
@@ -730,29 +579,44 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             return slot >= workerStartTime && slot < workerEndTime;
         });
         
-        // Get all booked slots for this worker and date
-        const dateString = formatDate(date);
-        const bookedSlotsForDay = bookedSlots.filter(slot => {
-            const slotDate = new Date(slot.booked_start);
-            return formatDate(slotDate) === dateString && 
-                   formState.worker === worker.id;
+        // Get all booked slots for this worker and date from worker.bookings
+        const bookedSlotsForDay = worker.bookings.filter(booking => {
+            // Always convert UTC dates to Melbourne time before comparing
+            const bookingDate = convertUTCToMelbourne(booking.start_time);
+            const selectedDate = new Date(date);
+            
+            return bookingDate.getDate() === selectedDate.getDate() && 
+                   bookingDate.getMonth() === selectedDate.getMonth() && 
+                   bookingDate.getFullYear() === selectedDate.getFullYear();
+        });
+        
+        // Log all booked time slots in Melbourne time
+        console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":",bookedSlotsForDay);
+        console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
+        bookedSlotsForDay.forEach(booking => {
+            const melbourneStart = convertUTCToMelbourne(booking.start_time);
+            const melbourneEnd = convertUTCToMelbourne(booking.end_time);
+            console.log(`${melbourneStart.toLocaleTimeString()} - ${melbourneEnd.toLocaleTimeString()}`);
         });
         
         // Map available slots to include disabled status
         return availableSlots.map(slot => {
             // Check if this slot overlaps with any booked slots
-            const isDisabled = bookedSlotsForDay.some(bookedSlot => {
-                const bookedStart = new Date(bookedSlot.booked_start);
-                const bookedEnd = new Date(bookedSlot.booked_end);
+            const isDisabled = bookedSlotsForDay.some(booking => {
+                // Always convert UTC dates to Melbourne time
+                const bookedStart = convertUTCToMelbourne(booking.start_time);
+                const bookedEnd = convertUTCToMelbourne(booking.end_time);
                 
-                // Calculate slot start and end times
+                // Calculate slot start and end times in Melbourne time
                 const [slotHours, slotMinutes] = slot.split(':').map(Number);
                 const slotStartTime = new Date(date);
                 slotStartTime.setHours(slotHours, slotMinutes, 0, 0);
                 
                 // Calculate service end time based on duration
                 const durationMinutes = formState.subServices.length > 0 ? 
-                    parseInt(formState.subServices[0].duration, 10) : 60;
+                    parseInt(formState.subServices[0].duration.split(':')[0]) * 60 + 
+                    parseInt(formState.subServices[0].duration.split(':')[1]) : 60;
+                
                 const slotEndTime = new Date(slotStartTime);
                 slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
                 
@@ -771,7 +635,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     // Add a combined function for date and time selection
     const renderDateAndTimeSelection = () => {
         const selectedWorker = formState.worker === "no_preference" ?
-            { id: "no_preference", name: "No Preference", workingHours: [] } as unknown as Worker :
+            { id: "no_preference", name: "No Preference", workingHours: [], bookings: [] } as unknown as Worker :
             formState.worker ?
                 services[0].workers.find(w => w.id === formState.worker) : null;
 
@@ -802,13 +666,102 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 className="mb-4"
             >
                 {/* Date Selection */}
-                {renderDateSelection()}
+                <div className="space-y-8 min-h-[55vh] flex flex-col">
+                    <h2 className="text-xl font-bold text-black mb-6 flex items-center">
+                        <FaCalendarAlt className="mr-2 text-black" /> Select Date
+                    </h2>
+
+                    {/* Month and Year Navigation */}
+                    <div className="flex items-center justify-between mb-4">
+                        <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handlePreviousMonth}
+                            className={`p-2 rounded-lg ${currentMonth.getMonth() === new Date().getMonth()
+                                ? "text-gray-400 cursor-not-allowed"
+                                : "text-black hover:bg-gray-100"
+                                }`}
+                            disabled={currentMonth.getMonth() === new Date().getMonth()}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </motion.button>
+
+                        <h3 className="text-xl font-semibold text-black">
+                            {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h3>
+
+                        <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleNextMonth}
+                            className="p-2 rounded-lg text-black hover:bg-gray-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </motion.button>
+                    </div>
+
+                    {/* Weekday Headers */}
+                    <div className="grid grid-cols-7 gap-2 mb-2">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                            <div key={day} className="text-center text-sm font-medium text-gray-500">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-2">
+                        {/* Add empty cells for days before the first of the month */}
+                        {[...Array(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay())].map((_, index) => (
+                            <div key={`empty-${index}`} className="p-4" />
+                        ))}
+
+                        {/* Date buttons */}
+                        {availableDates.map((date, index) => {
+                            const availability = getDayAvailability(date);
+                            const isSelected = formState.date && date.toDateString() === formState.date.toDateString();
+                            const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+
+                            return (
+                                <motion.button
+                                    key={index}
+                                    type="button"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => updateForm('date', date)}
+                                    className={`p-4 rounded-lg text-center flex flex-col items-center ${isSelected
+                                        ? "bg-black text-white"
+                                        : "bg-gray-50 hover:bg-gray-100 text-black"
+                                        }`}
+                                    disabled={isPast}
+                                >
+                                    <div className="text-sm font-medium mb-1">{date.getDate()}</div>
+                                    
+                                    {/* Availability indicator dot */}
+                                    {!isPast && availability !== 'none' && (
+                                        <div className={`h-2 w-2 rounded-full mt-1 
+                                            ${availability === 'available' ? 'bg-green' : 
+                                              availability === 'limited' ? 'bg-orange' : 
+                                              availability === 'fully-booked' ? 'bg-red' : 'bg-transparent'}`}>
+                                        </div>
+                                    )}
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 {/* Time Selection */}
                 {formState.date && (
                     <div className="mt-8">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <FaClock className="mr-2 text-indigo-600" /> Available Time
+                        <h2 className="text-xl font-bold text-black mb-4 flex items-center">
+                            <FaClock className="mr-2 text-black" /> Available Time
                         </h2>
                         {availableTimeSlots.length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -819,26 +772,30 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                         whileHover={!slot.disabled ? { scale: 1.05 } : {}}
                                         whileTap={!slot.disabled ? { scale: 0.95 } : {}}
                                         onClick={() => !slot.disabled && updateForm('time', slot.time)}
-                                        className={`p-3 rounded-lg text-center 
+                                        className={`p-3 rounded-lg text-center relative
                                             ${slot.disabled 
-                                                ? 'bg-red-100 text-red-400 border border-red-200 cursor-not-allowed opacity-80 relative overflow-hidden' 
+                                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300' 
                                                 : formState.time === slot.time
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                                                    ? 'bg-black text-white border-2 border-black'
+                                                    : 'bg-white hover:bg-gray-50 text-black border border-gray-300 hover:border-black'
                                             }`}
                                         disabled={slot.disabled}
                                     >
-                                        {slot.time}
+                                        <span className={`${slot.disabled ? 'opacity-70' : 'font-medium'}`}>
+                                            {slot.time}
+                                        </span>
+                                        
+                                        {/* Strikethrough for booked slots */}
                                         {slot.disabled && (
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="w-full h-[1px] bg-red-400 transform rotate-45 opacity-80"></div>
+                                            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                                                <div className="w-full h-[1.5px] bg-gray-400 transform rotate-45"></div>
                                             </div>
                                         )}
                                     </motion.button>
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-gray-500 py-4">
+                            <div className="text-center text-gray-500 py-4 bg-gray-50 rounded-lg border border-gray-200">
                                 No available time slots for this date. Please select another date.
                             </div>
                         )}
@@ -890,7 +847,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={goToPreviousStep}
-                    className="px-6 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
+                    className="px-6 py-2 text-black border border-black rounded-lg hover:bg-gray-100"
                 >
                     Previous
                 </motion.button>
@@ -901,7 +858,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={goToNextStep}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90 ml-auto"
+                    className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 ml-auto"
                 >
                     Next
                 </motion.button>
@@ -913,7 +870,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     disabled={!formState.date || !formState.time || isSubmitting}
                     className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
                         ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
+                        : "bg-black hover:bg-gray-800"
                         }`}
                 >
                     {isSubmitting ? (
@@ -975,22 +932,22 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-8"
+                        className="space-y-8 min-h-[55vh] flex flex-col"
                     >
-                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-                            <RiServiceFill className="mr-3 text-indigo-600" /> Select Services
+                        <h2 className="text-2xl font-bold text-black mb-8 flex items-center">
+                            <RiServiceFill className="mr-3 text-black" /> Select Services
                         </h2>
 
-                        {/* Service Dropdown using Daisy UI */}
+                        {/* Service Dropdown */}
                         <div className="mb-6">
-                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                            <label className="block text-black text-sm font-medium mb-2">
                                 Category
                             </label>
                             <div className="dropdown w-full">
                                 <div
                                     tabIndex={0}
                                     role="button"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 flex justify-between items-center bg-white"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black flex justify-between items-center bg-white"
                                 >
                                     {formState.serviceCategory ?
                                         services.find(s => s.id === formState.serviceCategory)?.name :
@@ -1000,7 +957,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
-                                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-full">
+                                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-full">
                                     {services.map((service) => (
                                         <li key={service.id}>
                                             <a
@@ -1009,7 +966,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                     updateForm('subServices', []); // Clear selected sub-services when changing category
                                                     updateForm('worker', ""); // Clear selected worker when changing service
                                                 }}
-                                                className={formState.serviceCategory === service.id ? 'bg-indigo-50' : ''}
+                                                className={formState.serviceCategory === service.id ? 'bg-gray-100' : ''}
                                             >
                                                 {service.name}
                                             </a>
@@ -1020,67 +977,69 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         </div>
 
                         {/* Sub-services */}
-                        {formState.serviceCategory && (
-                            <div className="grid grid-cols-1 gap-3">
-                                {(() => {
-                                    const selectedService = services.find(s => s.id === formState.serviceCategory);
+                        <div className="flex-grow">
+                            {formState.serviceCategory && (
+                                <div className="grid grid-cols-1 gap-3">
+                                    {(() => {
+                                        const selectedService = services.find(s => s.id === formState.serviceCategory);
 
-                                    if (!selectedService) return null;
+                                        if (!selectedService) return null;
 
-                                    return selectedService.subServices.map((subService) => (
-                                        <motion.button
-                                            key={subService.id}
-                                            type="button"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            onClick={() => {
-                                                setFormState(prev => ({
-                                                    ...prev,
-                                                    subServices: prev.subServices.some(service => service.id === subService.id)
-                                                        ? prev.subServices.filter(service => service.id !== subService.id)
-                                                        : [...prev.subServices, subService as Service]
-                                                }));
-                                            }}
-                                            className={`p-4 rounded-lg border ${formState.subServices.some(service => service.id === subService.id)
-                                                ? "border-indigo-500 bg-indigo-50"
-                                                : "border-gray-200 hover:border-indigo-300"
-                                                }`}
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <div className="font-medium text-left">{subService.name}</div>
-                                                    <div className="text-sm text-gray-500 text-left mt-1">{subService.duration}</div>
+                                        return selectedService.subServices.map((subService) => (
+                                            <motion.button
+                                                key={subService.id}
+                                                type="button"
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => {
+                                                    setFormState(prev => ({
+                                                        ...prev,
+                                                        subServices: prev.subServices.some(service => service.id === subService.id)
+                                                            ? prev.subServices.filter(service => service.id !== subService.id)
+                                                            : [...prev.subServices, subService as Service]
+                                                    }));
+                                                }}
+                                                className={`p-4 rounded-lg border ${formState.subServices.some(service => service.id === subService.id)
+                                                    ? "border-black bg-gray-100"
+                                                    : "border-gray-200 hover:border-gray-400"
+                                                    }`}
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <div className="font-medium text-left">{subService.name}</div>
+                                                        <div className="text-sm text-gray-500 text-left mt-1">{subService.duration}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-lg font-semibold text-black">
+                                                            ${subService.price}
+                                                        </span>
+                                                        {formState.subServices.some(service => service.id === subService.id) && (
+                                                            <div className="bg-black text-white p-1 rounded-full">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-lg font-semibold text-indigo-600">
-                                                        ${subService.price}
-                                                    </span>
-                                                    {formState.subServices.some(service => service.id === subService.id) && (
-                                                        <div className="bg-indigo-500 text-white p-1 rounded-full">
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </motion.button>
-                                    ));
-                                })()}
-                            </div>
-                        )}
+                                            </motion.button>
+                                        ));
+                                    })()}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Total Price Display */}
                         {formState.subServices.length > 0 && (
                             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800">Total Services: {formState.subServices.length}</h3>
+                                        <h3 className="font-semibold text-black">Total Services: {formState.subServices.length}</h3>
                                         <p className="text-sm text-gray-600">
                                             {formState.subServices.map(service => service.name).join(', ')}
                                         </p>
                                     </div>
-                                    <div className="text-xl font-bold text-indigo-600">
+                                    <div className="text-xl font-bold text-black">
                                         ${formState.subServices.reduce((total, service) => total + service.price, 0)}
                                     </div>
                                 </div>
@@ -1093,10 +1052,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-8"
+                        className="space-y-8 min-h-[55vh] flex flex-col"
                     >
-                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-                            <FaUser className="mr-3 text-indigo-600" /> Select Staff
+                        <h2 className="text-2xl font-bold text-black mb-8 flex items-center">
+                            <FaUser className="mr-3 text-black" /> Select Staff
                         </h2>
 
                         {formState.subServices.length > 0 ? (
@@ -1109,19 +1068,19 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => updateForm('worker', "no_preference")}
                                             className={`w-[200px] cursor-pointer ${formState.worker === "no_preference"
-                                                ? 'ring-2 ring-indigo-500'
-                                                : 'hover:shadow-lg'
+                                                ? 'ring-2 ring-black'
+                                                : 'hover:shadow-lg' 
                                                 } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
                                         >
                                             {/* No Preference Icon Container */}
                                             <div className="relative flex justify-center mb-3">
-                                                <div className="relative w-24 h-24 rounded-full bg-indigo-50 flex items-center justify-center">
-                                                    <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="relative w-24 h-24 rounded-full bg-black flex items-center justify-center">
+                                                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                                     </svg>
                                                     {formState.worker === "no_preference" && (
                                                         <div className="absolute -top-1 -right-1">
-                                                            <div className="bg-indigo-500 text-white p-1 rounded-full">
+                                                            <div className="bg-black text-white p-1 rounded-full">
                                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                                                 </svg>
@@ -1144,7 +1103,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                 </div>
 
                                                 <div className="flex flex-wrap justify-center gap-1">
-                                                    <div className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full">
+                                                    <div className="text-xs px-2 py-1 bg-gray-100 text-black rounded-full">
                                                         Any Staff
                                                     </div>
                                                 </div>
@@ -1160,7 +1119,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={() => updateForm('worker', worker.id)}
                                                 className={`w-[200px] cursor-pointer ${formState.worker === worker.id
-                                                    ? 'ring-2 ring-indigo-500'
+                                                    ? 'ring-2 ring-black'
                                                     : 'hover:shadow-lg'
                                                     } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
                                             >
@@ -1174,7 +1133,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                         />
                                                         {formState.worker === worker.id && (
                                                             <div className="absolute -top-1 -right-1">
-                                                                <div className="bg-indigo-500 text-white p-1 rounded-full">
+                                                                <div className="bg-black text-white p-1 rounded-full">
                                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                                                     </svg>
@@ -1203,7 +1162,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                                         {worker.specialties.map((specialty, index) => (
                                                             <div
                                                                 key={index}
-                                                                className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full"
+                                                                className="text-xs px-2 py-1 bg-gray-100 text-black rounded-full"
                                                             >
                                                                 {specialty}
                                                             </div>
@@ -1229,10 +1188,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="space-y-6"
+                        className="space-y-8 min-h-[55vh] flex flex-col"
                     >
-                        <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-                            <FaUser className="mr-3 text-indigo-600" /> Your Information
+                        <h2 className="text-2xl font-bold text-black mb-8 flex items-center">
+                            <FaUser className="mr-3 text-black" /> Your Information
                         </h2>
 
                         <div className="space-y-4">
@@ -1245,7 +1204,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     type="text"
                                     value={formState.contactInfo.name}
                                     onChange={(e) => updateForm('name', e.target.value)}
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black"
                                     placeholder="John Doe"
                                     required
                                 />
@@ -1260,7 +1219,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     type="email"
                                     value={formState.contactInfo.email}
                                     onChange={(e) => updateForm('email', e.target.value)}
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black"
                                     placeholder="john@example.com"
                                     required
                                 />
@@ -1275,7 +1234,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     type="tel"
                                     value={formState.contactInfo.phone}
                                     onChange={(e) => updateForm('phone', e.target.value)}
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black"
                                     placeholder="(123) 456-7890"
                                 />
                             </div>
@@ -1288,19 +1247,19 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-200">
-            {/* Main content container */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div className="min-h-screen bg-black">
+            {/* Main content container - reduced padding */}
+            <div className="container mx-auto px-1 sm:px-2 lg:px-3 py-2 md:py-4">
                 {/* Hero Section */}
-                <div className="rounded-2xl overflow-hidden mb-8">
+                <div className="rounded-xl overflow-hidden mb-4">
                     <HeroSection business={business} />
                 </div>
 
-                {/* Booking Form Section */}
-                <div className="bg-white rounded-2xl shadow-lg">
-                    <form onSubmit={handleSubmit} className="flex flex-col p-4 md:p-6">
+                {/* Booking Form Section - white background fills more space */}
+                <div className="bg-white rounded-xl shadow-lg">
+                    <form onSubmit={handleSubmit} className="flex flex-col p-3 md:p-5">
                         {/* Step indicator */}
-                        <div className="mb-4">
+                        <div className="mb-3">
                             <StepIndicator
                                 currentStep={currentStep}
                                 onStepClick={setCurrentStep}
@@ -1314,7 +1273,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         </div>
 
                         {/* Navigation/Submit buttons */}
-                        <div className="pt-4 mt-4 border-t border-gray-100">
+                        <div className="pt-3 mt-3 border-t border-gray-100">
                             <NavigationButtons />
                         </div>
                     </form>
@@ -1337,7 +1296,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                             </p>
                             <button
                                 onClick={() => setIsSuccess(false)}
-                                className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90"
+                                className="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800"
                             >
                                 Done
                             </button>

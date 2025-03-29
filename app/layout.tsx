@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en" data-theme="dark">
       <Head>
         {/* General Meta Tags */}
         <meta name="title" content="CoLaunch - Connect Business and Scale Up" />
