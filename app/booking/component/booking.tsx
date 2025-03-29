@@ -291,13 +291,6 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         return slots;
     };
 
-    const timeSlots = generateTimeSlots();
-
-    // Add this helper function
-    // const getSelectedService = () => {
-    //     return services.find(s => s.id === formState.subServices[0]);
-    // };
-
     // Update form handlers
     const updateForm = (field: string, value: any) => {
         setFormState(prev => {
