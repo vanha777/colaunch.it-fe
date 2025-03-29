@@ -858,14 +858,14 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
     // Add navigation buttons component
     const NavigationButtons = () => (
-        <div className="flex justify-between gap-4">
+        <div className="flex justify-between">
             {currentStep !== 'service' && (
                 <motion.button
                     type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={goToPreviousStep}
-                    className="px-8 py-3 text-indigo-600 border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 font-medium"
+                    className="px-6 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
                 >
                     Previous
                 </motion.button>
@@ -876,7 +876,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={goToNextStep}
-                    className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:opacity-90 font-medium ml-auto"
+                    className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90 ml-auto"
                 >
                     Next
                 </motion.button>
@@ -886,9 +886,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={!formState.date || !formState.time || isSubmitting}
-                    className={`px-8 py-3 rounded-xl text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
+                    className={`px-6 py-2 rounded-lg text-white font-medium transition-all duration-300 ${!formState.date || !formState.time || isSubmitting
                         ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90"
+                        : "bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
                         }`}
                 >
                     {isSubmitting ? (
@@ -1263,19 +1263,19 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-200">
             {/* Main content container */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
                 {/* Hero Section */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+                <div className="rounded-2xl overflow-hidden mb-8">
                     <HeroSection business={business} />
                 </div>
 
                 {/* Booking Form Section */}
                 <div className="bg-white rounded-2xl shadow-lg">
-                    <form onSubmit={handleSubmit} className="flex flex-col p-6 md:p-8">
+                    <form onSubmit={handleSubmit} className="flex flex-col p-4 md:p-6">
                         {/* Step indicator */}
-                        <div className="mb-8">
+                        <div className="mb-4">
                             <StepIndicator
                                 currentStep={currentStep}
                                 onStepClick={setCurrentStep}
@@ -1284,17 +1284,42 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         </div>
 
                         {/* Content area */}
-                        <div className="flex-1 min-h-0 space-y-8">
+                        <div className="flex-1 min-h-0">
                             {renderCurrentStep()}
                         </div>
 
                         {/* Navigation/Submit buttons */}
-                        <div className="pt-8 mt-8 border-t border-gray-100">
+                        <div className="pt-4 mt-4 border-t border-gray-100">
                             <NavigationButtons />
                         </div>
                     </form>
                 </div>
             </div>
+            
+            {/* Success Modal */}
+            {isSuccess && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                    <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <div className="text-center">
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                                <svg className="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
+                            <p className="text-gray-600 mb-6">
+                                Thank you for your booking. We've sent a confirmation to your email address.
+                            </p>
+                            <button
+                                onClick={() => setIsSuccess(false)}
+                                className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:opacity-90"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
