@@ -329,6 +329,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     // Update the handle submit function
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
+        
         // create a customer
         const { data: customerId, error: customerError } = await Auth.rpc('create_or_update_customer', {
             p_phone_number: formState.contactInfo.phone,
@@ -337,9 +339,11 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             p_last_name: formState.contactInfo.name.split(' ').slice(1).join(' ') || formState.contactInfo.name,
             p_email: formState.contactInfo.email
         });
+        
         if (customerError) {
             console.error('Error creating customer:', customerError);
             alert('Error creating customer. Please try again.');
+            setIsSubmitting(false);
             return;
         } else {
             // Convert selected date and time to UTC before submitting
@@ -442,15 +446,18 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 
                 console.log("All bookings created:", bookingIds);
             }
-        }
-        setIsSubmitting(true);
-        setTimeout(() => {
+            
+            // After all bookings are created successfully
             setIsSuccess(true);
-            setTimeout(() => {
-                setIsSubmitting(false);
-                setIsSuccess(false);
-            }, 1500);
-        }, 1000);
+        }
+    };
+
+    // Add this function to handle redirection
+    const handleCloseSuccessModal = () => {
+        setIsSuccess(false);
+        setIsSubmitting(false);
+        // Redirect back to the booking page for this business
+        window.location.href = `/booking/${businessId}`;
     };
 
     const formatDate = (date: Date) => {
@@ -1281,22 +1288,45 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 </div>
             </div>
             
-            {/* Success Modal */}
+            {/* Success Modal with check animation */}
             {isSuccess && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                     <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
                         <div className="text-center">
-                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                                <svg className="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 relative overflow-hidden">
+                                {/* Animated green check mark */}
+                                <svg 
+                                    className="h-14 w-14 text-green-500" 
+                                    fill="none" 
+                                    stroke="green" 
+                                    viewBox="0 0 24 24"
+                                    style={{
+                                        strokeDasharray: 100,
+                                        strokeDashoffset: 0,
+                                        animation: "drawCheck 0.5s ease-in-out forwards"
+                                    }}
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth="3" 
+                                        d="M5 13l4 4L19 7"
+                                    />
                                 </svg>
+                                
+                                {/* Circular animation */}
+                                <div className="absolute inset-0 border-4 border-green rounded-full"
+                                    style={{
+                                        animation: "scaleIn 0.3s ease-in-out forwards"
+                                    }}
+                                />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
                             <p className="text-gray-600 mb-6">
-                                Thank you for your booking. We've sent a confirmation to your email address.
+                                Thank you for your booking. We'll send a confirmation to your email address.
                             </p>
                             <button
-                                onClick={() => setIsSuccess(false)}
+                                onClick={handleCloseSuccessModal}
                                 className="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800"
                             >
                                 Done
@@ -1305,6 +1335,29 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     </div>
                 </div>
             )}
+
+            {/* Add CSS animation keyframes */}
+            <style jsx global>{`
+                @keyframes drawCheck {
+                    0% {
+                        stroke-dashoffset: 100;
+                    }
+                    100% {
+                        stroke-dashoffset: 0;
+                    }
+                }
+                
+                @keyframes scaleIn {
+                    0% {
+                        transform: scale(0);
+                        opacity: 0;
+                    }
+                    100% {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
