@@ -710,46 +710,62 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
     // Update getAvailableTimeSlots to consider booked slots
     const getAvailableTimeSlots = (worker: Worker, date: Date) => {
-        const melbourneDate = convertUTCToMelbourne(date);
-        const dayOfWeek = melbourneDate.getDay();
-        const workingHoursForDay = worker.workingHours.find(hours =>
-            hours.days.includes(dayOfWeek)
-        );
+        if (!worker || !date) return [];
 
-        if (!workingHoursForDay) {
-            return []; // Professional doesn't work on this day
-        }
-
-        const slots: string[] = [];
-        const [startHour] = workingHoursForDay.start.split(':').map(Number);
-        const [endHour] = workingHoursForDay.end.split(':').map(Number);
-
-        // Convert booked slots to Melbourne time for comparison
-        const dateBookedSlots = bookedSlots.filter(slot => {
-            const slotDate = convertUTCToMelbourne(slot.booked_start);
-            return slotDate.toDateString() === melbourneDate.toDateString();
+        // Get the day of week (0 = Sunday, 1 = Monday, etc.)
+        const dayOfWeek = date.getDay();
+        
+        // Find the worker's working hours for this day
+        const workerHours = worker.workingHours.find(wh => wh.days.includes(dayOfWeek));
+        if (!workerHours) return [];
+        
+        // Generate all possible time slots based on worker's hours
+        const allTimeSlots = generateTimeSlots();
+        
+        // Filter to only slots within worker's hours
+        const workerStartTime = workerHours.start;
+        const workerEndTime = workerHours.end;
+        
+        const availableSlots = allTimeSlots.filter(slot => {
+            return slot >= workerStartTime && slot < workerEndTime;
         });
-
-        for (let hour = startHour; hour < endHour; hour++) {
-            for (let minute of [0, 30]) {
-                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-
-                // Check if this time slot overlaps with any booked slots
-                const isBooked = dateBookedSlots.some(slot => {
-                    const slotStart = convertUTCToMelbourne(slot.booked_start);
-                    const slotEnd = convertUTCToMelbourne(slot.booked_end);
-                    const currentSlot = new Date(melbourneDate);
-                    currentSlot.setHours(hour, minute);
-                    return currentSlot >= slotStart && currentSlot < slotEnd;
-                });
-
-                if (!isBooked) {
-                    slots.push(timeString);
-                }
-            }
-        }
-
-        return slots;
+        
+        // Get all booked slots for this worker and date
+        const dateString = formatDate(date);
+        const bookedSlotsForDay = bookedSlots.filter(slot => {
+            const slotDate = new Date(slot.booked_start);
+            return formatDate(slotDate) === dateString && 
+                   formState.worker === worker.id;
+        });
+        
+        // Map available slots to include disabled status
+        return availableSlots.map(slot => {
+            // Check if this slot overlaps with any booked slots
+            const isDisabled = bookedSlotsForDay.some(bookedSlot => {
+                const bookedStart = new Date(bookedSlot.booked_start);
+                const bookedEnd = new Date(bookedSlot.booked_end);
+                
+                // Calculate slot start and end times
+                const [slotHours, slotMinutes] = slot.split(':').map(Number);
+                const slotStartTime = new Date(date);
+                slotStartTime.setHours(slotHours, slotMinutes, 0, 0);
+                
+                // Calculate service end time based on duration
+                const durationMinutes = formState.subServices.length > 0 ? 
+                    parseInt(formState.subServices[0].duration, 10) : 60;
+                const slotEndTime = new Date(slotStartTime);
+                slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
+                
+                // Check for overlap
+                return (
+                    (slotStartTime >= bookedStart && slotStartTime < bookedEnd) ||
+                    (slotEndTime > bookedStart && slotEndTime <= bookedEnd) ||
+                    (slotStartTime <= bookedStart && slotEndTime >= bookedEnd)
+                );
+            });
+            
+            return { time: slot, disabled: isDisabled };
+        });
     };
 
     // Add a combined function for date and time selection
@@ -796,19 +812,28 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         </h2>
                         {availableTimeSlots.length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                                {availableTimeSlots.map((time, index) => (
+                                {availableTimeSlots.map((slot, index) => (
                                     <motion.button
                                         key={index}
                                         type="button"
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => updateForm('time', time)}
-                                        className={`p-3 rounded-lg text-center ${time === formState.time
-                                            ? "bg-indigo-600 text-white"
-                                            : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                        whileHover={!slot.disabled ? { scale: 1.05 } : {}}
+                                        whileTap={!slot.disabled ? { scale: 0.95 } : {}}
+                                        onClick={() => !slot.disabled && updateForm('time', slot.time)}
+                                        className={`p-3 rounded-lg text-center 
+                                            ${slot.disabled 
+                                                ? 'bg-red-100 text-red-400 border border-red-200 cursor-not-allowed opacity-80 relative overflow-hidden' 
+                                                : formState.time === slot.time
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                                             }`}
+                                        disabled={slot.disabled}
                                     >
-                                        {time}
+                                        {slot.time}
+                                        {slot.disabled && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="w-full h-[1px] bg-red-400 transform rotate-45 opacity-80"></div>
+                                            </div>
+                                        )}
                                     </motion.button>
                                 ))}
                             </div>
