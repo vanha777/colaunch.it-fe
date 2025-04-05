@@ -331,27 +331,18 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             if (formState.date && formState.time) {
                 const [hours, minutes] = formState.time.split(':').map(Number);
                 
-                // Create a date object with the selected date and time
-                const melbourneDateTime = new Date(formState.date);
-                melbourneDateTime.setHours(hours, minutes, 0, 0);
+                // Create a date object with the selected date and time in user's local timezone
+                const localDateTime = new Date(formState.date);
+                localDateTime.setHours(hours, minutes, 0, 0);
                 
-                console.log("Original Melbourne date/time:", melbourneDateTime.toLocaleString('en-AU'));
+                console.log("Original Local date/time:", localDateTime.toLocaleString());
                 
-                // Determine if DST is in effect for this date in Melbourne
-                const isDST = true; // For March 31, 2025, this would be true
-                const offsetHours = isDST ? 11 : 10; // Use 11 hours during DST
-                
-                // Create a proper UTC date from Melbourne time
-                const year = melbourneDateTime.getFullYear();
-                const month = melbourneDateTime.getMonth();
-                const day = melbourneDateTime.getDate();
-                const utcDateTime = new Date(Date.UTC(year, month, day, hours - offsetHours, minutes, 0));
+                // Convert local time to UTC for storage
+                const utcDateTime = new Date(localDateTime.getTime());
                 
                 // Log both dates for verification
-                console.log("Melbourne time:", melbourneDateTime.toLocaleString('en-AU'));
-                console.log("UTC time with DST adjustment:", utcDateTime.toISOString());
-                console.log("UTC converted back to Melbourne:", 
-                            utcDateTime.toLocaleString('en-AU', {timeZone: 'Australia/Melbourne'}));
+                console.log("Local time:", localDateTime.toLocaleString());
+                console.log("UTC time for storage:", utcDateTime.toISOString());
                 
                 // Create bookings using the utcDateTime
                 let currentStartTime = utcDateTime;
@@ -359,9 +350,6 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
                 // Loop through all selected services
                 for (const service of formState.subServices) {
-                    // Fix the duration calculation - Correctly parse the format
-                    console.log("Raw duration string:", service.duration);
-
                     // Parse the duration correctly based on properly interpreting the format
                     let durationMs = 0;
 
@@ -370,10 +358,12 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         const parts = service.duration.split(':').map(Number);
                         
                         if (parts.length === 3) {
-                            const hours = parts[1]; // Middle value represents hours
-                            const minutes = parts[2]; // Last value represents minutes
-                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
-                            console.log(`Corrected Duration: ${hours} hours, ${minutes} minutes = ${durationMs}ms`);
+                            // Correct interpretation: first value is hours, second is minutes, third is seconds
+                            const hours = parts[0]; // First value represents hours
+                            const minutes = parts[1]; // Second value represents minutes
+                            const seconds = parts[2]; // Third value represents seconds
+                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
+                            console.log(`Duration: ${hours} hours, ${minutes} minutes, ${seconds} seconds = ${durationMs}ms`);
                         } else if (parts.length === 2) {
                             // For HH:MM format, interpret correctly
                             const hours = parts[0]; 
