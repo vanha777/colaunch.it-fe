@@ -171,10 +171,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const business = companyData ? {
         id: companyData.company.id,
         name: companyData.company.name,
-        image: "/business.jpeg", // You might want to add this to your company data
+        image: "/business2.png", // You might want to add this to your company data
         logo: companyData.company.logo.path,
         rating: 4.9, // You might want to add this to your company data
-        reviewCount: 250, // You might want to add this to your company data
+        reviewCount:50, // You might want to add this to your company data
         description: companyData.company.description
     } : null;
 
