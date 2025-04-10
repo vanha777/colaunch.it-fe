@@ -394,7 +394,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         company_id: companyData?.company.id,
                         start_time: utcDateTime.toISOString(),
                         end_time: endTime.toISOString(),
-                        status_id: 'dfbd8eb3-4eb4-49b5-b230-a9c7d3a14bca' // Pending
+                        status_id: '2b6bf1b7-8d4b-4b36-946c-e3bd951f6021' // Confirmed or Pending ?
                     })
                     .select('id')
                     .single();
