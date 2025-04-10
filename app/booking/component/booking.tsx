@@ -12,18 +12,18 @@ import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 // Replace the hardcoded Melbourne timezone functions with dynamic ones
 const getUserTimezone = (): string => {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
 const convertUTCToLocalTimezone = (utcDate: Date | string): Date => {
-  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
-  const timezone = getUserTimezone();
-  return toZonedTime(date, timezone);
+    const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
+    const timezone = getUserTimezone();
+    return toZonedTime(date, timezone);
 };
 
 const convertLocalTimezoneToUTC = (localDate: Date): Date => {
-  const timezone = getUserTimezone();
-  return fromZonedTime(localDate, timezone);
+    const timezone = getUserTimezone();
+    return fromZonedTime(localDate, timezone);
 };
 
 // Add these new types above the BookingPage component
@@ -176,7 +176,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
         image: "/business2.png", // You might want to add this to your company data
         logo: companyData.company.logo.path,
         rating: 4.9, // You might want to add this to your company data
-        reviewCount:50, // You might want to add this to your company data
+        reviewCount: 50, // You might want to add this to your company data
         description: companyData.company.description
     } : null;
 
@@ -313,7 +313,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
         // create a customer
         const { data: customerId, error: customerError } = await Auth.rpc('create_or_update_customer', {
             p_phone_number: formState.contactInfo.phone,
@@ -322,7 +322,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             p_last_name: formState.contactInfo.name.split(' ').slice(1).join(' ') || formState.contactInfo.name,
             p_email: formState.contactInfo.email
         });
-        
+
         if (customerError) {
             console.error('Error creating customer:', customerError);
             alert('Error creating customer. Please try again.');
@@ -332,20 +332,20 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             // Convert selected date and time to UTC before submitting
             if (formState.date && formState.time) {
                 const [hours, minutes] = formState.time.split(':').map(Number);
-                
+
                 // Create a date object with the selected date and time in user's local timezone
                 const localDateTime = new Date(formState.date);
                 localDateTime.setHours(hours, minutes, 0, 0);
-                
+
                 console.log("Original Local date/time:", localDateTime.toLocaleString());
-                
+
                 // Convert local time to UTC for storage
                 const utcDateTime = new Date(localDateTime.getTime());
-                
+
                 // Log both dates for verification
                 console.log("Local time:", localDateTime.toLocaleString());
                 console.log("UTC time for storage:", utcDateTime.toISOString());
-                
+
                 // Calculate total duration for all services
                 let totalDurationMs = 0;
                 for (const service of formState.subServices) {
@@ -355,35 +355,35 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     if (service.duration.includes(':')) {
                         // Format is always HH:MM:SS 
                         const parts = service.duration.split(':').map(Number);
-                        
+
                         // Extract hours, minutes, seconds
                         const hours = parts[0];
                         const minutes = parts[1];
                         const seconds = parts[2];
-                        
+
                         // Calculate duration in milliseconds
                         durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
                     } else {
                         // Just a number - assume minutes
                         durationMs = parseInt(service.duration) * 60 * 1000;
                     }
-                    
+
                     // Add relief time between services
                     if (totalDurationMs > 0) {
                         totalDurationMs += RELIEF_TIME_MINUTES * 60 * 1000;
                     }
-                    
+
                     totalDurationMs += durationMs;
                 }
-                
+
                 // Calculate the end time for the entire booking
                 const endTime = new Date(utcDateTime.getTime() + totalDurationMs);
-                
+
                 // Find an available staff member if "no preference" was selected
-                const staffId = formState.worker === "no_preference" 
+                const staffId = formState.worker === "no_preference"
                     ? await getRandomAvailableStaff(formState.subServices[0].id, utcDateTime, endTime)
                     : formState.worker;
-                
+
                 // Create one booking for all services
                 const { data: bookingData, error: bookingError } = await Auth
                     .from('booking')
@@ -398,18 +398,18 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     })
                     .select('id')
                     .single();
-                    
+
                 if (bookingError) {
                     console.error('Error creating booking:', bookingError);
                     alert('Error creating booking. Please try again.');
                     setIsSubmitting(false);
                     return;
-                } 
-                
+                }
+
                 // Link booking to selected services
                 const bookingId = bookingData.id;
                 console.log("Booking created:", bookingId);
-                
+
                 // Now create entries in booking_linkable table for each service
                 for (const service of formState.subServices) {
                     const { error: linkError } = await Auth
@@ -419,7 +419,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                             linkable_type: 'services',
                             linkable_id: service.id
                         });
-                        
+
                     if (linkError) {
                         console.error('Error linking service to booking:', linkError);
                         alert('Error linking service to booking. Please try again.');
@@ -427,7 +427,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         return;
                     }
                 }
-                
+
                 // After all services are linked successfully
                 console.log("All services linked to booking:", bookingId);
                 setIsSuccess(true);
@@ -439,36 +439,36 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const getRandomAvailableStaff = async (serviceId: string, startTime: Date, endTime: Date): Promise<string | null> => {
         try {
             // Get the service category containing this service
-            const serviceCategory = services.find(category => 
+            const serviceCategory = services.find(category =>
                 category.subServices.some(service => service.id === serviceId)
             );
-            
+
             if (!serviceCategory) return null;
-            
+
             // Get all staff for this service category
             const allStaff = serviceCategory.workers;
-            
+
             // Check which staff members are available at this time slot
             const availableStaff = allStaff.filter(staff => {
                 // Check if staff works on this day
                 const bookingDate = new Date(startTime);
                 const dayOfWeek = bookingDate.getDay();
-                
-                const worksOnThisDay = staff.workingHours.some(hours => 
+
+                const worksOnThisDay = staff.workingHours.some(hours =>
                     hours.days.includes(dayOfWeek)
                 );
-                
+
                 if (!worksOnThisDay) return false;
-                
+
                 // Check if staff doesn't have overlapping bookings
                 const hasOverlappingBooking = staff.bookings.some(booking => {
                     const bookingStart = new Date(booking.start_time);
                     const bookingEnd = new Date(booking.end_time);
-                    
+
                     // Add relief time to booking end
                     const bookingEndWithRelief = new Date(bookingEnd);
                     bookingEndWithRelief.setMinutes(bookingEnd.getMinutes() + RELIEF_TIME_MINUTES);
-                    
+
                     // Check for overlap
                     return (
                         (startTime >= bookingStart && startTime < bookingEndWithRelief) ||
@@ -476,13 +476,13 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         (startTime <= bookingStart && endTime >= bookingEndWithRelief)
                     );
                 });
-                
+
                 return !hasOverlappingBooking;
             });
-            
+
             // If no staff available, return null
             if (availableStaff.length === 0) return null;
-            
+
             // Randomly select a staff member
             const randomIndex = Math.floor(Math.random() * availableStaff.length);
             return availableStaff[randomIndex].id;
@@ -558,11 +558,11 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 // Filter booked slots for this date from worker's bookings
                 const dateBookedSlots = worker.bookings.filter(booking => {
                     // Always convert UTC dates to Melbourne time for comparison
-            const bookingDate = convertUTCToLocalTimezone(booking.start_time);
-                    
-                    return bookingDate.getDate() === melbourneDate.getDate() && 
-                           bookingDate.getMonth() === melbourneDate.getMonth() && 
-                           bookingDate.getFullYear() === melbourneDate.getFullYear();
+                    const bookingDate = convertUTCToLocalTimezone(booking.start_time);
+
+                    return bookingDate.getDate() === melbourneDate.getDate() &&
+                        bookingDate.getMonth() === melbourneDate.getMonth() &&
+                        bookingDate.getFullYear() === melbourneDate.getFullYear();
                 });
 
                 // Count available slots
@@ -600,33 +600,33 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
         // Get the day of week (0 = Sunday, 1 = Monday, etc.)
         const dayOfWeek = date.getDay();
-        
+
         // Find the worker's working hours for this day
         const workerHours = worker.workingHours.find(wh => wh.days.includes(dayOfWeek));
         if (!workerHours) return [];
-        
+
         // Generate all possible time slots based on worker's hours
         const allTimeSlots = generateTimeSlots();
-        
+
         // Filter to only slots within worker's hours
         const workerStartTime = workerHours.start;
         const workerEndTime = workerHours.end;
-        
+
         const availableSlots = allTimeSlots.filter(slot => {
             return slot >= workerStartTime && slot < workerEndTime;
         });
-        
+
         // Get all booked slots for this worker and date from worker.bookings
         const bookedSlotsForDay = worker.bookings.filter(booking => {
             // Always convert UTC dates to Melbourne time before comparing
             const bookingDate = convertUTCToLocalTimezone(booking.start_time);
             const selectedDate = new Date(date);
-            
-            return bookingDate.getDate() === selectedDate.getDate() && 
-                   bookingDate.getMonth() === selectedDate.getMonth() && 
-                   bookingDate.getFullYear() === selectedDate.getFullYear();
+
+            return bookingDate.getDate() === selectedDate.getDate() &&
+                bookingDate.getMonth() === selectedDate.getMonth() &&
+                bookingDate.getFullYear() === selectedDate.getFullYear();
         });
-        
+
         // Log all booked time slots in Melbourne time
         console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
         console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
@@ -635,7 +635,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             const melbourneEnd = convertUTCToLocalTimezone(booking.end_time);
             console.log(`${melbourneStart.toLocaleTimeString()} - ${melbourneEnd.toLocaleTimeString()}`);
         });
-        
+
         // Map available slots to include disabled status
         return availableSlots.map(slot => {
             // Check if this slot overlaps with any booked slots
@@ -643,28 +643,28 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 // Always convert UTC dates to Melbourne time
                 const bookedStart = convertUTCToLocalTimezone(booking.start_time);
                 const bookedEnd = convertUTCToLocalTimezone(booking.end_time);
-                
+
                 // Add relief time to booking end time
                 const bookedEndWithRelief = new Date(bookedEnd);
                 bookedEndWithRelief.setMinutes(bookedEnd.getMinutes() + RELIEF_TIME_MINUTES);
-                
+
                 // Calculate slot start and end times in Melbourne time
                 const [slotHours, slotMinutes] = slot.split(':').map(Number);
                 const slotStartTime = new Date(date);
                 slotStartTime.setHours(slotHours, slotMinutes, 0, 0);
-                
+
                 // Calculate service end time based on duration
-                const durationMinutes = formState.subServices.length > 0 ? 
-                    parseInt(formState.subServices[0].duration.split(':')[0]) * 60 + 
+                const durationMinutes = formState.subServices.length > 0 ?
+                    parseInt(formState.subServices[0].duration.split(':')[0]) * 60 +
                     parseInt(formState.subServices[0].duration.split(':')[1]) : 60;
-                
+
                 const slotEndTime = new Date(slotStartTime);
                 slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
-                
+
                 // Add relief time to slot end time
                 const slotEndWithRelief = new Date(slotEndTime);
                 slotEndWithRelief.setMinutes(slotEndTime.getMinutes() + RELIEF_TIME_MINUTES);
-                
+
                 // Check for overlap including relief time
                 return (
                     // Slot starts during a booking (including relief time)
@@ -675,7 +675,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     (slotStartTime <= bookedStart && slotEndTime >= bookedEndWithRelief)
                 );
             });
-            
+
             return { time: slot, disabled: isDisabled };
         });
     };
@@ -790,13 +790,13 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                     disabled={isPast}
                                 >
                                     <div className="text-sm font-medium mb-1">{date.getDate()}</div>
-                                    
+
                                     {/* Availability indicator dot */}
                                     {!isPast && availability !== 'none' && (
                                         <div className={`h-2 w-2 rounded-full mt-1 
-                                            ${availability === 'available' ? 'bg-green' : 
-                                              availability === 'limited' ? 'bg-[#FFA500]' : 
-                                              availability === 'fully-booked' ? 'bg-[#FF0000]' : 'bg-transparent'}`}>
+                                            ${availability === 'available' ? 'bg-green' :
+                                                availability === 'limited' ? 'bg-[#FFA500]' :
+                                                    availability === 'fully-booked' ? 'bg-[#FF0000]' : 'bg-transparent'}`}>
                                         </div>
                                     )}
                                 </motion.button>
@@ -821,8 +821,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                         whileTap={!slot.disabled ? { scale: 0.95 } : {}}
                                         onClick={() => !slot.disabled && updateForm('time', slot.time)}
                                         className={`p-3 rounded-lg text-center relative
-                                            ${slot.disabled 
-                                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300' 
+                                            ${slot.disabled
+                                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
                                                 : formState.time === slot.time
                                                     ? 'bg-black text-white border-2 border-black'
                                                     : 'bg-white hover:bg-gray-50 text-black border border-gray-300 hover:border-black'
@@ -832,7 +832,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                         <span className={`${slot.disabled ? 'opacity-70' : 'font-medium'}`}>
                                             {slot.time}
                                         </span>
-                                        
+
                                         {/* Strikethrough for booked slots */}
                                         {slot.disabled && (
                                             <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -1117,7 +1117,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                             onClick={() => updateForm('worker', "no_preference")}
                                             className={`w-[200px] cursor-pointer ${formState.worker === "no_preference"
                                                 ? 'ring-2 ring-black'
-                                                : 'hover:shadow-lg' 
+                                                : 'hover:shadow-lg'
                                                 } rounded-lg bg-white shadow-sm transition-all duration-300 p-4`}
                                         >
                                             {/* No Preference Icon Container */}
@@ -1327,7 +1327,7 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     </form>
                 </div>
             </div>
-            
+
             {/* Success Modal with check animation */}
             {isSuccess && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -1335,10 +1335,10 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         <div className="text-center">
                             <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 relative overflow-hidden">
                                 {/* Animated green check mark */}
-                                <svg 
-                                    className="h-14 w-14 text-green-500" 
-                                    fill="none" 
-                                    stroke="green" 
+                                <svg
+                                    className="h-14 w-14 text-green-500"
+                                    fill="none"
+                                    stroke="green"
                                     viewBox="0 0 24 24"
                                     style={{
                                         strokeDasharray: 100,
@@ -1346,14 +1346,14 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                         animation: "drawCheck 0.5s ease-in-out forwards"
                                     }}
                                 >
-                                    <path 
-                                        strokeLinecap="round" 
-                                        strokeLinejoin="round" 
-                                        strokeWidth="3" 
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="3"
                                         d="M5 13l4 4L19 7"
                                     />
                                 </svg>
-                                
+
                                 {/* Circular animation */}
                                 <div className="absolute inset-0 border-4 border-green rounded-full"
                                     style={{
