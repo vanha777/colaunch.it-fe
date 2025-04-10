@@ -354,23 +354,17 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     let durationMs = 0;
 
                     if (service.duration.includes(':')) {
-                        // Format is HH:MM:SS 
+                        // Format is always HH:MM:SS 
                         const parts = service.duration.split(':').map(Number);
                         
-                        if (parts.length === 3) {
-                            // Correct interpretation: first value is hours, second is minutes, third is seconds
-                            const hours = parts[0]; // First value represents hours
-                            const minutes = parts[1]; // Second value represents minutes
-                            const seconds = parts[2]; // Third value represents seconds
-                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
-                            console.log(`Duration: ${hours} hours, ${minutes} minutes, ${seconds} seconds = ${durationMs}ms`);
-                        } else if (parts.length === 2) {
-                            // For HH:MM format, interpret correctly
-                            const hours = parts[0]; 
-                            const minutes = parts[1];
-                            durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
-                            console.log(`Duration: ${hours} hours, ${minutes} minutes = ${durationMs}ms`);
-                        }
+                        // Extract hours, minutes, seconds
+                        const hours = parts[0];
+                        const minutes = parts[1];
+                        const seconds = parts[2];
+                        
+                        // Calculate duration in milliseconds
+                        durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
+                        console.log(`Duration: ${hours} hours, ${minutes} minutes, ${seconds} seconds = ${durationMs}ms`);
                     } else {
                         // Just a number - assume minutes
                         durationMs = parseInt(service.duration) * 60 * 1000;
@@ -391,7 +385,9 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         .from('booking')
                         .insert({
                             customer_id: customerId,
-                            staff_id: formState.worker === "no_preference" ? null : formState.worker,
+                            staff_id: formState.worker === "no_preference" 
+                                ? await getRandomAvailableStaff(service.id, currentStartTime, endTime)
+                                : formState.worker,
                             service_id: service.id,
                             company_id: companyData?.company.id,
                             start_time: currentStartTime.toISOString(),
@@ -420,6 +416,63 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
             
             // After all bookings are created successfully
             setIsSuccess(true);
+        }
+    };
+
+    // Add this helper function before handleSubmit
+    const getRandomAvailableStaff = async (serviceId: string, startTime: Date, endTime: Date): Promise<string | null> => {
+        try {
+            // Get the service category containing this service
+            const serviceCategory = services.find(category => 
+                category.subServices.some(service => service.id === serviceId)
+            );
+            
+            if (!serviceCategory) return null;
+            
+            // Get all staff for this service category
+            const allStaff = serviceCategory.workers;
+            
+            // Check which staff members are available at this time slot
+            const availableStaff = allStaff.filter(staff => {
+                // Check if staff works on this day
+                const bookingDate = new Date(startTime);
+                const dayOfWeek = bookingDate.getDay();
+                
+                const worksOnThisDay = staff.workingHours.some(hours => 
+                    hours.days.includes(dayOfWeek)
+                );
+                
+                if (!worksOnThisDay) return false;
+                
+                // Check if staff doesn't have overlapping bookings
+                const hasOverlappingBooking = staff.bookings.some(booking => {
+                    const bookingStart = new Date(booking.start_time);
+                    const bookingEnd = new Date(booking.end_time);
+                    
+                    // Add relief time to booking end
+                    const bookingEndWithRelief = new Date(bookingEnd);
+                    bookingEndWithRelief.setMinutes(bookingEnd.getMinutes() + RELIEF_TIME_MINUTES);
+                    
+                    // Check for overlap
+                    return (
+                        (startTime >= bookingStart && startTime < bookingEndWithRelief) ||
+                        (endTime > bookingStart && endTime <= bookingEndWithRelief) ||
+                        (startTime <= bookingStart && endTime >= bookingEndWithRelief)
+                    );
+                });
+                
+                return !hasOverlappingBooking;
+            });
+            
+            // If no staff available, return null
+            if (availableStaff.length === 0) return null;
+            
+            // Randomly select a staff member
+            const randomIndex = Math.floor(Math.random() * availableStaff.length);
+            return availableStaff[randomIndex].id;
+        } catch (error) {
+            console.error("Error finding available staff:", error);
+            return null;
         }
     };
 
