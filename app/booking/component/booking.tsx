@@ -124,12 +124,14 @@ interface Booking {
         id: string;
         name: string;
     };
-    service: {
-        id: string;
-        name: string;
-        duration: string;
-        price: number;
-    };
+    service: Services[] | null;
+}
+
+interface Services {
+    id: string;
+    name: string;
+    duration: string;
+    price: number;
 }
 
 // Add this interface for the form state
@@ -344,11 +346,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                 console.log("Local time:", localDateTime.toLocaleString());
                 console.log("UTC time for storage:", utcDateTime.toISOString());
                 
-                // Create bookings using the utcDateTime
-                let currentStartTime = utcDateTime;
-                const bookingIds = [];
-
-                // Loop through all selected services
+                // Calculate total duration for all services
+                let totalDurationMs = 0;
                 for (const service of formState.subServices) {
                     // Parse the duration correctly based on properly interpreting the format
                     let durationMs = 0;
@@ -364,58 +363,75 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                         
                         // Calculate duration in milliseconds
                         durationMs = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000) + (seconds * 1000);
-                        console.log(`Duration: ${hours} hours, ${minutes} minutes, ${seconds} seconds = ${durationMs}ms`);
                     } else {
                         // Just a number - assume minutes
                         durationMs = parseInt(service.duration) * 60 * 1000;
-                        console.log(`Duration: ${parseInt(service.duration)} minutes = ${durationMs}ms`);
                     }
                     
-                    // Calculate end time by adding duration to start time
-                    const endTime = new Date(currentStartTime.getTime() + durationMs);
-                    
-                    // Log booking times in Melbourne timezone
-                    console.log(`Booking for service ${service.id} - Melbourne time:`, {
-                        start: currentStartTime.toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }),
-                        end: endTime.toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })
-                    });
-                    
-                    // Create booking for this service
-                    const { data: bookingId, error: bookingError } = await Auth
-                        .from('booking')
-                        .insert({
-                            customer_id: customerId,
-                            staff_id: formState.worker === "no_preference" 
-                                ? await getRandomAvailableStaff(service.id, currentStartTime, endTime)
-                                : formState.worker,
-                            service_id: service.id,
-                            company_id: companyData?.company.id,
-                            start_time: currentStartTime.toISOString(),
-                            end_time: endTime.toISOString(),
-                            status_id: 'dfbd8eb3-4eb4-49b5-b230-a9c7d3a14bca' // Pending
-                        })
-                        .select('id')
-                        .single();
-                        
-                    if (bookingError) {
-                        console.error('Error creating booking:', bookingError);
-                        alert('Error creating booking. Please try again.');
-                        return;
-                    } else {
-                        console.log("Booking created:", bookingId);
-                        bookingIds.push(bookingId);
+                    // Add relief time between services
+                    if (totalDurationMs > 0) {
+                        totalDurationMs += RELIEF_TIME_MINUTES * 60 * 1000;
                     }
                     
-                    // Update start time for next service, now including relief time
-                    const reliefTimeMs = RELIEF_TIME_MINUTES * 60 * 1000;
-                    currentStartTime = new Date(endTime.getTime() + reliefTimeMs);
+                    totalDurationMs += durationMs;
                 }
                 
-                console.log("All bookings created:", bookingIds);
+                // Calculate the end time for the entire booking
+                const endTime = new Date(utcDateTime.getTime() + totalDurationMs);
+                
+                // Find an available staff member if "no preference" was selected
+                const staffId = formState.worker === "no_preference" 
+                    ? await getRandomAvailableStaff(formState.subServices[0].id, utcDateTime, endTime)
+                    : formState.worker;
+                
+                // Create one booking for all services
+                const { data: bookingData, error: bookingError } = await Auth
+                    .from('booking')
+                    .insert({
+                        customer_id: customerId,
+                        staff_id: staffId,
+                        service_id: null, // No specific service - using junction table instead
+                        company_id: companyData?.company.id,
+                        start_time: utcDateTime.toISOString(),
+                        end_time: endTime.toISOString(),
+                        status_id: 'dfbd8eb3-4eb4-49b5-b230-a9c7d3a14bca' // Pending
+                    })
+                    .select('id')
+                    .single();
+                    
+                if (bookingError) {
+                    console.error('Error creating booking:', bookingError);
+                    alert('Error creating booking. Please try again.');
+                    setIsSubmitting(false);
+                    return;
+                } 
+                
+                // Link booking to selected services
+                const bookingId = bookingData.id;
+                console.log("Booking created:", bookingId);
+                
+                // Now create entries in booking_linkable table for each service
+                for (const service of formState.subServices) {
+                    const { error: linkError } = await Auth
+                        .from('booking_linkable')
+                        .insert({
+                            booking_id: bookingId,
+                            linkable_type: 'services',
+                            linkable_id: service.id
+                        });
+                        
+                    if (linkError) {
+                        console.error('Error linking service to booking:', linkError);
+                        alert('Error linking service to booking. Please try again.');
+                        setIsSubmitting(false);
+                        return;
+                    }
+                }
+                
+                // After all services are linked successfully
+                console.log("All services linked to booking:", bookingId);
+                setIsSuccess(true);
             }
-            
-            // After all bookings are created successfully
-            setIsSuccess(true);
         }
     };
 
