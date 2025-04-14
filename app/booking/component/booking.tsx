@@ -638,33 +638,51 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
 
         // Map available slots to include disabled status
         return availableSlots.map(slot => {
+            // Check if this slot is in the past
+            const isInPast = (() => {
+                const now = new Date();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Only check for past times if the date is today
+                if (date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear()) {
+                    
+                    const [slotHours, slotMinutes] = slot.split(':').map(Number);
+                    return (slotHours < now.getHours() || 
+                           (slotHours === now.getHours() && slotMinutes <= now.getMinutes()));
+                }
+                return false;
+            })();
+            
             // Check if this slot overlaps with any booked slots
-            const isDisabled = bookedSlotsForDay.some(booking => {
+            const isBooked = bookedSlotsForDay.some(booking => {
                 // Always convert UTC dates to Melbourne time
                 const bookedStart = convertUTCToLocalTimezone(booking.start_time);
                 const bookedEnd = convertUTCToLocalTimezone(booking.end_time);
-
+                
                 // Add relief time to booking end time
                 const bookedEndWithRelief = new Date(bookedEnd);
                 bookedEndWithRelief.setMinutes(bookedEnd.getMinutes() + RELIEF_TIME_MINUTES);
-
+                
                 // Calculate slot start and end times in Melbourne time
                 const [slotHours, slotMinutes] = slot.split(':').map(Number);
                 const slotStartTime = new Date(date);
                 slotStartTime.setHours(slotHours, slotMinutes, 0, 0);
-
+                
                 // Calculate service end time based on duration
-                const durationMinutes = formState.subServices.length > 0 ?
-                    parseInt(formState.subServices[0].duration.split(':')[0]) * 60 +
+                const durationMinutes = formState.subServices.length > 0 ? 
+                    parseInt(formState.subServices[0].duration.split(':')[0]) * 60 + 
                     parseInt(formState.subServices[0].duration.split(':')[1]) : 60;
-
+                
                 const slotEndTime = new Date(slotStartTime);
                 slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
-
+                
                 // Add relief time to slot end time
                 const slotEndWithRelief = new Date(slotEndTime);
                 slotEndWithRelief.setMinutes(slotEndTime.getMinutes() + RELIEF_TIME_MINUTES);
-
+                
                 // Check for overlap including relief time
                 return (
                     // Slot starts during a booking (including relief time)
@@ -675,8 +693,8 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                     (slotStartTime <= bookedStart && slotEndTime >= bookedEndWithRelief)
                 );
             });
-
-            return { time: slot, disabled: isDisabled };
+            
+            return { time: slot, disabled: isBooked || isInPast };
         });
     };
 

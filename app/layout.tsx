@@ -24,11 +24,11 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
-    icon: '/logo.png',
+    icon: '/bookdiLogo.png',
     // You can also specify different sizes
     apple: [
-      { url: '/logo.png' },
-      { url: '/apple.png', sizes: '180x180' }
+      { url: '/bookdiLogo.png' },
+      { url: '/bookdiLogo.png', sizes: '180x180' }
     ],
     shortcut: '/favicon.ico'
   },
