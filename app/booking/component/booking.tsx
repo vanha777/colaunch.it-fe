@@ -313,16 +313,27 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-
+        
+        // Ensure phone has +61 prefix and correct format
+        let phoneNumber = formState.contactInfo.phone;
+        if (phoneNumber.startsWith('+610')) {
+            // Fix case where +61 was added to a number with leading 0
+            phoneNumber = '+61' + phoneNumber.substring(4);
+        } else if (!phoneNumber.startsWith('+61')) {
+            // Add +61 and remove leading 0 if needed
+            phoneNumber = '+61' + phoneNumber.replace(/^0/, '');
+        }
+        
+        console.log("new phone number: ", phoneNumber);
         // create a customer
         const { data: customerId, error: customerError } = await Auth.rpc('create_or_update_customer', {
-            p_phone_number: formState.contactInfo.phone,
+            p_phone_number: phoneNumber,
             p_company_id: companyData?.company.id,
             p_first_name: formState.contactInfo.name.split(' ')[0],
             p_last_name: formState.contactInfo.name.split(' ').slice(1).join(' ') || formState.contactInfo.name,
             p_email: formState.contactInfo.email
         });
-
+        console.log("Customer ID:", customerId);
         if (customerError) {
             console.error('Error creating customer:', customerError);
             alert('Error creating customer. Please try again.');
@@ -1295,14 +1306,24 @@ const BookingPage = ({ businessId }: { businessId: string }) => {
                                 <label className="block text-gray-700 text-sm font-medium mb-2" htmlFor="phone">
                                     Phone Number
                                 </label>
-                                <input
-                                    id="phone"
-                                    type="tel"
-                                    value={formState.contactInfo.phone}
-                                    onChange={(e) => updateForm('phone', e.target.value)}
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:border-black"
-                                    placeholder="(123) 456-7890"
-                                />
+                                <div className="flex w-full items-center border-2 border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-black focus-within:border-black overflow-hidden">
+                                    <div className="bg-gray-100 px-2 py-3 text-gray-600 font-medium border-r-2 border-gray-200">
+                                        +61
+                                    </div>
+                                    <input
+                                        id="phone"
+                                        type="tel"
+                                        value={formState.contactInfo.phone.startsWith('+61') ? formState.contactInfo.phone.substring(3) : formState.contactInfo.phone}
+                                        onChange={(e) => {
+                                            // Strip any non-digit characters
+                                            const phoneValue = e.target.value.replace(/\D/g, '');
+                                            // Store with the +61 prefix
+                                            updateForm('phone', '+61' + phoneValue);
+                                        }}
+                                        className="flex-1 px-4 py-3 focus:outline-none"
+                                        placeholder="XXX XXX XXX"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </motion.div>
