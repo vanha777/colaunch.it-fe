@@ -151,7 +151,8 @@ interface BookingFormState {
 // Add a constant for the relief time (in minutes)
 const RELIEF_TIME_MINUTES = 30;
 
-const BookingPage = ({ businessId }: { businessId: string }) => {
+const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId: string | undefined }) => {
+    console.log("Rescheduling booking: ", bookingId);
     const [companyData, setCompanyData] = useState<CompanyData | null>(null);
 
     useEffect(() => {
