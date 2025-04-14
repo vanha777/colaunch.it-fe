@@ -116,6 +116,20 @@ interface CompanyData {
     staff: Staff[];
 }
 
+interface BookingStatus {
+    id: string;
+    name: string;
+}
+
+interface BookingData {
+    id: string;
+    staff_id: string;
+    customer_id: string;
+    start_time: string;
+    end_time: string;
+    status: BookingStatus;
+}
+
 interface Booking {
     id: string;
     start_time: string;
@@ -190,6 +204,10 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [showInitialOverlay, setShowInitialOverlay] = useState(true);
+    const [bookingStatus, setBookingStatus] = useState<{ id: string; name: string } | null>(null);
+    const [isBookingCompletedOrCancelled, setIsBookingCompletedOrCancelled] = useState(false);
 
     // Memoize services transformation
     const services = useMemo(() => transformCompanyDataToServices(companyData), [companyData]);
@@ -248,14 +266,38 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                             staff_id,
                             customer_id,
                             start_time,
-                            end_time
+                            end_time,
+                            status:status_id (
+                                id,
+                                name
+                            )
                         `)
                         .eq('id', bookingId)
-                        .single();
+                        .single() as { data: BookingData | null, error: any };
 
                     if (bookingError) {
                         console.error('Error fetching booking:', bookingError);
                         return;
+                    }
+
+                    if (!bookingData) {
+                        console.error('No booking data found');
+                        return;
+                    }
+
+                    // Set booking status
+                    if (bookingData.status) {
+                        setBookingStatus({
+                            id: bookingData.status.id,
+                            name: bookingData.status.name
+                        });
+
+                        // Check if booking is completed or cancelled
+                        if (bookingData.status.name === 'completed' || bookingData.status.name === 'cancelled') {
+                            setIsBookingCompletedOrCancelled(true);
+                            setShowInitialOverlay(true); // Show the overlay with status message
+                            return; // Don't proceed with further data fetching
+                        }
                     }
 
                     // Get linked services
@@ -1329,9 +1371,30 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-8 min-h-[55vh] flex flex-col"
                     >
-                        <h2 className="text-2xl font-bold text-black mb-8 flex items-center">
-                            <FaCalendarAlt className="mr-3 text-black" /> Confirm Rescheduling
-                        </h2>
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-black flex items-center">
+                                <FaCalendarAlt className="mr-3 text-black" /> Confirm Rescheduling
+                            </h2>
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={handleCancelBooking}
+                                disabled={isCancelling}
+                                className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                            >
+                                {isCancelling ? (
+                                    <span className="flex items-center">
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Cancelling...
+                                    </span>
+                                ) : (
+                                    "Cancel Booking"
+                                )}
+                            </motion.button>
+                        </div>
 
                         <div className="space-y-6">
                             {/* Booking Details */}
@@ -1400,39 +1463,140 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         }
     };
 
+    // Add this new function for handling booking cancellation
+    const handleCancelBooking = async () => {
+        if (!bookingId) return;
+        
+        setIsCancelling(true);
+        try {
+            const { error: cancelError } = await Auth
+                .from('booking')
+                .update({
+                    status_id: 'e11e739f-44a8-4b2a-958d-c4d5ad73db88' // You'll need to replace this with your actual cancelled status ID
+                })
+                .eq('id', bookingId);
+
+            if (cancelError) {
+                console.error('Error cancelling booking:', cancelError);
+                alert('Error cancelling booking. Please try again.');
+                setIsCancelling(false);
+                return;
+            }
+
+            // Redirect back to the booking page after successful cancellation
+            window.location.href = `/booking/${businessId}`;
+        } catch (error) {
+            console.error('Error in handleCancelBooking:', error);
+            alert('An unexpected error occurred. Please try again.');
+            setIsCancelling(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-black">
+            {/* Initial Overlay */}
+            {showInitialOverlay && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-xl"
+                    >
+                        <div className="text-center">
+                            {isBookingCompletedOrCancelled && bookingStatus ? (
+                                <>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                                        {bookingStatus.name === 'completed' ? 'Booking Completed' : 'Booking Cancelled'}
+                                    </h2>
+                                    <p className="text-gray-600 mb-8">
+                                        This booking has been {bookingStatus.name}. You cannot reschedule or cancel it.
+                                    </p>
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => window.location.href = `/booking/${businessId}`}
+                                        className="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                                    >
+                                        Return to Booking Page
+                                    </motion.button>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-4">What would you like to do?</h2>
+                                    <p className="text-gray-600 mb-8">
+                                        You can either reschedule your booking to a different time or cancel it completely.
+                                    </p>
+                                    
+                                    <div className="space-y-4">
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => setShowInitialOverlay(false)}
+                                            className="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                                        >
+                                            Reschedule Booking
+                                        </motion.button>
+                                        
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={handleCancelBooking}
+                                            disabled={isCancelling}
+                                            className="w-full px-6 py-3 text-red-600 border border-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                        >
+                                            {isCancelling ? (
+                                                <span className="flex items-center justify-center">
+                                                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Cancelling...
+                                                </span>
+                                            ) : (
+                                                "Cancel Booking"
+                                            )}
+                                        </motion.button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
             {/* Main content container - reduced padding */}
-            <div className="container mx-auto px-1 sm:px-2 lg:px-3 py-2 md:py-4">
-                {/* Hero Section */}
-                <div className="rounded-xl overflow-hidden mb-4">
-                    <HeroSection business={business} />
+            {!isBookingCompletedOrCancelled && (
+                <div className="container mx-auto px-1 sm:px-2 lg:px-3 py-2 md:py-4">
+                    {/* Hero Section */}
+                    <div className="rounded-xl overflow-hidden mb-4">
+                        <HeroSection business={business} />
+                    </div>
+
+                    {/* Booking Form Section - white background fills more space */}
+                    <div className="bg-white rounded-xl shadow-lg">
+                        <form onSubmit={handleSubmit} className="flex flex-col p-3 md:p-5">
+                            {/* Step indicator */}
+                            <div className="mb-3">
+                                <StepIndicator
+                                    currentStep={currentStep}
+                                    onStepClick={setCurrentStep}
+                                    canNavigateToStep={canNavigateToStep}
+                                />
+                            </div>
+
+                            {/* Content area */}
+                            <div className="flex-1 min-h-0">
+                                {renderCurrentStep()}
+                            </div>
+
+                            {/* Navigation/Submit buttons */}
+                            <div className="pt-3 mt-3 border-t border-gray-100">
+                                <NavigationButtons />
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                {/* Booking Form Section - white background fills more space */}
-                <div className="bg-white rounded-xl shadow-lg">
-                    <form onSubmit={handleSubmit} className="flex flex-col p-3 md:p-5">
-                        {/* Step indicator */}
-                        <div className="mb-3">
-                            <StepIndicator
-                                currentStep={currentStep}
-                                onStepClick={setCurrentStep}
-                                canNavigateToStep={canNavigateToStep}
-                            />
-                        </div>
-
-                        {/* Content area */}
-                        <div className="flex-1 min-h-0">
-                            {renderCurrentStep()}
-                        </div>
-
-                        {/* Navigation/Submit buttons */}
-                        <div className="pt-3 mt-3 border-t border-gray-100">
-                            <NavigationButtons />
-                        </div>
-                    </form>
-                </div>
-            </div>
+            )}
 
             {/* Success Modal with check animation */}
             {isSuccess && (
