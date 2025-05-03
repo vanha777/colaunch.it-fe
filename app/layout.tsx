@@ -77,9 +77,9 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
       </Head>
       <body suppressHydrationWarning={true} className={inter.className}>
-        <AppProvider>
+        {/* <AppProvider> */}
           {children}
-        </AppProvider>
+        {/* </AppProvider> */}
         <Analytics />
       </body>
     </html>

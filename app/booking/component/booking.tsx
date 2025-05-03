@@ -805,6 +805,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                             const availability = getDayAvailability(date);
                             const isSelected = formState.date && date.toDateString() === formState.date.toDateString();
                             const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+                            const isToday = date.toDateString() === new Date().toDateString();
 
                             return (
                                 <motion.button
@@ -813,10 +814,13 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => updateForm('date', date)}
-                                    className={`p-4 rounded-lg text-center flex flex-col items-center ${isSelected
-                                        ? "bg-black text-white"
-                                        : "bg-gray-50 hover:bg-gray-100 text-black"
-                                        }`}
+                                    className={`p-4 rounded-lg text-center flex flex-col items-center ${
+                                        isSelected
+                                            ? "bg-black text-white"
+                                            : isToday
+                                            ? "bg-blue-50 text-blue-600 border-2 border-blue-500"
+                                            : "bg-gray-50 hover:bg-gray-100 text-black"
+                                    }`}
                                     disabled={isPast}
                                 >
                                     <div className="text-sm font-medium mb-1">{date.getDate()}</div>
