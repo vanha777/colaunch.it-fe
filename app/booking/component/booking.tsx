@@ -164,6 +164,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                 console.error('Error fetching business details:', error);
             } else {
                 console.log("Business data:", data);
+                console.log("Company timetable:", data?.company.timetable);
                 setCompanyData(data);
             }
         };
@@ -233,16 +234,34 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         const dates = [];
         const firstDayOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
         const lastDayOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
-
-        // Get dates for the current month
+        
+        // Get the day of week for the first day (0 = Sunday, 1 = Monday, etc.)
+        const firstDayOfWeek = firstDayOfMonth.getDay();
+        
+        // Add empty cells for days before the first of the month
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            dates.push(null);
+        }
+        
+        // Add all days of the current month
         for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
             const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), i);
             // Only include dates from today onwards
             if (date >= new Date(new Date().setHours(0, 0, 0, 0))) {
                 dates.push(date);
+            } else {
+                dates.push(null);
             }
         }
-
+        
+        // Add empty cells to complete the last week
+        const remainingCells = 7 - (dates.length % 7);
+        if (remainingCells < 7) {
+            for (let i = 0; i < remainingCells; i++) {
+                dates.push(null);
+            }
+        }
+        
         return dates;
     };
 
@@ -353,7 +372,6 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
 
                 // Convert local time to UTC for storage
                 const utcDateTime = new Date(localDateTime.getTime());
-
                 // Log both dates for verification
                 console.log("Local time:", localDateTime.toLocaleString());
                 console.log("UTC time for storage:", utcDateTime.toISOString());
@@ -795,13 +813,11 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
 
                     {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-2">
-                        {/* Add empty cells for days before the first of the month */}
-                        {[...Array(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay())].map((_, index) => (
-                            <div key={`empty-${index}`} className="p-4" />
-                        ))}
-
-                        {/* Date buttons */}
                         {availableDates.map((date, index) => {
+                            if (date === null) {
+                                return <div key={`empty-${index}`} className="p-4" />;
+                            }
+
                             const availability = getDayAvailability(date);
                             const isSelected = formState.date && date.toDateString() === formState.date.toDateString();
                             const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
