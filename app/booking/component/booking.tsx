@@ -665,6 +665,9 @@ console.log("Working time for the day", workerHours);
             // Check if slot is outside working hours
             const isOutsideWorkingHours = slotTotalMinutes < startMinutes || slotTotalMinutes > endMinutes;
 
+            // Check if slot is within 30 minutes of closing time
+            const isTooCloseToClosing = slotTotalMinutes + 30 > endMinutes;
+
             // Check if this slot is in the past
             const isInPast = (() => {
                 const now = new Date();
@@ -710,7 +713,7 @@ console.log("Working time for the day", workerHours);
             
             return { 
                 time: slot, 
-                disabled: isOutsideWorkingHours || isBooked || isInPast 
+                disabled: isOutsideWorkingHours || isTooCloseToClosing || isBooked || isInPast 
             };
         });
     };
