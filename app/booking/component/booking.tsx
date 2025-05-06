@@ -292,12 +292,13 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         const endHour = 17; // 5 PM
 
         for (let hour = startHour; hour <= endHour; hour++) {
-            slots.push(`${hour}:00`);
-            if (hour < endHour) {
-                slots.push(`${hour}:30`);
+            for (let minute = 0; minute < 60; minute += 15) {
+                // Format: "HH:MM" (e.g., "09:05", "09:10", etc.)
+                const formattedHour = hour.toString().padStart(2, '0');
+                const formattedMinute = minute.toString().padStart(2, '0');
+                slots.push(`${formattedHour}:${formattedMinute}`);
             }
         }
-
         return slots;
     };
 
@@ -660,6 +661,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         // Log all booked time slots in Melbourne time
         console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
         console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
+        console.log("Working time for the day", workerHours);
         bookedSlotsForDay.forEach(booking => {
             const melbourneStart = convertUTCToLocalTimezone(booking.start_time);
             const melbourneEnd = convertUTCToLocalTimezone(booking.end_time);

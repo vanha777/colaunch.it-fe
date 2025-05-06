@@ -745,6 +745,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         // Log all booked time slots in Melbourne time
         console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
         console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
+        console.log("Working time for the day", worker.workingHours);
         bookedSlotsForDay.forEach(booking => {
             const melbourneStart = convertUTCToLocalTimezone(booking.start_time);
             const melbourneEnd = convertUTCToLocalTimezone(booking.end_time);
@@ -1466,7 +1467,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
     // Add this new function for handling booking cancellation
     const handleCancelBooking = async () => {
         if (!bookingId) return;
-        
+
         setIsCancelling(true);
         try {
             const { error: cancelError } = await Auth
@@ -1497,7 +1498,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
             {/* Initial Overlay */}
             {showInitialOverlay && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-xl"
@@ -1526,7 +1527,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                                     <p className="text-gray-600 mb-8">
                                         You can either reschedule your booking to a different time or cancel it completely.
                                     </p>
-                                    
+
                                     <div className="space-y-4">
                                         <motion.button
                                             whileHover={{ scale: 1.02 }}
@@ -1536,7 +1537,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                                         >
                                             Reschedule Booking
                                         </motion.button>
-                                        
+
                                         <motion.button
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
