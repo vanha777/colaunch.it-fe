@@ -288,12 +288,11 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
     // Generate time slots
     const generateTimeSlots = () => {
         const slots = [];
-        const startHour = 9; // 9 AM
-        const endHour = 17; // 5 PM
+        const startHour = 7; // 7 AM
+        const endHour = 18; // 6 PM
 
         for (let hour = startHour; hour <= endHour; hour++) {
             for (let minute = 0; minute < 60; minute += 15) {
-                // Format: "HH:MM" (e.g., "09:05", "09:10", etc.)
                 const formattedHour = hour.toString().padStart(2, '0');
                 const formattedMinute = minute.toString().padStart(2, '0');
                 slots.push(`${formattedHour}:${formattedMinute}`);
@@ -625,7 +624,7 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         return 'available'; // Good availability (>50%)
     };
 
-    // Update getAvailableTimeSlots to include relief time
+    // Update getAvailableTimeSlots to mark slots as disabled instead of filtering
     const getAvailableTimeSlots = (worker: Worker, date: Date) => {
         if (!worker || !date) return [];
 
@@ -635,21 +634,21 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
         // Find the worker's working hours for this day
         const workerHours = worker.workingHours.find(wh => wh.days.includes(dayOfWeek));
         if (!workerHours) return [];
-
-        // Generate all possible time slots based on worker's hours
+console.log("Working time for the day", workerHours);
+        // Generate all time slots from 7 AM to 6 PM
         const allTimeSlots = generateTimeSlots();
 
-        // Filter to only slots within worker's hours
-        const workerStartTime = workerHours.start;
-        const workerEndTime = workerHours.end;
+        // Convert times to minutes for easier comparison
+        const timeToMinutes = (time: string) => {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        };
 
-        const availableSlots = allTimeSlots.filter(slot => {
-            return slot >= workerStartTime && slot < workerEndTime;
-        });
+        const startMinutes = timeToMinutes(workerHours.start);
+        const endMinutes = timeToMinutes(workerHours.end);
 
-        // Get all booked slots for this worker and date from worker.bookings
+        // Get all booked slots for this worker and date
         const bookedSlotsForDay = worker.bookings.filter(booking => {
-            // Always convert UTC dates to Melbourne time before comparing
             const bookingDate = convertUTCToLocalTimezone(booking.start_time);
             const selectedDate = new Date(date);
 
@@ -658,30 +657,23 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                 bookingDate.getFullYear() === selectedDate.getFullYear();
         });
 
-        // Log all booked time slots in Melbourne time
-        console.log("Booked time slots for", worker.name, "on UTC", date.toLocaleDateString(), ":", bookedSlotsForDay);
-        console.log('Booked time slots for', worker.name, 'on', date.toLocaleDateString(), ':');
-        console.log("Working time for the day", workerHours);
-        bookedSlotsForDay.forEach(booking => {
-            const melbourneStart = convertUTCToLocalTimezone(booking.start_time);
-            const melbourneEnd = convertUTCToLocalTimezone(booking.end_time);
-            console.log(`${melbourneStart.toLocaleTimeString()} - ${melbourneEnd.toLocaleTimeString()}`);
-        });
+        // Map all slots to include disabled status
+        return allTimeSlots.map(slot => {
+            const [slotHours, slotMinutes] = slot.split(':').map(Number);
+            const slotTotalMinutes = slotHours * 60 + slotMinutes;
 
-        // Map available slots to include disabled status
-        return availableSlots.map(slot => {
+            // Check if slot is outside working hours
+            const isOutsideWorkingHours = slotTotalMinutes < startMinutes || slotTotalMinutes > endMinutes;
+
             // Check if this slot is in the past
             const isInPast = (() => {
                 const now = new Date();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
-                // Only check for past times if the date is today
                 if (date.getDate() === today.getDate() && 
                     date.getMonth() === today.getMonth() && 
                     date.getFullYear() === today.getFullYear()) {
-                    
-                    const [slotHours, slotMinutes] = slot.split(':').map(Number);
                     return (slotHours < now.getHours() || 
                            (slotHours === now.getHours() && slotMinutes <= now.getMinutes()));
                 }
@@ -690,20 +682,15 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
             
             // Check if this slot overlaps with any booked slots
             const isBooked = bookedSlotsForDay.some(booking => {
-                // Always convert UTC dates to Melbourne time
                 const bookedStart = convertUTCToLocalTimezone(booking.start_time);
                 const bookedEnd = convertUTCToLocalTimezone(booking.end_time);
                 
-                // Add relief time to booking end time
                 const bookedEndWithRelief = new Date(bookedEnd);
                 bookedEndWithRelief.setMinutes(bookedEnd.getMinutes() + RELIEF_TIME_MINUTES);
                 
-                // Calculate slot start and end times in Melbourne time
-                const [slotHours, slotMinutes] = slot.split(':').map(Number);
                 const slotStartTime = new Date(date);
                 slotStartTime.setHours(slotHours, slotMinutes, 0, 0);
                 
-                // Calculate service end time based on duration
                 const durationMinutes = formState.subServices.length > 0 ? 
                     parseInt(formState.subServices[0].duration.split(':')[0]) * 60 + 
                     parseInt(formState.subServices[0].duration.split(':')[1]) : 60;
@@ -711,22 +698,20 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
                 const slotEndTime = new Date(slotStartTime);
                 slotEndTime.setMinutes(slotStartTime.getMinutes() + durationMinutes);
                 
-                // Add relief time to slot end time
                 const slotEndWithRelief = new Date(slotEndTime);
                 slotEndWithRelief.setMinutes(slotEndTime.getMinutes() + RELIEF_TIME_MINUTES);
                 
-                // Check for overlap including relief time
                 return (
-                    // Slot starts during a booking (including relief time)
                     (slotStartTime >= bookedStart && slotStartTime < bookedEndWithRelief) ||
-                    // Slot ends during a booking (including preparation time)
                     (slotEndTime > bookedStart && slotEndTime <= bookedEndWithRelief) ||
-                    // Slot completely contains a booking
                     (slotStartTime <= bookedStart && slotEndTime >= bookedEndWithRelief)
                 );
             });
             
-            return { time: slot, disabled: isBooked || isInPast };
+            return { 
+                time: slot, 
+                disabled: isOutsideWorkingHours || isBooked || isInPast 
+            };
         });
     };
 
