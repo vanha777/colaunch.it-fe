@@ -26,6 +26,29 @@ const convertLocalTimezoneToUTC = (localDate: Date): Date => {
     return fromZonedTime(localDate, timezone);
 };
 
+// Helper function to convert time between timezones
+const convertTimeBetweenTimezones = (time: string, fromTimezone: string, toTimezone: string): string => {
+    // Create a date object for today with the given time
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, seconds);
+
+    // First convert the time to UTC
+    const utcDate = fromZonedTime(date, fromTimezone);
+    
+    // Then convert from UTC to the target timezone
+    const toDate = toZonedTime(utcDate, toTimezone);
+    
+    // Format the time back to HH:mm:ss
+    const formattedHours = toDate.getHours().toString().padStart(2, '0');
+    const formattedMinutes = toDate.getMinutes().toString().padStart(2, '0');
+    const formattedSeconds = toDate.getSeconds().toString().padStart(2, '0');
+    
+    const result = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+    console.log("Converting time between timezones:", time, fromTimezone, "to", toTimezone, "result:", result);
+    return result;
+};
+
 // Add these new types above the BookingPage component
 interface CompanyTimetable {
     id: string;
@@ -33,6 +56,7 @@ interface CompanyTimetable {
     day_of_week: number;
     start_time: string;
     end_time: string;
+    timezone: string;
 }
 
 // Update the Worker interface to include workingHours
@@ -201,13 +225,15 @@ const BookingPage = ({ businessId, bookingId }: { businessId: string, bookingId:
             rating: 4.9, // You might want to add this to your staff data
             reviewCount: 156, // You might want to add this to your staff data
             workingHours: companyData.company.timetable.map(tt => ({
-                start: tt.start_time,
-                end: tt.end_time,
+                start: convertTimeBetweenTimezones(tt.start_time, tt.timezone, getUserTimezone()),
+                end: convertTimeBetweenTimezones(tt.end_time, tt.timezone, getUserTimezone()),
                 days: [tt.day_of_week]
             })),
             bookings: staff.bookings
         }))
     })) : [];
+
+    
 
     // Replace individual states with a single form state
     const [formState, setFormState] = useState<BookingFormState>({
